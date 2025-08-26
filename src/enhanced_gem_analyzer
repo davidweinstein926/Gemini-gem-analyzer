@@ -1,0 +1,936 @@
+#!/usr/bin/env python3
+"""
+ENHANCED GEM ANALYZER v2.1 - OPTIMIZED - FIXED for 0-100 Normalization
+Implements David's sophisticated matching rules with corrected UV ratio analysis
+OPTIMIZED: Reduced line count while maintaining all functionality
+"""
+import sqlite3
+import pandas as pd
+import numpy as np
+from pathlib import Path
+import os
+import re
+from datetime import datetime
+from typing import Dict, List, Tuple, Optional
+
+class GemNamingSystem:
+    """Handles gem naming convention parsing"""
+    
+    @staticmethod
+    def parse_gem_filename(filename: str) -> Dict[str, str]:
+        """Parse gem filename into components"""
+        base_name = Path(filename).stem.split('_')[0] if '_' in Path(filename).stem else Path(filename).stem
+        pattern = r'^(.+?)([BLU])([CP])(\d+)$'
+        match = re.match(pattern, base_name, re.IGNORECASE)
+        
+        if match:
+            prefix, light, orientation, scan = match.groups()
+            light_source = {'B': 'Halogen', 'L': 'Laser', 'U': 'UV'}.get(light.upper(), 'Unknown')
+            return {
+                'gem_id': prefix, 'light_source': light_source, 'orientation': orientation.upper(),
+                'scan_number': int(scan), 'full_identifier': base_name, 'original_filename': filename
+            }
+        
+        return {
+            'gem_id': base_name, 'light_source': 'Unknown', 'orientation': 'Unknown',
+            'scan_number': 1, 'full_identifier': base_name, 'original_filename': filename
+        }
+
+class SpectralMatcher:
+    """OPTIMIZED: Implements David's sophisticated spectral matching rules for 0-100 normalization"""
+    
+    def __init__(self):
+        # Matching penalties and tolerances
+        self.missing_feature_penalty = 10.0
+        self.extra_feature_penalty = 10.0
+        self.uv_missing_peak_penalty = 5.0
+        self.tolerance_penalty_per_nm = 5.0
+        self.max_tolerance_penalty = 20.0
+        
+        self.tolerances = {
+            'peak_top': 2.0, 'trough_bottom': 2.0, 'valley_midpoint': 5.0,
+            'trough_start_end': 5.0, 'mound_plateau_start': 7.0,
+            'mound_plateau_top': 5.0, 'mound_plateau_end': 7.0
+        }
+        
+        # UV parameters for 0-100 scale
+        self.uv_reference_wavelength = 811.0
+        self.uv_reference_expected_intensity = 15.0
+        self.uv_real_peak_standards = [296.7, 302.1, 415.6, 419.6, 922.7]
+        self.uv_minimum_real_peak_intensity = 2.0
+        self.uv_diagnostic_peaks = {
+            507.0: "Diamond ID (natural=absorb, synthetic=transmit)",
+            302.0: "Corundum natural vs synthetic"
+        }
+        
+        self.expected_normalization_schemes = {
+            'UV': 'UV_811nm_15000_to_100',
+            'Halogen': 'Halogen_650nm_50000_to_100',
+            'Laser': 'Laser_max_50000_to_100'
+        }
+    
+    def match_features_by_light_source(self, unknown_features: List[Dict], db_features: List[Dict], 
+                                     light_source: str, unknown_gem_id: str, db_gem_id: str) -> float:
+        """Route to appropriate matching algorithm with normalization validation"""
+        if unknown_gem_id == db_gem_id:
+            return 100.0
+        if not unknown_features or not db_features:
+            return 0.0
+        
+        # Validate normalization compatibility
+        unknown_norm = self.extract_normalization_scheme(unknown_features)
+        db_norm = self.extract_normalization_scheme(db_features)
+        if unknown_norm and db_norm and unknown_norm != db_norm:
+            print(f"      WARNING: Normalization mismatch - Unknown: {unknown_norm}, DB: {db_norm}")
+        
+        return (self.match_uv_intensity_ratios_fixed(unknown_features, db_features, unknown_gem_id, db_gem_id)
+                if light_source.upper() == 'UV' else
+                self.match_halogen_laser_wavelengths(unknown_features, db_features, unknown_gem_id, db_gem_id))
+    
+    def extract_normalization_scheme(self, features: List[Dict]) -> Optional[str]:
+        """Extract normalization scheme from feature metadata"""
+        for feature in features:
+            for key in ['Normalization_Scheme', 'normalization_scheme']:
+                if key in feature:
+                    return feature[key]
+        return None
+    
+    def match_uv_intensity_ratios_fixed(self, unknown_features: List[Dict], db_features: List[Dict], 
+                                       unknown_gem_id: str, db_gem_id: str) -> float:
+        """UV matching for 0-100 normalized data"""
+        print(f"\n   UV RATIO ANALYSIS (FIXED 0-100): {unknown_gem_id} vs {db_gem_id}")
+        
+        unknown_ratios = self.calculate_uv_ratios_fixed(unknown_features, "Unknown")
+        db_ratios = self.calculate_uv_ratios_fixed(db_features, "Database")
+        
+        if not unknown_ratios or not db_ratios:
+            print("      Cannot calculate UV ratios (missing 811nm reference or no valid peaks)")
+            return 0.0
+        
+        all_wavelengths = set(unknown_ratios.keys()) | set(db_ratios.keys())
+        total_score, penalties, matched_peaks = 100.0, 0.0, 0
+        
+        print("      Peak ratio comparison (0-100 scale):")
+        for wavelength in sorted(all_wavelengths):
+            unknown_ratio = unknown_ratios.get(wavelength)
+            db_ratio = db_ratios.get(wavelength)
+            
+            if unknown_ratio is None or db_ratio is None:
+                penalty = self.uv_missing_peak_penalty
+                penalties += penalty
+                missing_side = "unknown" if unknown_ratio is None else "database"
+                print(f"         {wavelength:.0f}nm: Missing in {missing_side} (-{penalty}%)")
+                if wavelength in self.uv_diagnostic_peaks:
+                    print(f"            DIAGNOSTIC: {self.uv_diagnostic_peaks[wavelength]}")
+            else:
+                ratio_diff = abs(unknown_ratio - db_ratio)
+                ratio_score = 100.0 * np.exp(-3.0 * ratio_diff)
+                print(f"         {wavelength:.0f}nm: {unknown_ratio:.3f} vs {db_ratio:.3f} "
+                      f"(Δ{ratio_diff:.3f} → {ratio_score:.1f}%)")
+                if wavelength in self.uv_diagnostic_peaks:
+                    print(f"            DIAGNOSTIC: {self.uv_diagnostic_peaks[wavelength]}")
+                total_score += ratio_score
+                matched_peaks += 1
+        
+        average_ratio_score = total_score / (matched_peaks + 1) if matched_peaks > 0 else 100.0
+        final_score = max(0.0, average_ratio_score - penalties)
+        
+        print(f"      UV Results: {matched_peaks} matched, -{penalties:.1f}% penalties, "
+              f"avg: {average_ratio_score:.1f}%, final: {final_score:.1f}%")
+        return min(100.0, final_score)
+    
+    def calculate_uv_ratios_fixed(self, features: List[Dict], dataset_name: str) -> Dict[float, float]:
+        """Calculate ratios for 0-100 normalized data"""
+        reference_intensity, peak_data = None, {}
+        
+        for feature in features:
+            wavelength = self.extract_wavelength(feature, 'UV')
+            intensity = feature.get('intensity', feature.get('Intensity', 0.0))
+            if wavelength is not None and intensity > 0:
+                peak_data[wavelength] = intensity
+                if abs(wavelength - self.uv_reference_wavelength) <= 1.0:
+                    reference_intensity = intensity
+        
+        if not reference_intensity or reference_intensity <= 0:
+            print(f"      {dataset_name}: No 811nm reference peak found")
+            return {}
+        
+        if reference_intensity < 5.0:
+            print(f"      WARNING: {dataset_name} 811nm intensity ({reference_intensity:.2f}) seems low for 0-100 scale")
+        
+        real_peak_threshold = self.determine_uv_real_peak_threshold_fixed(peak_data, dataset_name)
+        filtered_peaks = {wl: intensity for wl, intensity in peak_data.items() if intensity >= real_peak_threshold}
+        
+        print(f"      {dataset_name}: Filtered {len(peak_data) - len(filtered_peaks)}/{len(peak_data)} minor peaks, "
+              f"threshold: {real_peak_threshold:.2f}")
+        
+        ratios = {wl: intensity / reference_intensity for wl, intensity in filtered_peaks.items()}
+        print(f"      {dataset_name} UV ratios (811nm = {reference_intensity:.2f}):")
+        for wl in sorted(ratios.keys()):
+            print(f"         {wl:.1f}nm: {ratios[wl]:.3f}")
+        
+        return ratios
+    
+    def determine_uv_real_peak_threshold_fixed(self, peak_data: Dict[float, float], dataset_name: str) -> float:
+        """Determine threshold for 0-100 normalized data"""
+        standard_intensities, tolerance = [], 2.0
+        
+        for standard_wl in self.uv_real_peak_standards:
+            closest_wl = min((wl for wl in peak_data.keys() if abs(wl - standard_wl) <= tolerance), 
+                           key=lambda wl: abs(wl - standard_wl), default=None)
+            if closest_wl:
+                intensity = peak_data[closest_wl]
+                standard_intensities.append(intensity)
+                print(f"      {dataset_name}: Found standard {standard_wl:.1f}nm → {closest_wl:.1f}nm (I={intensity:.2f})")
+        
+        if standard_intensities:
+            threshold = max(min(standard_intensities) * 0.8, self.uv_minimum_real_peak_intensity)
+            print(f"      {dataset_name}: Threshold from {len(standard_intensities)} standards")
+        else:
+            if peak_data:
+                intensities = list(peak_data.values())
+                mean_intensity, std_intensity = np.mean(intensities), np.std(intensities)
+                threshold = max(mean_intensity - std_intensity, np.max(intensities) * 0.05, self.uv_minimum_real_peak_intensity)
+                print(f"      {dataset_name}: Statistical threshold (mean={mean_intensity:.2f}, std={std_intensity:.2f})")
+            else:
+                threshold = self.uv_minimum_real_peak_intensity
+                print(f"      {dataset_name}: Using minimum threshold")
+        
+        return max(threshold, self.uv_minimum_real_peak_intensity)
+    
+    def match_halogen_laser_wavelengths(self, unknown_features: List[Dict], db_features: List[Dict], 
+                                      unknown_gem_id: str, db_gem_id: str) -> float:
+        """Halogen/Laser wavelength-based matching"""
+        if not unknown_features or not db_features:
+            return 0.0
+        
+        unknown_types = set(f.get('feature_type', 'unknown') for f in unknown_features)
+        db_types = set(f.get('feature_type', 'unknown') for f in db_features)
+        common_types = unknown_types.intersection(db_types)
+        
+        feature_penalty = (len(unknown_types - db_types) * self.missing_feature_penalty + 
+                          len(db_types - unknown_types) * self.extra_feature_penalty)
+        
+        if not common_types:
+            return max(0.0, 100.0 - feature_penalty)
+        
+        type_scores = [self.match_features_of_type_simple(
+            [f for f in unknown_features if f.get('feature_type') == ft],
+            [f for f in db_features if f.get('feature_type') == ft], ft
+        ) for ft in common_types]
+        
+        base_score = sum(type_scores) / len(type_scores) if type_scores else 0.0
+        preliminary_score = max(0.0, base_score - feature_penalty)
+        
+        if preliminary_score >= 30.0:
+            print(f"\n   H/L Wavelength analysis: {unknown_gem_id} vs {db_gem_id}")
+            if unknown_types - db_types:
+                print(f"      Missing features: {unknown_types - db_types} (-{len(unknown_types - db_types)*self.missing_feature_penalty}%)")
+            if db_types - unknown_types:
+                print(f"      Extra features: {db_types - unknown_types} (-{len(db_types - unknown_types)*self.extra_feature_penalty}%)")
+            
+            for ft in common_types:
+                self.match_features_of_type([f for f in unknown_features if f.get('feature_type') == ft],
+                                          [f for f in db_features if f.get('feature_type') == ft], ft)
+            
+            print(f"      Base spectral score: {base_score:.1f}%")
+            print(f"      Final H/L score: {preliminary_score:.1f}%")
+        
+        return min(100.0, preliminary_score)
+    
+    def calculate_wavelength_score(self, unknown_wl: float, db_wl: float, feature_type: str) -> float:
+        """Calculate score based on wavelength difference and tolerance rules"""
+        diff = abs(unknown_wl - db_wl)
+        tolerance = {
+            'peak': self.tolerances['peak_top'],
+            'trough': self.tolerances['trough_bottom'],
+            'valley': self.tolerances['valley_midpoint']
+        }.get(feature_type.lower(), self.tolerances.get(f'{feature_type.lower()}_top', self.tolerances['valley_midpoint']))
+        
+        if diff <= tolerance:
+            return 100.0 - (diff / tolerance) * 5.0
+        else:
+            excess_nm = diff - tolerance
+            tolerance_units_out = int(excess_nm // tolerance)
+            penalty = min(tolerance_units_out * self.tolerance_penalty_per_nm, self.max_tolerance_penalty)
+            return max(0.0, 95.0 - penalty)
+    
+    def match_features_of_type(self, unknown_features: List[Dict], db_features: List[Dict], feature_type: str) -> float:
+        """Match features with detailed scoring breakdown"""
+        if not unknown_features or not db_features:
+            return 0.0
+        
+        total_score, matched_count = 0.0, 0
+        print(f"      Matching {feature_type} features:")
+        
+        for i, unknown_feature in enumerate(unknown_features):
+            unknown_wl = self.extract_wavelength(unknown_feature, feature_type)
+            if unknown_wl is None:
+                continue
+            
+            best_score, best_db_wl = 0.0, None
+            for db_feature in db_features:
+                db_wl = self.extract_wavelength(db_feature, feature_type)
+                if db_wl is None:
+                    continue
+                score = self.calculate_wavelength_score(unknown_wl, db_wl, feature_type)
+                if score > best_score:
+                    best_score, best_db_wl = score, db_wl
+            
+            if best_db_wl:
+                diff = abs(unknown_wl - best_db_wl)
+                print(f"         {i+1}. {unknown_wl:.1f}nm → {best_db_wl:.1f}nm (Δ{diff:.1f}nm, {best_score:.1f}%)")
+            
+            total_score += best_score
+            matched_count += 1
+        
+        avg_score = total_score / matched_count if matched_count > 0 else 0.0
+        print(f"      {feature_type} average score: {avg_score:.1f}%")
+        return avg_score
+    
+    def match_features_of_type_simple(self, unknown_features: List[Dict], db_features: List[Dict], feature_type: str) -> float:
+        """Match features without detailed output"""
+        if not unknown_features or not db_features:
+            return 0.0
+        
+        total_score, matched_count = 0.0, 0
+        for unknown_feature in unknown_features:
+            unknown_wl = self.extract_wavelength(unknown_feature, feature_type)
+            if unknown_wl is None:
+                continue
+            
+            best_score = max((self.calculate_wavelength_score(unknown_wl, self.extract_wavelength(db_feature, feature_type), feature_type)
+                            for db_feature in db_features 
+                            if self.extract_wavelength(db_feature, feature_type) is not None), default=0.0)
+            
+            total_score += best_score
+            matched_count += 1
+        
+        return total_score / matched_count if matched_count > 0 else 0.0
+    
+    def extract_wavelength(self, feature: Dict, feature_type: str) -> Optional[float]:
+        """Extract appropriate wavelength from feature"""
+        fields = (['Wavelength_nm', 'wavelength', 'Wavelength'] if feature_type == 'UV' or feature_type.upper() == 'UV' else []) + [
+            'wavelength', 'crest_wavelength', 'max_wavelength', 'midpoint_wavelength', 
+            'peak_wavelength', 'Wavelength', 'Crest', 'Midpoint'
+        ]
+        
+        for field in fields:
+            if field in feature and feature[field] is not None:
+                try:
+                    return float(feature[field])
+                except (ValueError, TypeError):
+                    continue
+        return None
+
+class EnhancedGemAnalyzer:
+    """OPTIMIZED: Enhanced analyzer compatible with 0-100 normalization"""
+    
+    def __init__(self, db_path="multi_structural_gem_data.db"):
+        self.db_path = db_path
+        self.unknown_path = Path(r"C:\users\david\gemini sp10 structural data\unknown")
+        self.naming_system = GemNamingSystem()
+        self.matcher = SpectralMatcher()
+    
+    def analyze_unknown_file(self, file_path: Path) -> Dict:
+        """Analyze unknown file with enhanced matching and normalization validation"""
+        file_info = self.naming_system.parse_gem_filename(file_path.name)
+        print(f"\nAnalyzing: {file_info['original_filename']}")
+        print(f"   Gem: {file_info['gem_id']}, Light: {file_info['light_source']}, "
+              f"Orientation: {file_info['orientation']}, Scan: {file_info['scan_number']}")
+        
+        unknown_data = self.load_unknown_data_fixed(file_path)
+        if not unknown_data:
+            print("   Could not load file data")
+            return {'error': 'Could not load data'}
+        
+        print(f"   Found {len(unknown_data)} spectral features")
+        
+        norm_scheme = self.validate_normalization_scheme(unknown_data, file_info['light_source'])
+        wavelengths = [self.matcher.extract_wavelength(f, f.get('feature_type', '')) for f in unknown_data]
+        wavelengths = [w for w in wavelengths if w is not None]
+        
+        if wavelengths:
+            print(f"   Wavelength range: {min(wavelengths):.1f} - {max(wavelengths):.1f} nm")
+        
+        self.validate_intensity_range(unknown_data, file_info['light_source'])
+        matches = self.find_database_matches(unknown_data, file_info)
+        
+        if matches:
+            print(f"   Found {len(matches)} potential matches:")
+            for i, match in enumerate(matches[:5], 1):
+                print(f"      {i}. {match['db_gem_id']} - {match['score']:.1f}% "
+                      f"({match['db_features']} features, {match['light_source']})")
+        else:
+            print("   No similar gems found in database")
+        
+        return {'file_info': file_info, 'unknown_data': unknown_data, 'matches': matches, 'normalization_scheme': norm_scheme}
+    
+    def validate_normalization_scheme(self, features: List[Dict], light_source: str) -> Optional[str]:
+        """Validate that normalization scheme matches expected format"""
+        scheme = self.matcher.extract_normalization_scheme(features)
+        expected = self.matcher.expected_normalization_schemes.get(light_source)
+        
+        if not scheme:
+            print("   WARNING: No normalization scheme found in data")
+        elif expected and scheme != expected:
+            print(f"   WARNING: Unexpected normalization - Found: {scheme}, Expected: {expected}")
+        else:
+            print(f"   Normalization validated: {scheme}")
+        
+        return scheme
+    
+    def validate_intensity_range(self, features: List[Dict], light_source: str):
+        """Validate intensity values are in expected 0-100 range"""
+        intensities = []
+        for feature in features:
+            intensity = feature.get('intensity', feature.get('Intensity'))
+            if intensity is not None:
+                try:
+                    intensities.append(float(intensity))
+                except (ValueError, TypeError):
+                    continue
+        
+        if not intensities:
+            print("   WARNING: No intensity values found")
+            return
+        
+        min_int, max_int = min(intensities), max(intensities)
+        print(f"   Intensity range: {min_int:.2f} - {max_int:.2f}")
+        
+        if max_int <= 1.0:
+            print("   ERROR: Intensities appear to be 0-1 normalized (broken for UV analysis)")
+        elif max_int > 100.0:
+            print("   WARNING: Intensities exceed 100 (unexpected for fixed normalization)")
+        elif min_int < 0:
+            print("   WARNING: Negative intensities found")
+        else:
+            print("   Intensity range validated for 0-100 scale")
+        
+        if light_source == 'UV':
+            ref_intensity = None
+            for feature in features:
+                wl = self.matcher.extract_wavelength(feature, 'UV')
+                if wl and abs(wl - 811.0) <= 1.0:
+                    intensity = feature.get('intensity', feature.get('Intensity', 0))
+                    if intensity > 0:
+                        ref_intensity = intensity
+                        break
+            
+            if ref_intensity:
+                if ref_intensity < 10.0:
+                    print(f"   WARNING: 811nm reference ({ref_intensity:.2f}) seems low for UV normalization")
+                else:
+                    print(f"   811nm reference validated: {ref_intensity:.2f}")
+            else:
+                print("   WARNING: No 811nm reference peak found for UV analysis")
+    
+    def find_database_matches(self, unknown_data: List[Dict], file_info: Dict, top_n: int = 10) -> List[Dict]:
+        """Find matching gems with normalization compatibility checking"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            query = """SELECT file, light_source, wavelength, intensity, feature_group, data_type, 
+                             start_wavelength, end_wavelength, midpoint, bottom, normalization_scheme, reference_wavelength
+                       FROM structural_features WHERE light_source = ? ORDER BY file, wavelength"""
+            
+            db_df = pd.read_sql_query(query, conn, params=(file_info['light_source'],))
+            conn.close()
+            
+            if db_df.empty:
+                return []
+            
+            matches, unknown_norm = [], self.matcher.extract_normalization_scheme(unknown_data)
+            
+            for db_file in db_df['file'].unique():
+                file_data = db_df[db_df['file'] == db_file]
+                db_file_info = self.naming_system.parse_gem_filename(db_file)
+                
+                db_features = []
+                for _, row in file_data.iterrows():
+                    feature = {
+                        'feature_type': row.get('feature_group', 'unknown'), 'wavelength': row['wavelength'],
+                        'intensity': row['intensity'], 'midpoint_wavelength': row.get('midpoint'),
+                        'start_wavelength': row.get('start_wavelength'), 'end_wavelength': row.get('end_wavelength'),
+                        'crest_wavelength': row['wavelength'], 'max_wavelength': row['wavelength']
+                    }
+                    
+                    if 'normalization_scheme' in row and pd.notna(row['normalization_scheme']):
+                        feature['Normalization_Scheme'] = row['normalization_scheme']
+                    if 'reference_wavelength' in row and pd.notna(row['reference_wavelength']):
+                        feature['Reference_Wavelength'] = row['reference_wavelength']
+                    
+                    db_features.append(feature)
+                
+                score = self.matcher.match_features_by_light_source(
+                    unknown_data, db_features, file_info['light_source'], file_info['gem_id'], db_file_info['gem_id']
+                )
+                
+                db_norm = self.matcher.extract_normalization_scheme(db_features)
+                if unknown_norm and db_norm:
+                    score += 2.0 if unknown_norm == db_norm else -5.0
+                
+                if score > 0:
+                    matches.append({
+                        'db_gem_id': db_file_info['gem_id'], 'db_full_id': db_file_info['full_identifier'],
+                        'score': score, 'db_features': len(db_features), 'light_source': db_file_info['light_source'],
+                        'orientation': db_file_info['orientation'], 'scan_number': db_file_info['scan_number'],
+                        'normalization_scheme': db_norm,
+                        'normalization_compatible': unknown_norm == db_norm if unknown_norm and db_norm else None
+                    })
+            
+            matches.sort(key=lambda x: x['score'], reverse=True)
+            return matches[:top_n]
+            
+        except Exception as e:
+            print(f"Error finding matches: {e}")
+            return []
+    
+    def load_unknown_data_fixed(self, file_path: Path) -> List[Dict]:
+        """Load unknown data with normalization metadata handling"""
+        try:
+            df = pd.read_csv(file_path)
+            
+            if 'Peak_Number' in df.columns:  # Peak detection format
+                features = []
+                for _, row in df.iterrows():
+                    feature = {
+                        'feature_type': 'Peak', 'wavelength': row['Wavelength_nm'],
+                        'max_wavelength': row['Wavelength_nm'], 'intensity': row['Intensity'],
+                        'prominence': row.get('Prominence', 1.0)
+                    }
+                    
+                    for key in ['Normalization_Scheme', 'Reference_Wavelength', 'Light_Source']:
+                        if key in row and pd.notna(row[key]):
+                            feature[key] = row[key]
+                    
+                    features.append(feature)
+                return features
+            
+            elif 'Feature' in df.columns:  # Structural features format
+                features = []
+                for _, row in df.iterrows():
+                    feature = {
+                        'feature_type': row.get('Feature', 'unknown'),
+                        'wavelength': row.get('Wavelength', row.get('Crest')),
+                        'intensity': row.get('Intensity', 1.0)
+                    }
+                    
+                    for field, col in [('crest_wavelength', 'Crest'), ('midpoint_wavelength', 'Midpoint'),
+                                     ('start_wavelength', 'Start'), ('end_wavelength', 'End')]:
+                        if col in row:
+                            feature[field] = row[col]
+                    
+                    if 'Normalization_Scheme' in row and pd.notna(row['Normalization_Scheme']):
+                        feature['Normalization_Scheme'] = row['Normalization_Scheme']
+                    
+                    features.append(feature)
+                return features
+            
+        except Exception as e:
+            print(f"Error loading {file_path}: {e}")
+        
+        return []
+    
+    def analyze_all_unknowns(self):
+        """Analyze all unknown files with enhanced normalization validation"""
+        if not os.path.exists(self.db_path):
+            print(f"Database not found: {self.db_path}")
+            return
+        
+        if not self.unknown_path.exists():
+            print(f"Unknown directory not found: {self.unknown_path}")
+            return
+        
+        csv_files = list(self.unknown_path.glob("*.csv"))
+        if not csv_files:
+            print("No unknown files found")
+            return
+        
+        print(f"Found {len(csv_files)} unknown files to analyze")
+        all_results, normalization_issues = {}, []
+        
+        for file_path in csv_files:
+            try:
+                result = self.analyze_unknown_file(file_path)
+                all_results[file_path.name] = result
+                
+                if 'normalization_scheme' in result:
+                    scheme = result['normalization_scheme']
+                    if not scheme or 'Unknown' in scheme:
+                        normalization_issues.append(file_path.name)
+            except Exception as e:
+                print(f"Error analyzing {file_path.name}: {e}")
+        
+        print(f"\nENHANCED ANALYSIS SUMMARY (FIXED for 0-100 normalization):")
+        print("=" * 70)
+        
+        if normalization_issues:
+            print("NORMALIZATION WARNINGS:")
+            for issue_file in normalization_issues:
+                print(f"   ! {issue_file}: Missing or unknown normalization scheme")
+            print()
+        
+        for filename, result in all_results.items():
+            if 'error' in result:
+                print(f"Analyzing {filename}\n   {result['error']}")
+            elif result.get('matches'):
+                matches = result['matches']
+                best_match = matches[0]
+                file_info = result['file_info']
+                
+                print(f"Analyzing {filename}")
+                print(f"   Gem: {file_info['gem_id']} ({file_info['light_source']})")
+                
+                norm_scheme = result.get('normalization_scheme', 'Unknown')
+                best_norm_compat = best_match.get('normalization_compatible')
+                compat_indicator = ("COMPATIBLE" if best_norm_compat is True else 
+                                  "INCOMPATIBLE" if best_norm_compat is False else "UNKNOWN")
+                
+                print(f"   Best match: {best_match['db_gem_id']} ({best_match['score']:.1f}%) [{compat_indicator}]")
+                print(f"   Normalization: {norm_scheme}")
+                
+                if best_match['score'] == 100.0:
+                    print("   PERFECT MATCH - Same gem, different scan!")
+                elif best_match['score'] >= 80.0:
+                    print("   EXCELLENT - Very likely same species")
+                elif best_match['score'] >= 60.0:
+                    print("   GOOD - Possibly same variety")
+                else:
+                    print("   MODERATE - Similar characteristics")
+            else:
+                print(f"Analyzing {filename}\n   No matches found")
+        
+        return all_results
+    
+    def analyze_multi_light_integration(self, gem_id: str):
+        """Multi-light analysis with normalization validation"""
+        print(f"\nMULTI-LIGHT INTEGRATION ANALYSIS (FIXED): {gem_id}")
+        print("=" * 70)
+        
+        unknown_files = {}
+        if self.unknown_path.exists():
+            for file in self.unknown_path.glob("*.csv"):
+                file_info = self.naming_system.parse_gem_filename(file.name)
+                if file_info['gem_id'] == gem_id:
+                    unknown_files[file_info['light_source']] = file
+        
+        if not unknown_files:
+            print(f"No unknown files found for gem {gem_id}")
+            return
+        
+        print("Found unknown files:")
+        for light_source, file in unknown_files.items():
+            print(f"   {light_source}: {file.name}")
+        
+        best_matches, normalization_summary, gem_scores = {}, {}, {}
+        
+        for light_source, file_path in unknown_files.items():
+            print(f"\nAnalyzing {light_source} data...")
+            
+            file_info = self.naming_system.parse_gem_filename(file_path.name)
+            unknown_data = self.load_unknown_data_fixed(file_path)
+            
+            if unknown_data:
+                norm_scheme = self.validate_normalization_scheme(unknown_data, light_source)
+                normalization_summary[light_source] = norm_scheme
+                
+                matches = self.find_database_matches(unknown_data, file_info, top_n=5)
+                if matches:
+                    best_match = matches[0]
+                    best_score = best_match['score']
+                    gem_scores[light_source] = best_score
+                    best_matches[light_source] = best_match
+                    
+                    norm_compat = best_match.get('normalization_compatible')
+                    compat_str = (" [COMPATIBLE]" if norm_compat is True else 
+                                " [INCOMPATIBLE]" if norm_compat is False else "")
+                    
+                    print(f"   Best {light_source} match: {best_match['db_gem_id']} ({best_score:.1f}%){compat_str}")
+                else:
+                    gem_scores[light_source] = 0.0
+                    best_matches[light_source] = None
+                    print(f"   No {light_source} matches found")
+        
+        if gem_scores:
+            integrated_score = sum(gem_scores.values()) / len(gem_scores)
+            
+            gem_vote_counts, gem_total_scores = {}, {}
+            for light_source, match in best_matches.items():
+                if match:
+                    db_gem = match['db_gem_id']
+                    score = match['score']
+                    
+                    if db_gem not in gem_vote_counts:
+                        gem_vote_counts[db_gem] = 0
+                        gem_total_scores[db_gem] = 0
+                    
+                    gem_vote_counts[db_gem] += 1
+                    gem_total_scores[db_gem] += score
+            
+            best_overall_gem = max(gem_vote_counts.keys(), 
+                                 key=lambda gem: gem_vote_counts[gem] * gem_total_scores[gem] / gem_vote_counts[gem],
+                                 default=None)
+            
+            print(f"\nINTEGRATED ANALYSIS RESULTS (FIXED):")
+            print("=" * 50)
+            print(f"UNKNOWN GEM: {gem_id}")
+            print(f"BEST MATCH: {best_overall_gem if best_overall_gem else 'No clear winner'}")
+            
+            print(f"\nNORMALIZATION VALIDATION:")
+            for light_source in ['UV', 'Laser', 'Halogen']:
+                if light_source in normalization_summary:
+                    scheme = normalization_summary[light_source] or 'Unknown'
+                    print(f"   {light_source}: {scheme}")
+            print()
+            
+            icons = {'UV': 'UV', 'Laser': 'LASER', 'Halogen': 'HALOGEN'}
+            for light_source in ['UV', 'Laser', 'Halogen']:
+                if light_source in gem_scores:
+                    score = gem_scores[light_source]
+                    match = best_matches.get(light_source)
+                    
+                    if match:
+                        matched_gem = match['db_gem_id']
+                        norm_compat = match.get('normalization_compatible')
+                        
+                        compat_indicator = (" (COMPAT)" if norm_compat is True else 
+                                          " (INCOMPAT)" if norm_compat is False else "")
+                        
+                        match_indicator = " MATCH" if matched_gem == best_overall_gem else ""
+                        print(f"   {icons[light_source]}: {score:.1f}% → {matched_gem}{compat_indicator}{match_indicator}")
+                    else:
+                        print(f"   {icons[light_source]}: {score:.1f}% → No match")
+            
+            print(f"\n   INTEGRATED SCORE: {integrated_score:.1f}%")
+            
+            if best_overall_gem:
+                confidence_levels = [
+                    (90.0, "EXCELLENT: very likely same gem"),
+                    (75.0, "STRONG: probably same gem"),
+                    (60.0, "MODERATE: might be similar"),
+                    (40.0, "WEAK: some similarity"),
+                    (0.0, "POOR: no strong match")
+                ]
+                
+                for threshold, description in confidence_levels:
+                    if integrated_score >= threshold:
+                        print(f"   {description}")
+                        break
+            else:
+                print("   INCONCLUSIVE: No consistent match across light sources")
+            
+            if len(gem_vote_counts) > 1:
+                print(f"\nCANDIDATE SUMMARY:")
+                sorted_candidates = sorted(gem_vote_counts.items(), 
+                                         key=lambda x: gem_total_scores[x[0]]/x[1], reverse=True)
+                for candidate_gem, vote_count in sorted_candidates:
+                    avg_score = gem_total_scores[candidate_gem] / vote_count
+                    light_sources_matched = [ls for ls, match in best_matches.items() 
+                                           if match and match['db_gem_id'] == candidate_gem]
+                    print(f"   • {candidate_gem}: {avg_score:.1f}% avg "
+                          f"({vote_count}/{len(gem_scores)} sources: {', '.join(light_sources_matched)})")
+            
+            return {
+                'gem_id': gem_id, 'best_match': best_overall_gem, 'light_source_scores': gem_scores,
+                'light_source_matches': {ls: match['db_gem_id'] if match else None for ls, match in best_matches.items()},
+                'integrated_score': integrated_score, 'normalization_schemes': normalization_summary
+            }
+        
+        return None
+
+def main_menu():
+    """Main menu for OPTIMIZED enhanced gem analyzer"""
+    print("ENHANCED GEM ANALYZER v2.1 - OPTIMIZED - FIXED for 0-100 Normalization")
+    print("Implements David's sophisticated matching algorithms")
+    print("=" * 70)
+    
+    analyzer = EnhancedGemAnalyzer()
+    
+    menu_options = {
+        "1": ("Analyze Unknown Files (FIXED for 0-100 normalization)", lambda: analyzer.analyze_all_unknowns()),
+        "2": ("Multi-Light Integration Analysis (FIXED)", lambda: handle_multi_light_analysis(analyzer)),
+        "3": ("Show Unknown Directory", lambda: show_unknown_directory(analyzer)),
+        "4": ("Clear Unknown Directory", lambda: clear_unknown_directory(analyzer)),
+        "5": ("Database Statistics", lambda: show_database_stats(analyzer)),
+        "6": ("Show Matching Parameters (FIXED)", lambda: show_matching_parameters(analyzer)),
+        "7": ("Exit", lambda: None)
+    }
+    
+    while True:
+        print(f"\nMAIN MENU:")
+        for key, (desc, _) in menu_options.items():
+            print(f"{key}. {desc}")
+        
+        try:
+            choice = input("Choice (1-7): ").strip()
+            
+            if choice == "7":
+                print("Goodbye!")
+                break
+            
+            if choice in menu_options:
+                _, action = menu_options[choice]
+                if action:
+                    action()
+                    if choice in ['1', '2', '3', '4', '5', '6']:
+                        input("\nPress Enter to continue...")
+            else:
+                print("Invalid choice. Please enter 1-7")
+                
+        except KeyboardInterrupt:
+            print("\nExiting...")
+            break
+        except Exception as e:
+            print(f"Error: {e}")
+
+def handle_multi_light_analysis(analyzer):
+    """Handle multi-light integration analysis"""
+    gem_ids = set()
+    if analyzer.unknown_path.exists():
+        for file in analyzer.unknown_path.glob("*.csv"):
+            file_info = analyzer.naming_system.parse_gem_filename(file.name)
+            gem_ids.add(file_info['gem_id'])
+    
+    if gem_ids:
+        print("Found gems with unknown data:")
+        gem_list = sorted(list(gem_ids))
+        for i, gem_id in enumerate(gem_list, 1):
+            print(f"   {i}. {gem_id}")
+        
+        try:
+            selection = input(f"\nSelect gem (1-{len(gem_list)}) or 'all': ").strip()
+            if selection.lower() == 'all':
+                for gem_id in gem_list:
+                    analyzer.analyze_multi_light_integration(gem_id)
+            else:
+                idx = int(selection) - 1
+                if 0 <= idx < len(gem_list):
+                    analyzer.analyze_multi_light_integration(gem_list[idx])
+                else:
+                    print("Invalid selection")
+        except ValueError:
+            print("Invalid selection")
+    else:
+        print("No unknown gems found")
+
+def show_unknown_directory(analyzer):
+    """Show unknown directory contents"""
+    if analyzer.unknown_path.exists():
+        files = list(analyzer.unknown_path.glob("*.csv"))
+        if files:
+            print(f"Found {len(files)} files:")
+            for file in files:
+                info = analyzer.naming_system.parse_gem_filename(file.name)
+                size = file.stat().st_size
+                print(f"   {file.name} ({size} bytes)")
+                print(f"       Gem: {info['gem_id']}, Light: {info['light_source']}, Scan: {info['scan_number']}")
+        else:
+            print("No files found")
+    else:
+        print("Directory not found")
+
+def clear_unknown_directory(analyzer):
+    """Clear unknown directory"""
+    if analyzer.unknown_path.exists():
+        files = list(analyzer.unknown_path.glob("*.csv"))
+        if files:
+            confirm = input(f"Delete {len(files)} files? (y/N): ").strip().lower()
+            if confirm == 'y':
+                deleted = sum(1 for file in files if not file.unlink() or True)
+                print(f"Deleted {deleted} files")
+            else:
+                print("Cancelled")
+        else:
+            print("No files to delete")
+    else:
+        print("Directory not found")
+
+def show_database_stats(analyzer):
+    """Show database statistics"""
+    try:
+        conn = sqlite3.connect(analyzer.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT COUNT(*) FROM structural_features")
+        total = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(DISTINCT file) FROM structural_features")
+        unique_files = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT light_source, COUNT(*) FROM structural_features GROUP BY light_source")
+        by_light = cursor.fetchall()
+        
+        cursor.execute("SELECT COUNT(*) FROM structural_features WHERE normalization_scheme IS NOT NULL")
+        with_norm = cursor.fetchone()[0]
+        
+        print(f"Total records: {total:,}")
+        print(f"Unique gem files: {unique_files:,}")
+        print(f"Records with normalization metadata: {with_norm:,}")
+        print("By light source:")
+        for light, count in by_light:
+            print(f"   {light}: {count:,}")
+        
+        conn.close()
+    except Exception as e:
+        print(f"Database error: {e}")
+
+def show_matching_parameters(analyzer):
+    """Show matching parameters"""
+    print("MATCHING PARAMETERS (FIXED for 0-100 normalization)")
+    print("=" * 70)
+    print("Wavelength Tolerances (Halogen/Laser):")
+    for param, value in analyzer.matcher.tolerances.items():
+        print(f"   {param}: ±{value} nm")
+    
+    print(f"\nPenalties:")
+    penalties = [
+        (analyzer.matcher.missing_feature_penalty, "Missing feature (H/L)"),
+        (analyzer.matcher.extra_feature_penalty, "Extra feature (H/L)"),
+        (analyzer.matcher.uv_missing_peak_penalty, "Missing UV peak"),
+        (analyzer.matcher.tolerance_penalty_per_nm, "Out-of-tolerance (per nm)"),
+        (analyzer.matcher.max_tolerance_penalty, "Maximum tolerance penalty")
+    ]
+    for penalty, desc in penalties:
+        print(f"   {desc}: -{penalty}%")
+    
+    print(f"\nFIXED UV Analysis Parameters (0-100 scale):")
+    uv_params = [
+        (analyzer.matcher.uv_reference_wavelength, "Reference wavelength", "nm"),
+        (analyzer.matcher.uv_reference_expected_intensity, "Expected 811nm intensity", " (0-100 scale)"),
+        (analyzer.matcher.uv_minimum_real_peak_intensity, "Minimum real peak intensity", ""),
+    ]
+    for value, desc, unit in uv_params:
+        print(f"   {desc}: {value}{unit}")
+    
+    print(f"   Real peak standards: {', '.join(f'{wl:.1f}nm' for wl in analyzer.matcher.uv_real_peak_standards)}")
+    
+    print(f"\nExpected Normalization Schemes:")
+    for light, scheme in analyzer.matcher.expected_normalization_schemes.items():
+        print(f"   {light}: {scheme}")
+    
+    validation_features = [
+        "Checks intensity ranges are 0-100",
+        "Validates 811nm reference for UV", 
+        "Warns about incompatible schemes",
+        "Applies compatibility bonuses/penalties"
+    ]
+    print(f"\nNormalization Validation:")
+    for feature in validation_features:
+        print(f"   • {feature}")
+
+if __name__ == "__main__":
+    print("TESTING FIXED UV RATIO CALCULATIONS")
+    print("=" * 60)
+    
+    matcher = SpectralMatcher()
+    print(f"FIXED UV Parameters:")
+    print(f"   Expected 811nm intensity: ~{matcher.uv_reference_expected_intensity} (0-100 scale)")
+    print(f"   Minimum real peak: {matcher.uv_minimum_real_peak_intensity}")
+    print(f"   Real peak standards: {matcher.uv_real_peak_standards}")
+    
+    print(f"\nExpected normalization schemes:")
+    for light, scheme in matcher.expected_normalization_schemes.items():
+        print(f"   {light}: {scheme}")
+    
+    print(f"\nStarting OPTIMIZED Enhanced Gem Analyzer...")
+    main_menu()
