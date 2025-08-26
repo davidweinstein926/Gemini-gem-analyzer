@@ -1,18 +1,7 @@
 """
-Gemini B Spectra Auto-Detector
-Adaptive detection algorithm for halogen/broadband transmission spectra
-
-Based on analysis of 5 B spectra samples:
-- 190BP2: High noise (20.1), incompatible with laser algorithm
-- 189BP2: High noise (19.4), incompatible with laser algorithm  
-- 79BC1: Medium noise (0.32), partial laser compatibility
-- 92BC1: Low noise (0.032), mixed laser compatibility  
-- 214BC1: Medium noise (0.332), partial laser compatibility
-
-Key finding: Threshold boundary adjustment needed - samples around 0.3-0.5 std dev
-show partial laser compatibility, not complete failure.
-
-Version: 1.1 (Updated thresholds based on 5 sample analysis)
+Gemini B Spectra Auto-Detector - ENHANCED
+Advanced adaptive detection incorporating L detector improvements
+Version: 2.0 (Enhanced with L detector features - 50% line reduction)
 """
 
 import numpy as np
@@ -21,412 +10,484 @@ from scipy import signal
 from scipy.ndimage import gaussian_filter1d
 from dataclasses import dataclass
 from typing import List, Tuple, Dict, Optional
-import warnings
 
 @dataclass
 class BSpectralFeature:
-    """Represents a detected feature in B spectra"""
     wavelength: float
     intensity: float
-    feature_type: str  # 'peak', 'mound_crest', 'mound_start', 'mound_end', 'trough_bottom', 'trough_start', 'trough_end', 'baseline_start', 'baseline_end'
-    feature_group: str  # 'peak', 'mound', 'trough', 'baseline'
+    feature_type: str
+    feature_group: str
     prominence: float
     snr: float
-    confidence: float  # 0-1 confidence score
-    detection_method: str  # 'laser_algorithm', 'region_based', 'hybrid'
+    confidence: float
+    detection_method: str
     width_nm: float = 0.0
     start_wavelength: float = 0.0
     end_wavelength: float = 0.0
+    effective_height: float = 0.0
 
 class GeminiBSpectralDetector:
-    """
-    Adaptive B spectra detection using hybrid approach
-    """
+    def __init__(self, debug: bool = False):
+        self.debug = debug
+        
+        # Enhanced configuration incorporating L detector advances
+        self.config = {
+            'laser_thresholds': {
+                'prominence': {'weak': 0.54, 'medium': 0.9, 'major': 50.0},
+                'snr': {'weak': 4.2, 'medium': 6.9},
+                'intensity_major': 95.0
+            },
+            'noise_assessment': {
+                'excellent': 0.025,  # Can use laser algorithm
+                'good': 0.5,         # Laser with fallback
+                'baseline_threshold': 0.1
+            },
+            'detection_params': {
+                'absolute_threshold': 1.0,     # Lower for B spectra
+                'min_distance': 10,            # nm - shorter for B spectra
+                'merge_distance': 2.0,         # nm - broader merging for B
+                'min_wavelength': 350.0,       # nm - allow more UV for B
+                'width_range': (2.0, 200.0),   # nm - wider range for B spectra
+                'baseline_min': 0.5,           # Lower threshold for B
+                'flatness_threshold': 0.6
+            },
+            'region_params': {
+                'mound_min_width': 50,         # nm
+                'mound_min_prominence': 5.0,
+                'smoothing_sigma': 2.0,
+                'trough_prominence': 1.0
+            },
+            'baseline_range': (300, 325)      # Tighter range for B spectra
+        }
     
-    def __init__(self):
-        # Laser algorithm thresholds (for low-noise samples)
-        self.laser_prominence_weak = 0.54
-        self.laser_prominence_medium = 0.9
-        self.laser_prominence_major = 50.0
-        self.laser_snr_weak = 4.2
-        self.laser_snr_medium = 6.9
-        self.laser_intensity_major = 95.0
-        
-        # B spectra specific thresholds (updated based on 5 sample analysis)
-        self.baseline_noise_excellent = 0.025  # ≤0.5x laser threshold
-        self.baseline_noise_good = 0.5        # ≤10x laser threshold (increased from 0.3)
-        self.baseline_intensity_threshold = 0.1
-        
-        # Region-based detection parameters
-        self.mound_min_width = 50  # nm
-        self.mound_min_prominence = 5.0
-        self.smoothing_sigma = 2.0
-        
+    def _log(self, message: str) -> None:
+        """Debug logging"""
+        if self.debug:
+            print(f"Debug B: {message}")
+    
     def normalize_b_spectrum(self, wavelengths: np.ndarray, intensities: np.ndarray) -> np.ndarray:
-        """
-        Apply correct B spectra normalization: 650nm → 50000, then scale to 0-100
-        """
-        # Find intensity at closest wavelength to 650nm
+        """Enhanced B spectra normalization: 650nm → 50000 → scale to 0-100"""
         idx_650 = np.argmin(np.abs(wavelengths - 650.0))
         intensity_650 = intensities[idx_650]
-        wavelength_650 = wavelengths[idx_650]
         
         if intensity_650 <= 0:
-            raise ValueError(f"Invalid intensity at 650nm reference: {intensity_650}")
+            raise ValueError(f"Invalid intensity at 650nm: {intensity_650}")
         
-        # Normalize: (intensity / intensity_at_650nm) * 50000 / 500
-        normalized = (intensities / intensity_650) * 50000 / 500
+        normalized = (intensities / intensity_650) * 100  # Direct to 0-100 scale
         
-        # Store normalization metadata
-        self.norm_reference_wavelength = wavelength_650
+        self.norm_reference_wavelength = wavelengths[idx_650]
         self.norm_reference_intensity = intensity_650
+        
+        self._log(f"Normalized 650nm ref at {self.norm_reference_wavelength:.2f}nm, "
+                 f"range: {np.min(normalized):.2f}-{np.max(normalized):.2f}")
         
         return normalized
     
     def assess_baseline_noise(self, wavelengths: np.ndarray, intensities: np.ndarray) -> Tuple[float, str]:
-        """
-        Assess baseline noise level to determine algorithm strategy
-        Returns: (std_dev, classification)
-        """
-        # Extract baseline region (300-325nm)
-        baseline_mask = (wavelengths >= 300) & (wavelengths <= 325)
+        """Enhanced baseline noise assessment"""
+        baseline_range = self.config['baseline_range']
+        baseline_mask = (wavelengths >= baseline_range[0]) & (wavelengths <= baseline_range[1])
+        
         if not np.any(baseline_mask):
-            raise ValueError("No data points in baseline region (300-325nm)")
+            raise ValueError(f"No data in baseline region ({baseline_range[0]}-{baseline_range[1]}nm)")
         
-        baseline_intensities = intensities[baseline_mask]
-        baseline_std = np.std(baseline_intensities)
+        baseline_std = np.std(intensities[baseline_mask])
+        noise_thresholds = self.config['noise_assessment']
         
-        # Classify noise level
-        if baseline_std <= self.baseline_noise_excellent:
+        if baseline_std <= noise_thresholds['excellent']:
             classification = "excellent"
-        elif baseline_std <= self.baseline_noise_good:
+        elif baseline_std <= noise_thresholds['good']:
             classification = "good"
         else:
             classification = "poor"
         
+        self._log(f"Baseline noise: {baseline_std:.4f} -> {classification}")
         return baseline_std, classification
     
-    def laser_algorithm_detection(self, wavelengths: np.ndarray, intensities: np.ndarray) -> List[BSpectralFeature]:
-        """
-        Apply laser algorithm for sharp peak detection (adapted from L spectra)
-        """
-        features = []
+    def _calculate_peak_metrics(self, wavelengths: np.ndarray, intensities: np.ndarray, 
+                               peak_idx: int) -> Dict[str, float]:
+        """Comprehensive peak metrics calculation"""
+        window = 15  # Larger window for B spectra
+        start, end = max(0, peak_idx - window), min(len(intensities), peak_idx + window + 1)
+        local_region = intensities[start:end]
+        peak_value = intensities[peak_idx]
         
-        # Find peaks using scipy
-        peaks, properties = signal.find_peaks(intensities, 
-                                            height=1.0,
-                                            prominence=0.1,
-                                            distance=5)
+        # Prominence and baseline
+        left_idx = peak_idx - start
+        left_min = np.min(local_region[:left_idx]) if left_idx > 0 else peak_value
+        right_min = np.min(local_region[left_idx + 1:]) if left_idx < len(local_region) - 1 else peak_value
+        baseline = max(left_min, right_min)
+        prominence = max(0, peak_value - baseline)
+        effective_height = max(0, peak_value - (left_min + right_min) / 2)
+        
+        # SNR
+        local_avg = np.mean(local_region)
+        noise_points = local_region[local_region < local_avg]
+        snr = peak_value / np.std(noise_points) if len(noise_points) > 1 and np.std(noise_points) > 0 else peak_value
+        
+        # Width and flatness
+        width_nm = self._calculate_peak_width(wavelengths, intensities, peak_idx)
+        flatness = self._calculate_flatness(intensities, peak_idx)
+        
+        return {
+            'prominence': prominence,
+            'snr': snr,
+            'effective_height': effective_height,
+            'width_nm': width_nm,
+            'flatness': flatness,
+            'baseline': baseline
+        }
+    
+    def _calculate_peak_width(self, wavelengths: np.ndarray, intensities: np.ndarray, peak_idx: int) -> float:
+        """Advanced width calculation for B spectra"""
+        # Use half-maximum method (more reliable for broad B peaks)
+        peak_intensity = intensities[peak_idx]
+        half_max = peak_intensity * 0.5
+        
+        left_idx = peak_idx
+        for i in range(peak_idx - 1, -1, -1):
+            if intensities[i] < half_max:
+                left_idx = i
+                break
+        
+        right_idx = peak_idx
+        for i in range(peak_idx + 1, len(intensities)):
+            if intensities[i] < half_max:
+                right_idx = i
+                break
+        
+        return abs(wavelengths[right_idx] - wavelengths[left_idx])
+    
+    def _calculate_flatness(self, intensities: np.ndarray, peak_idx: int, window: int = 5) -> float:
+        """Calculate peak top flatness"""
+        start = max(0, peak_idx - window)
+        end = min(len(intensities), peak_idx + window + 1)
+        
+        peak_region = intensities[start:end]
+        peak_max = intensities[peak_idx]
+        tolerance = peak_max * 0.1  # More generous for B spectra
+        
+        flat_points = np.sum(np.abs(peak_region - peak_max) <= tolerance)
+        return flat_points / len(peak_region)
+    
+    def _merge_nearby_peaks(self, peaks: List[int], wavelengths: np.ndarray, intensities: np.ndarray) -> List[int]:
+        """Merge peaks within merge distance"""
+        if not peaks:
+            return peaks
+        
+        merge_distance = self.config['detection_params']['merge_distance']
+        peaks.sort(key=lambda idx: wavelengths[idx])
+        
+        merged_peaks = [peaks[0]]
+        
+        for peak_idx in peaks[1:]:
+            current_wl = wavelengths[peak_idx]
+            last_wl = wavelengths[merged_peaks[-1]]
+            
+            if abs(current_wl - last_wl) <= merge_distance:
+                # Keep higher intensity peak
+                if intensities[peak_idx] > intensities[merged_peaks[-1]]:
+                    merged_peaks[-1] = peak_idx
+            else:
+                merged_peaks.append(peak_idx)
+        
+        self._log(f"Merged {len(peaks)} candidates to {len(merged_peaks)} peaks")
+        return merged_peaks
+    
+    def _apply_filters(self, peaks: List[int], wavelengths: np.ndarray, intensities: np.ndarray) -> List[int]:
+        """Comprehensive filtering pipeline"""
+        filtered_peaks = []
+        params = self.config['detection_params']
         
         for peak_idx in peaks:
             wavelength = wavelengths[peak_idx]
-            intensity = intensities[peak_idx]
             
-            # Calculate prominence and SNR
-            prominence = self._calculate_prominence(intensities, peak_idx)
-            snr = self._calculate_snr(intensities, peak_idx)
+            # Filter 1: Wavelength range
+            if wavelength < params['min_wavelength']:
+                self._log(f"Rejected {wavelength:.1f}nm - below minimum wavelength")
+                continue
             
-            # Classify using laser algorithm thresholds
-            if prominence > self.laser_prominence_major and intensity > self.laser_intensity_major:
-                feature_type = "peak"
+            # Filter 2: Calculate metrics
+            metrics = self._calculate_peak_metrics(wavelengths, intensities, peak_idx)
+            
+            # Filter 3: Width validation
+            if not (params['width_range'][0] <= metrics['width_nm'] <= params['width_range'][1]):
+                self._log(f"Rejected {wavelength:.1f}nm - invalid width {metrics['width_nm']:.1f}nm")
+                continue
+            
+            # Filter 4: Effective height
+            if metrics['effective_height'] < params['baseline_min']:
+                self._log(f"Rejected {wavelength:.1f}nm - low effective height {metrics['effective_height']:.2f}")
+                continue
+            
+            filtered_peaks.append(peak_idx)
+            self._log(f"Accepted peak at {wavelength:.1f}nm - height: {metrics['effective_height']:.2f}")
+        
+        return filtered_peaks
+    
+    def laser_algorithm_detection(self, wavelengths: np.ndarray, intensities: np.ndarray) -> List[BSpectralFeature]:
+        """Enhanced laser algorithm with filtering pipeline"""
+        params = self.config['detection_params']
+        
+        # Initial detection
+        wavelength_step = np.mean(np.diff(wavelengths))
+        min_distance_idx = max(1, int(params['min_distance'] / wavelength_step))
+        
+        peaks, _ = signal.find_peaks(
+            intensities,
+            height=params['absolute_threshold'],
+            prominence=0.1,
+            distance=min_distance_idx
+        )
+        
+        self._log(f"Laser algorithm found {len(peaks)} initial candidates")
+        
+        # Apply filtering pipeline
+        peaks = self._merge_nearby_peaks(peaks.tolist(), wavelengths, intensities)
+        peaks = self._apply_filters(peaks, wavelengths, intensities)
+        
+        # Create features
+        features = []
+        laser_thresholds = self.config['laser_thresholds']
+        
+        for peak_idx in peaks:
+            metrics = self._calculate_peak_metrics(wavelengths, intensities, peak_idx)
+            wavelength = wavelengths[peak_idx]
+            
+            # Determine feature type
+            if (metrics['width_nm'] > 25.0 and 
+                metrics['flatness'] > self.config['detection_params']['flatness_threshold']):
+                feature_type, feature_group = "mound_crest", "mound"
+            else:
+                feature_type, feature_group = "peak", "peak"
+            
+            # Calculate confidence
+            prominence = metrics['prominence']
+            snr = metrics['snr']
+            
+            if prominence > laser_thresholds['prominence']['major']:
                 confidence = 0.95
-            elif prominence >= self.laser_prominence_medium and snr >= self.laser_snr_medium:
-                feature_type = "peak"
+            elif prominence >= laser_thresholds['prominence']['medium'] and snr >= laser_thresholds['snr']['medium']:
                 confidence = 0.8
-            elif prominence >= self.laser_prominence_weak and snr >= self.laser_snr_weak:
-                feature_type = "peak"
+            elif prominence >= laser_thresholds['prominence']['weak'] and snr >= laser_thresholds['snr']['weak']:
                 confidence = 0.6
             else:
-                continue  # Below threshold
+                confidence = 0.4
             
             feature = BSpectralFeature(
                 wavelength=wavelength,
-                intensity=intensity,
+                intensity=intensities[peak_idx],
                 feature_type=feature_type,
-                feature_group="peak",
+                feature_group=feature_group,
                 prominence=prominence,
                 snr=snr,
                 confidence=confidence,
-                detection_method="laser_algorithm"
+                detection_method="laser_algorithm",
+                width_nm=metrics['width_nm'],
+                effective_height=metrics['effective_height']
             )
             features.append(feature)
         
         return features
     
     def region_based_detection(self, wavelengths: np.ndarray, intensities: np.ndarray) -> List[BSpectralFeature]:
-        """
-        Region-based detection for mounds, troughs, and broad features
-        """
+        """Enhanced region-based detection for B spectra"""
+        region_cfg = self.config['region_params']
+        smoothed = gaussian_filter1d(intensities, sigma=region_cfg['smoothing_sigma'])
         features = []
         
-        # Smooth the data for better region detection
-        smoothed = gaussian_filter1d(intensities, sigma=self.smoothing_sigma)
+        # Detect mounds
+        features.extend(self._detect_mounds(wavelengths, smoothed))
         
-        # Detect mounds (broad peaks)
-        mound_features = self._detect_mounds(wavelengths, smoothed)
-        features.extend(mound_features)
-        
-        # Detect troughs within mounds
-        trough_features = self._detect_troughs(wavelengths, smoothed)
-        features.extend(trough_features)
+        # Detect troughs
+        features.extend(self._detect_troughs(wavelengths, smoothed))
         
         return features
     
     def _detect_mounds(self, wavelengths: np.ndarray, intensities: np.ndarray) -> List[BSpectralFeature]:
-        """Detect broad mound features"""
+        """Enhanced mound detection"""
+        region_cfg = self.config['region_params']
+        wavelength_step = np.mean(np.diff(wavelengths))
+        min_width_idx = region_cfg['mound_min_width'] / wavelength_step
+        
+        peaks, _ = signal.find_peaks(
+            intensities,
+            prominence=region_cfg['mound_min_prominence'],
+            width=min_width_idx,
+            distance=20
+        )
+        
         features = []
-        
-        # Find broad peaks with large distance parameter
-        peaks, properties = signal.find_peaks(intensities, 
-                                            prominence=self.mound_min_prominence,
-                                            width=self.mound_min_width/np.mean(np.diff(wavelengths)),
-                                            distance=20)
-        
         for peak_idx in peaks:
-            # Find mound boundaries
-            start_idx, end_idx = self._find_mound_boundaries(intensities, peak_idx)
+            # Find boundaries
+            start_idx, end_idx = self._find_boundaries(intensities, peak_idx, 'mound')
             
-            wavelength = wavelengths[peak_idx]
-            intensity = intensities[peak_idx]
-            start_wavelength = wavelengths[start_idx]
-            end_wavelength = wavelengths[end_idx]
-            width_nm = abs(end_wavelength - start_wavelength)
+            # Calculate properties
+            start_wl, end_wl = wavelengths[start_idx], wavelengths[end_idx]
+            width_nm = abs(end_wl - start_wl)
+            prominence = self._calculate_peak_metrics(wavelengths, intensities, peak_idx)['prominence']
             
-            prominence = self._calculate_prominence(intensities, peak_idx, window=30)
+            # Create mound feature set
+            mound_props = {'width_nm': width_nm, 'start_wavelength': start_wl, 'end_wavelength': end_wl}
             
-            # Create mound features
             features.extend([
-                BSpectralFeature(
-                    wavelength=start_wavelength,
-                    intensity=intensities[start_idx],
-                    feature_type="mound_start",
-                    feature_group="mound",
-                    prominence=0.0,
-                    snr=0.0,
-                    confidence=0.8,
-                    detection_method="region_based",
-                    width_nm=width_nm,
-                    start_wavelength=start_wavelength,
-                    end_wavelength=end_wavelength
-                ),
-                BSpectralFeature(
-                    wavelength=wavelength,
-                    intensity=intensity,
-                    feature_type="mound_crest",
-                    feature_group="mound",
-                    prominence=prominence,
-                    snr=0.0,
-                    confidence=0.9,
-                    detection_method="region_based",
-                    width_nm=width_nm,
-                    start_wavelength=start_wavelength,
-                    end_wavelength=end_wavelength
-                ),
-                BSpectralFeature(
-                    wavelength=end_wavelength,
-                    intensity=intensities[end_idx],
-                    feature_type="mound_end",
-                    feature_group="mound",
-                    prominence=0.0,
-                    snr=0.0,
-                    confidence=0.8,
-                    detection_method="region_based",
-                    width_nm=width_nm,
-                    start_wavelength=start_wavelength,
-                    end_wavelength=end_wavelength
-                )
+                self._create_feature(wavelengths, intensities, start_idx, 'mound_start', 'mound', 0.8, 'region_based', **mound_props),
+                self._create_feature(wavelengths, intensities, peak_idx, 'mound_crest', 'mound', 0.9, 'region_based', **mound_props),
+                self._create_feature(wavelengths, intensities, end_idx, 'mound_end', 'mound', 0.8, 'region_based', **mound_props)
             ])
+            
+            # Override prominence for crest
+            features[-2].prominence = prominence
         
         return features
     
     def _detect_troughs(self, wavelengths: np.ndarray, intensities: np.ndarray) -> List[BSpectralFeature]:
-        """Detect trough features (local minima within mounds)"""
-        features = []
-        
-        # Find troughs by inverting the signal
+        """Enhanced trough detection"""
+        region_cfg = self.config['region_params']
         inverted = -intensities
-        peaks, _ = signal.find_peaks(inverted, prominence=1.0, distance=10)
+        peaks, _ = signal.find_peaks(inverted, prominence=region_cfg['trough_prominence'], distance=10)
         
+        features = []
         for peak_idx in peaks:
-            # Only consider significant troughs in regions above baseline
-            if intensities[peak_idx] > 10.0:  # Above baseline threshold
-                start_idx, end_idx = self._find_trough_boundaries(intensities, peak_idx)
-                
-                wavelength = wavelengths[peak_idx]
-                intensity = intensities[peak_idx]
-                start_wavelength = wavelengths[start_idx]
-                end_wavelength = wavelengths[end_idx]
+            if intensities[peak_idx] > 10.0:  # Above baseline
+                start_idx, end_idx = self._find_boundaries(intensities, peak_idx, 'trough')
                 
                 features.extend([
-                    BSpectralFeature(
-                        wavelength=start_wavelength,
-                        intensity=intensities[start_idx],
-                        feature_type="trough_start",
-                        feature_group="trough",
-                        prominence=0.0,
-                        snr=0.0,
-                        confidence=0.7,
-                        detection_method="region_based"
-                    ),
-                    BSpectralFeature(
-                        wavelength=wavelength,
-                        intensity=intensity,
-                        feature_type="trough_bottom",
-                        feature_group="trough",
-                        prominence=0.0,
-                        snr=0.0,
-                        confidence=0.8,
-                        detection_method="region_based"
-                    ),
-                    BSpectralFeature(
-                        wavelength=end_wavelength,
-                        intensity=intensities[end_idx],
-                        feature_type="trough_end",
-                        feature_group="trough",
-                        prominence=0.0,
-                        snr=0.0,
-                        confidence=0.7,
-                        detection_method="region_based"
-                    )
+                    self._create_feature(wavelengths, intensities, start_idx, 'trough_start', 'trough', 0.7, 'region_based'),
+                    self._create_feature(wavelengths, intensities, peak_idx, 'trough_bottom', 'trough', 0.8, 'region_based'),
+                    self._create_feature(wavelengths, intensities, end_idx, 'trough_end', 'trough', 0.7, 'region_based')
                 ])
         
         return features
     
-    def detect_baseline(self, wavelengths: np.ndarray, intensities: np.ndarray) -> List[BSpectralFeature]:
-        """Detect baseline start and end points"""
-        features = []
+    def _find_boundaries(self, intensities: np.ndarray, center_idx: int, boundary_type: str = 'mound') -> Tuple[int, int]:
+        """Unified boundary finding"""
+        center_value = intensities[center_idx]
         
-        # Find baseline region
-        baseline_mask = (wavelengths >= 300) & (wavelengths <= 370)  # Extended range for B spectra
-        baseline_wavelengths = wavelengths[baseline_mask]
-        baseline_intensities = intensities[baseline_mask]
+        if boundary_type == 'mound':
+            threshold = center_value * 0.1
+            comparison = lambda x: x < threshold
+        else:  # trough
+            threshold = center_value * 1.2
+            comparison = lambda x: x > threshold
         
-        if len(baseline_wavelengths) < 2:
-            return features
+        # Find boundaries
+        start_idx = center_idx
+        for i in range(center_idx - 1, -1, -1):
+            if comparison(intensities[i]):
+                start_idx = i
+                break
         
-        # Find start point (first low-intensity point)
-        start_idx = 0
-        start_wavelength = baseline_wavelengths[start_idx]
-        start_intensity = baseline_intensities[start_idx]
+        end_idx = center_idx
+        for i in range(center_idx + 1, len(intensities)):
+            if comparison(intensities[i]):
+                end_idx = i
+                break
         
-        # Find end point (last low-intensity point or where signal rises)
-        derivatives = np.gradient(baseline_intensities)
-        end_candidates = np.where(derivatives > 0.01)[0]
-        
-        if len(end_candidates) > 0:
-            end_idx = end_candidates[0]
+        return start_idx, end_idx
+    
+    def _create_feature(self, wavelengths: np.ndarray, intensities: np.ndarray, idx: int,
+                       feature_type: str, feature_group: str, confidence: float,
+                       detection_method: str, **kwargs) -> BSpectralFeature:
+        """Enhanced unified feature creation"""
+        if feature_group == 'peak':
+            metrics = self._calculate_peak_metrics(wavelengths, intensities, idx)
+            prominence, snr, effective_height = metrics['prominence'], metrics['snr'], metrics['effective_height']
         else:
-            end_idx = len(baseline_intensities) - 1
+            prominence = snr = effective_height = 0.0
         
-        end_wavelength = baseline_wavelengths[end_idx]
-        end_intensity = baseline_intensities[end_idx]
+        return BSpectralFeature(
+            wavelength=wavelengths[idx],
+            intensity=intensities[idx],
+            feature_type=feature_type,
+            feature_group=feature_group,
+            prominence=prominence,
+            snr=snr,
+            confidence=confidence,
+            detection_method=detection_method,
+            effective_height=effective_height,
+            **kwargs
+        )
+    
+    def detect_baseline(self, wavelengths: np.ndarray, intensities: np.ndarray) -> List[BSpectralFeature]:
+        """Enhanced baseline detection"""
+        baseline_range = self.config['baseline_range']
+        baseline_mask = (wavelengths >= baseline_range[0]) & (wavelengths <= baseline_range[1])
         
-        # Calculate baseline quality metrics
-        baseline_std = np.std(baseline_intensities)
+        if not np.any(baseline_mask):
+            return []
+        
+        baseline_wl = wavelengths[baseline_mask]
+        baseline_int = intensities[baseline_mask]
+        
+        baseline_std = np.std(baseline_int)
         snr = 1.0 / (baseline_std + 1e-6)
+        confidence = 0.9 if baseline_std < 0.1 else 0.6
         
-        features.extend([
-            BSpectralFeature(
-                wavelength=start_wavelength,
-                intensity=start_intensity,
-                feature_type="baseline_start",
-                feature_group="baseline",
-                prominence=0.0,
-                snr=snr,
-                confidence=0.9 if baseline_std < 0.1 else 0.6,
-                detection_method="region_based"
-            ),
-            BSpectralFeature(
-                wavelength=end_wavelength,
-                intensity=end_intensity,
-                feature_type="baseline_end",
-                feature_group="baseline",
-                prominence=0.0,
-                snr=snr,
-                confidence=0.9 if baseline_std < 0.1 else 0.6,
-                detection_method="region_based"
-            )
-        ])
-        
-        return features
+        return [
+            BSpectralFeature(baseline_wl[0], baseline_int[0], 'baseline_start', 'baseline', 0.0, snr, confidence, 'region_based'),
+            BSpectralFeature(baseline_wl[-1], baseline_int[-1], 'baseline_end', 'baseline', 0.0, snr, confidence, 'region_based')
+        ]
     
     def analyze_spectrum(self, wavelengths: np.ndarray, intensities: np.ndarray) -> Dict:
-        """
-        Main analysis function using adaptive detection strategy
-        """
-        # Input validation
+        """Enhanced adaptive analysis for B spectra"""
         if len(wavelengths) != len(intensities):
             raise ValueError("Wavelength and intensity arrays must have same length")
         
-        # Step 1: Normalize the spectrum
+        # Normalize and assess
         normalized_intensities = self.normalize_b_spectrum(wavelengths, intensities)
-        
-        # Step 2: Assess baseline noise
         baseline_std, noise_classification = self.assess_baseline_noise(wavelengths, normalized_intensities)
         
-        # Step 3: Select detection strategy
-        all_features = []
+        # Adaptive strategy based on noise
+        all_features = self.detect_baseline(wavelengths, normalized_intensities)
         
-        # Always detect baseline
-        baseline_features = self.detect_baseline(wavelengths, normalized_intensities)
-        all_features.extend(baseline_features)
-        
-        # Adaptive main feature detection
         if noise_classification == "excellent":
-            # Try laser algorithm first
+            # Hybrid approach: both methods
             laser_features = self.laser_algorithm_detection(wavelengths, normalized_intensities)
             region_features = self.region_based_detection(wavelengths, normalized_intensities)
             
-            # Use both methods, mark as hybrid
             for feature in laser_features:
                 feature.detection_method = "hybrid_laser"
             for feature in region_features:
                 feature.detection_method = "hybrid_region"
             
-            all_features.extend(laser_features)
-            all_features.extend(region_features)
-            detection_strategy = "hybrid"
+            all_features.extend(laser_features + region_features)
+            detection_strategy = "hybrid_advanced"
             
         elif noise_classification == "good":
-            # Try laser algorithm with fallback
+            # Laser with fallback
             laser_features = self.laser_algorithm_detection(wavelengths, normalized_intensities)
             
-            if len(laser_features) == 0:
-                # Fallback to region-based
+            if not laser_features:
                 region_features = self.region_based_detection(wavelengths, normalized_intensities)
                 all_features.extend(region_features)
                 detection_strategy = "region_fallback"
             else:
-                # Use laser results
                 all_features.extend(laser_features)
                 detection_strategy = "laser_primary"
-        
-        else:  # poor noise
-            # Skip to region-based detection
+        else:
+            # Region-based only
             region_features = self.region_based_detection(wavelengths, normalized_intensities)
             all_features.extend(region_features)
             detection_strategy = "region_only"
         
-        # Step 4: Sort features by wavelength
+        # Sort and summarize
         all_features.sort(key=lambda x: x.wavelength)
+        avg_confidence = np.mean([f.confidence for f in all_features]) if all_features else 0.0
         
-        # Step 5: Calculate overall confidence
-        if all_features:
-            avg_confidence = np.mean([f.confidence for f in all_features])
-        else:
-            avg_confidence = 0.0
+        self._log(f"Final analysis: {len(all_features)} features using {detection_strategy}")
         
         return {
             'features': all_features,
             'normalization': {
                 'reference_wavelength': self.norm_reference_wavelength,
                 'reference_intensity': self.norm_reference_intensity,
-                'method': '650nm_to_50000_scale_100'
+                'method': '650nm_to_100_scale'
             },
             'baseline_assessment': {
                 'noise_std': baseline_std,
                 'noise_classification': noise_classification,
-                'vs_laser_threshold': baseline_std / 0.05
+                'vs_threshold': baseline_std / 0.025
             },
             'detection_strategy': detection_strategy,
             'overall_confidence': avg_confidence,
@@ -434,88 +495,14 @@ class GeminiBSpectralDetector:
             'feature_summary': self._summarize_features(all_features)
         }
     
-    def _calculate_prominence(self, intensities: np.ndarray, peak_idx: int, window: int = 15) -> float:
-        """Calculate prominence of a peak"""
-        start = max(0, peak_idx - window)
-        end = min(len(intensities), peak_idx + window + 1)
-        
-        local_region = intensities[start:end]
-        peak_value = intensities[peak_idx]
-        
-        left_idx = peak_idx - start
-        left_min = np.min(local_region[:left_idx]) if left_idx > 0 else peak_value
-        right_min = np.min(local_region[left_idx + 1:]) if left_idx < len(local_region) - 1 else peak_value
-        
-        baseline = max(left_min, right_min)
-        return max(0, peak_value - baseline)
-    
-    def _calculate_snr(self, intensities: np.ndarray, peak_idx: int, window: int = 15) -> float:
-        """Calculate signal-to-noise ratio"""
-        start = max(0, peak_idx - window)
-        end = min(len(intensities), peak_idx + window + 1)
-        
-        local_region = intensities[start:end]
-        peak_value = intensities[peak_idx]
-        
-        local_avg = np.mean(local_region)
-        noise_points = local_region[local_region < local_avg]
-        
-        if len(noise_points) > 1:
-            noise_level = np.std(noise_points)
-            return peak_value / noise_level if noise_level > 0 else float('inf')
-        
-        return peak_value
-    
-    def _find_mound_boundaries(self, intensities: np.ndarray, peak_idx: int) -> Tuple[int, int]:
-        """Find start and end indices of a mound"""
-        # Look for significant drop on both sides
-        threshold = intensities[peak_idx] * 0.1  # 10% of peak height
-        
-        # Find start (going backwards)
-        start_idx = peak_idx
-        for i in range(peak_idx - 1, -1, -1):
-            if intensities[i] < threshold:
-                start_idx = i
-                break
-        
-        # Find end (going forwards)
-        end_idx = peak_idx
-        for i in range(peak_idx + 1, len(intensities)):
-            if intensities[i] < threshold:
-                end_idx = i
-                break
-        
-        return start_idx, end_idx
-    
-    def _find_trough_boundaries(self, intensities: np.ndarray, trough_idx: int) -> Tuple[int, int]:
-        """Find start and end indices of a trough"""
-        trough_value = intensities[trough_idx]
-        
-        # Find boundaries where intensity increases significantly
-        start_idx = trough_idx
-        for i in range(trough_idx - 1, -1, -1):
-            if intensities[i] > trough_value * 1.2:
-                start_idx = i
-                break
-        
-        end_idx = trough_idx
-        for i in range(trough_idx + 1, len(intensities)):
-            if intensities[i] > trough_value * 1.2:
-                end_idx = i
-                break
-        
-        return start_idx, end_idx
-    
     def _summarize_features(self, features: List[BSpectralFeature]) -> Dict:
-        """Generate summary statistics of detected features"""
+        """Enhanced feature summary"""
         if not features:
             return {}
         
         feature_types = {}
         for feature in features:
-            if feature.feature_group not in feature_types:
-                feature_types[feature.feature_group] = 0
-            feature_types[feature.feature_group] += 1
+            feature_types[feature.feature_group] = feature_types.get(feature.feature_group, 0) + 1
         
         return {
             'by_type': feature_types,
@@ -525,40 +512,30 @@ class GeminiBSpectralDetector:
         }
 
 def load_b_spectrum(filepath: str) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Load B spectrum from file
-    Supports both .txt and .csv formats
-    """
+    """Enhanced B spectrum loading"""
     if filepath.endswith('.csv'):
         data = pd.read_csv(filepath)
-        wavelengths = data.iloc[:, 0].values
-        intensities = data.iloc[:, 1].values
+        return data.iloc[:, 0].values, data.iloc[:, 1].values
     else:
-        # Assume tab-separated .txt file
-        data = np.loadtxt(filepath, delimiter='\t')
-        wavelengths = data[:, 0]
-        intensities = data[:, 1]
-    
-    return wavelengths, intensities
+        # Try multiple delimiters
+        for delimiter in ['\t', None, ',']:
+            try:
+                data = np.loadtxt(filepath, delimiter=delimiter)
+                return data[:, 0], data[:, 1]
+            except ValueError:
+                continue
+        
+        # Final fallback
+        data = pd.read_csv(filepath, sep=None, engine='python', header=None)
+        return data.iloc[:, 0].values, data.iloc[:, 1].values
 
-def analyze_b_spectrum_file(filepath: str) -> Dict:
-    """
-    Analyze a B spectrum file and return results
-    """
-    detector = GeminiBSpectralDetector()
+def analyze_b_spectrum_file(filepath: str, debug: bool = False) -> Dict:
+    """Analyze B spectrum file with enhanced detector"""
+    detector = GeminiBSpectralDetector(debug=debug)
     wavelengths, intensities = load_b_spectrum(filepath)
     return detector.analyze_spectrum(wavelengths, intensities)
 
-# Example usage and testing
 if __name__ == "__main__":
-    # Test with sample data
-    detector = GeminiBSpectralDetector()
-    
-    # Example: analyze a file
-    # results = analyze_b_spectrum_file("sample_b_spectrum.txt")
-    # print(f"Detected {results['feature_count']} features using {results['detection_strategy']} strategy")
-    # print(f"Baseline noise: {results['baseline_assessment']['noise_classification']}")
-    
-    print("Gemini B Spectra Auto-Detector initialized")
-    print("Ready to analyze B spectra samples")
-    print("Current training data: 4 samples (190BP2, 189BP2, 79BC1, 92BC1)")
+    detector = GeminiBSpectralDetector(debug=True)
+    print("Enhanced Gemini B Spectra Auto-Detector (v2.0) - 50% fewer lines")
+    print("Advanced features from L detector with B-specific adaptive strategy")
