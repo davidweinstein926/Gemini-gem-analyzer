@@ -569,3 +569,5 @@ if __name__ == "__main__":
     print("FIXED Gemini B Spectra Auto-Detector")
     print("Correct point structure: Peak=1, Baseline=2, Mound=3, Trough=3, Valley=1")
     print("Target: ~17 features matching manual detection")
+ne=2, Mound=3, Trough=3, Valley=1")
+    print("Target: ~17 features matching manual detection")
