@@ -38,8 +38,8 @@ class GeminiLauncher:
                 "u": ("structural_analysis/gemini_uv_analyzer.py", "gemini_uv_analyzer.py", "Manual UV Analyzer")
             },
             "auto": {
-                "bh": ("enhanced_halogen_auto_analyzer.py", "b_spectra_auto_detector.py", "Auto Halogen Analyzer"),
-                "l": ("enhanced_laser_auto_analyzer.py", "l_spectra_auto_detector.py", "Auto Laser Analyzer"),
+                "bh": ("b_spectra_auto_detector.py", "enhanced_halogen_auto_analyzer.py", "Auto Halogen Analyzer"),
+                "l": ("l_spectra_auto_detector.py", "enhanced_laser_auto_analyzer.py", "Auto Laser Analyzer"),
                 "u": ("gemini_peak_detector.py", "gemini_uv_analyzer.py", "Auto UV Analyzer")
             }
         }
