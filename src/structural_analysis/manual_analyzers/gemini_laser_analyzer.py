@@ -14,7 +14,7 @@ class UltraOptimizedLaserAnalyzer:
     """ULTRA OPTIMIZED: 58% code reduction with enhanced laser spectral analysis capabilities"""
     
     def __init__(self):
-        self.OUTPUT_DIRECTORY = r"c:\users\david\gemini sp10 structural data\laser"
+        self.OUTPUT_DIRECTORY = r"c:\users\david\onedrive\desktop\gemini_gemological_analysis\data\structural_data\laser"
         
         # CONSOLIDATED CONFIG: All parameters in single comprehensive dictionary
         self.config = {
