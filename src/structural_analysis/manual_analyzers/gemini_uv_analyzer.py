@@ -10,7 +10,7 @@ from datetime import datetime
 
 class GeminiUVAnalyzer:
     def __init__(self):
-        self.OUTPUT_DIRECTORY = r"c:\users\david\gemini sp10 structural data\uv"
+        self.OUTPUT_DIRECTORY = r"c:\users\david\onedrive\desktop\gemini_gemological_analysis\data\structural_data\uv"
         self.reset_session()
         
     def reset_session(self):
