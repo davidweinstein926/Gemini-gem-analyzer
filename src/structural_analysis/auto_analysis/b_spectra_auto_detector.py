@@ -39,8 +39,8 @@ except ImportError:
 # Configuration - B spectra specific (updated from old version)
 CONFIG = {
     'default_dirs': {
-        'input': r"C:\Users\David\onedrive\desktop\gemini_structural_analysis\data\raw",
-        'halogen_output': r"c:\users\david\onedrive\desktop\gemini_structural_analysis\data\structural data\halogen",  # Updated path
+        'input': r"C:\Users\David\onedrive\desktop\gemini_gemological_analysis\data\raw",
+        'halogen_output': r"c:\users\david\onedrive\desktop\gemini_gemological_analysis\data\structural_data\halogen",  # Updated path
             },
     'zoom_regions': [(300, 400), (400, 500), (500, 600), (600, 700), (700, 800), (800, 900)],  # B spectra ranges
     'feature_colors': {
