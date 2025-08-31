@@ -28,9 +28,9 @@ except ImportError:
 # Configuration
 CONFIG = {
     'default_dirs': {
-        'input': r"C:\Users\David\gemini sp10 raw",
-        'laser_output': r"C:\Users\David\gemini sp10 structural data\laser",
-        'halogen_output': r"C:\Users\David\gemini sp10 structural data\halogen"
+        'input': r"C:\Users\David\onedrive\desktop\gemini_structural_analysis\data\raw",
+        'laser_output': r"C:\Users\David\onedrive\desktop\gemini_structural_analysis\data\structural data\laser",
+        
     },
     'zoom_regions': [(400, 500), (500, 600), (600, 700), (700, 800)],
     'feature_colors': {
