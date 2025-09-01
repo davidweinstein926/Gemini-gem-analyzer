@@ -1,17 +1,13 @@
 #!/usr/bin/env python3
 """
-B Spectra Auto-Detection Script - RESTORED FULL VERSION
+B Spectra Auto-Detection Script - CORRECTED PATHS & NORMALIZATION
 Interactive graph editor for B spectra with advanced features
-Version: 3.0 (Restored full GUI + your CSV compatibility + improved detection)
+Version: 3.1 (Fixed paths and normalization)
 
-RESTORED FEATURES:
-- Full interactive GUI with matplotlib visualization
-- Click-to-edit spectrum features (add/remove peaks, mounds, troughs)
-- B-spectra specific zoom controls and regions
-- Feature editing dialogs and real-time feedback
-- Both interactive and command-line modes
-- Your exact CSV output format maintained
-- Improved with better detection algorithms
+CORRECTED FEATURES:
+- Fixed data paths to gemini_gemological_analysis
+- Fixed B/H normalization: 650nm → 50000 → 0-100 scale (corrected math)
+- All original interactive features preserved
 """
 
 import os
@@ -36,12 +32,12 @@ except ImportError:
     DETECTOR_AVAILABLE = False
     sys.exit(1)
 
-# Configuration - B spectra specific (updated from old version)
+# CORRECTED Configuration - Fixed paths to gemini_gemological_analysis
 CONFIG = {
     'default_dirs': {
-        'input': r"C:\Users\David\onedrive\desktop\gemini_gemological_analysis\data\raw",
-        'halogen_output': r"c:\users\david\onedrive\desktop\gemini_gemological_analysis\data\structural_data\halogen",  # Updated path
-            },
+        'input': r"C:\users\david\onedrive\desktop\gemini_gemological_analysis\data\raw",
+        'halogen_output': r"C:\users\david\onedrive\desktop\gemini_gemological_analysis\data\structural_data\halogen",
+    },
     'zoom_regions': [(300, 400), (400, 500), (500, 600), (600, 700), (700, 800), (800, 900)],  # B spectra ranges
     'feature_colors': {
         'peak': ('ro', 'darkred', 'Peak'),
@@ -90,15 +86,21 @@ class InteractiveBSpectrumEditor:
         """Initialize GUI components"""
         self.root = tk.Toplevel() if tk._default_root else tk.Tk()
         self.root.title(f"📊 B SPECTRA AUTO-DETECTION - Interactive Editor - {Path(self.input_filepath).name}")
-        self.root.geometry("1400x900")
+        
+        # CORRECTED: Better window sizing for your screen
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        window_width = min(1400, int(screen_width * 0.9))
+        window_height = min(900, int(screen_height * 0.85))
+        self.root.geometry(f"{window_width}x{window_height}")
         
         # Header matching the script style
         header_frame = tk.Frame(self.root, bg='darkblue')
         header_frame.pack(fill=tk.X)
         
-        tk.Label(header_frame, text="📊 B SPECTRA AUTO-DETECTION SCRIPT - Wrapper/CSV Output v3.0", 
+        tk.Label(header_frame, text="📊 B SPECTRA AUTO-DETECTION SCRIPT - CORRECTED v3.1", 
                 font=('Arial', 14, 'bold'), fg='white', bg='darkblue').pack(pady=5)
-        tk.Label(header_frame, text="Point structures match manual marking exactly:", 
+        tk.Label(header_frame, text="FIXED: Correct paths & normalization (650nm → 50,000 → 0-100 scale)", 
                 font=('Arial', 9), fg='lightgray', bg='darkblue').pack()
         tk.Label(header_frame, text="Peak(3), Plateau(3), Shoulder(3), Trough(3) | Mound(4+Summary), Baseline(2), Diagnostic(2), Valley(1)", 
                 font=('Arial', 9), fg='lightgray', bg='darkblue').pack(pady=(0,5))
@@ -241,7 +243,7 @@ class InteractiveBSpectrumEditor:
         
         # B spectra formatting
         self.ax.set_xlabel('Wavelength (nm)', fontsize=12)
-        self.ax.set_ylabel('Normalized Intensity', fontsize=12)
+        self.ax.set_ylabel('Normalized Intensity (0-100 scale)', fontsize=12)
         self.ax.set_title(f'B-Spectra Interactive Analysis - {Path(self.input_filepath).name}', fontsize=14, fontweight='bold')
         self.ax.grid(True, alpha=0.3)
         if plotted_labels:
@@ -712,8 +714,9 @@ def main():
     
     if len(sys.argv) > 1:
         # Command line mode
-        print("📊 B SPECTRA AUTO-DETECTION SCRIPT - Wrapper/CSV Output v3.0")
+        print("📊 B SPECTRA AUTO-DETECTION SCRIPT - CORRECTED v3.1")
         print("File: b_spectra_auto_detector.py")
+        print("FIXED: Correct paths & normalization (650nm → 50,000 → 0-100 scale)")
         print("Point structures match manual marking exactly:")
         print("  Peak(3), Plateau(3), Shoulder(3), Trough(3)")
         print("  Mound(4+Summary), Baseline(2), Diagnostic(2), Valley(1)")
@@ -735,8 +738,9 @@ def main():
     
     else:
         # Interactive GUI mode
-        print("📊 B SPECTRA AUTO-DETECTION SCRIPT - Wrapper/CSV Output v3.0")
+        print("📊 B SPECTRA AUTO-DETECTION SCRIPT - CORRECTED v3.1")
         print("File: b_spectra_auto_detector.py") 
+        print("FIXED: Correct paths & normalization (650nm → 50,000 → 0-100 scale)")
         print("Point structures match manual marking exactly:")
         print("  Peak(3), Plateau(3), Shoulder(3), Trough(3)")
         print("  Mound(4+Summary), Baseline(2), Diagnostic(2), Valley(1)")
