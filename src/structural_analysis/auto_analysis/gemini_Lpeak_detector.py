@@ -417,3 +417,4 @@ if __name__ == "__main__":
     detector = GeminiLSpectralDetector(debug=True)
     print("Optimized Gemini L Spectra Auto-Detector (v2.0) - 45% fewer lines")
     print("Advanced filtering with preserved sophisticated features")
+
