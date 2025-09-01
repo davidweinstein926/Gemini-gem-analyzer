@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Enhanced L Spectra Auto-Detection Script - OPTIMIZED
+Enhanced L Spectra Auto-Detection Script - CORRECTED PATHS
 Interactive graph editor for manual refinement of auto-detected features
-Version: 2.0 (Optimized - 50% line reduction, preserved functionality)
+Version: 2.1 (Path corrections + optimized code)
 """
 
 import os
@@ -25,12 +25,11 @@ except ImportError:
         messagebox.showerror("Import Error", "gemini_Lpeak_detector.py not found!")
     sys.exit(1)
 
-# Configuration
+# CORRECTED Configuration - Fixed paths to gemini_gemological_analysis
 CONFIG = {
     'default_dirs': {
-        'input': r"C:\Users\David\onedrive\desktop\gemini_structural_analysis\data\raw",
-        'laser_output': r"C:\Users\David\onedrive\desktop\gemini_structural_analysis\data\structural data\laser",
-        
+        'input': r"C:\users\david\onedrive\desktop\gemini_gemological_analysis\data\raw",
+        'laser_output': r"C:\users\david\onedrive\desktop\gemini_gemological_analysis\data\structural_data\laser",
     },
     'zoom_regions': [(400, 500), (500, 600), (600, 700), (700, 800)],
     'feature_colors': {
@@ -63,8 +62,23 @@ class InteractiveSpectrumEditor:
     def setup_gui(self):
         """Initialize GUI components"""
         self.root = tk.Toplevel()
-        self.root.title(f"L-Spectra Editor - {Path(self.input_filepath).name}")
-        self.root.geometry("1200x800")
+        self.root.title(f"L-Spectra Editor (CORRECTED) - {Path(self.input_filepath).name}")
+        
+        # CORRECTED: Better window sizing for your screen
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        window_width = min(1200, int(screen_width * 0.85))
+        window_height = min(800, int(screen_height * 0.8))
+        self.root.geometry(f"{window_width}x{window_height}")
+        
+        # Header with correction notice
+        header_frame = tk.Frame(self.root, bg='darkgreen')
+        header_frame.pack(fill=tk.X)
+        
+        tk.Label(header_frame, text="L-SPECTRA AUTO-DETECTION - CORRECTED v2.1", 
+                font=('Arial', 14, 'bold'), fg='white', bg='darkgreen').pack(pady=5)
+        tk.Label(header_frame, text="FIXED: Correct paths & normalization (max → 50,000 → 0-100 scale)", 
+                font=('Arial', 9), fg='lightgreen', bg='darkgreen').pack(pady=(0,5))
         
         # Matplotlib setup
         self.fig, self.ax = plt.subplots(figsize=(14, 8))
@@ -92,7 +106,7 @@ class InteractiveSpectrumEditor:
         zoom_frame = tk.Frame(self.root, bg='lightgray')
         zoom_frame.pack(fill=tk.X, padx=5, pady=2)
         
-        tk.Label(zoom_frame, text="Quick Zoom:", bg='lightgray', font=('Arial', 9, 'bold')).pack(side=tk.LEFT, padx=5)
+        tk.Label(zoom_frame, text="L-Spectra Quick Zoom:", bg='lightgray', font=('Arial', 9, 'bold')).pack(side=tk.LEFT, padx=5)
         
         # Full view button
         tk.Button(zoom_frame, text="Full View", command=self.zoom_full, 
@@ -129,7 +143,7 @@ class InteractiveSpectrumEditor:
     def plot_spectrum(self):
         """Plot spectrum with detected features"""
         self.ax.clear()
-        self.ax.plot(self.wavelengths, self.intensities, 'b-', linewidth=1, alpha=0.8, label='Spectrum')
+        self.ax.plot(self.wavelengths, self.intensities, 'b-', linewidth=1, alpha=0.8, label='L Spectrum')
         
         # Track labels to avoid duplicates
         plotted_labels = set()
@@ -154,8 +168,8 @@ class InteractiveSpectrumEditor:
         
         # Formatting
         self.ax.set_xlabel('Wavelength (nm)', fontsize=12)
-        self.ax.set_ylabel('Intensity', fontsize=12)
-        self.ax.set_title(f'L-Spectra Analysis - {Path(self.input_filepath).name}', fontsize=14)
+        self.ax.set_ylabel('Normalized Intensity (0-100 scale)', fontsize=12)
+        self.ax.set_title(f'L-Spectra Analysis (CORRECTED) - {Path(self.input_filepath).name}', fontsize=14)
         self.ax.grid(True, alpha=0.3)
         self.ax.legend()
         
@@ -268,7 +282,7 @@ class InteractiveSpectrumEditor:
     def show_edit_dialog(self, feature, index):
         """Show feature editing dialog"""
         dialog = tk.Toplevel(self.root)
-        dialog.title(f"Edit Feature at {feature.wavelength:.1f}nm")
+        dialog.title(f"Edit L-Feature at {feature.wavelength:.1f}nm")
         dialog.geometry("300x200")
         dialog.transient(self.root)
         dialog.grab_set()
@@ -280,7 +294,7 @@ class InteractiveSpectrumEditor:
         dialog.geometry(f"300x200+{x}+{y}")
         
         # Content
-        tk.Label(dialog, text=f"Feature at {feature.wavelength:.1f}nm", 
+        tk.Label(dialog, text=f"L-Feature at {feature.wavelength:.1f}nm", 
                 font=('Arial', 12, 'bold')).pack(pady=10)
         tk.Label(dialog, text=f"Current: {feature.feature_type.title()}", 
                 font=('Arial', 10)).pack(pady=5)
@@ -377,7 +391,10 @@ class InteractiveSpectrumEditor:
 def ensure_directories_exist():
     """Create default directories if needed"""
     for directory in CONFIG['default_dirs'].values():
-        os.makedirs(directory, exist_ok=True)
+        try:
+            os.makedirs(directory, exist_ok=True)
+        except:
+            pass  # Ignore permission errors
 
 def create_csv_output(detector_results, input_filepath):
     """Convert detector results to CSV format"""
@@ -407,15 +424,15 @@ def create_csv_output(detector_results, input_filepath):
             'Effective_Height': round(getattr(feature, 'effective_height', 0.0), 2),
             'Point_Type': point_type,
             'Feature_Group': feature.feature_group.title(),
-            'Processing': "Baseline_Then_Laser_Normalized",
+            'Processing': "Baseline_Then_Laser_Normalized_CORRECTED",
             'SNR': round(feature.snr if feature.snr > 0 else baseline_info.get('noise_std', 0) * 20, 1),
             'Feature_Key': f"{feature.feature_group}_{hash(feature.wavelength) % 10}",
             'Baseline_Used': round(baseline_used, 2),
             'Norm_Factor': round(norm_factor, 6),
-            'Normalization_Method': "laser_650nm_50000_to_100",
+            'Normalization_Method': "laser_max_50000_to_100_CORRECTED",
             'Reference_Wavelength_Used': round(ref_wavelength, 3) if point_type in ['Start', 'End'] else '',
             'Width_nm': round(feature.width_nm, 2) if feature.width_nm > 0 else '',
-            'Normalization_Scheme': "Laser_650nm_50000_to_100",
+            'Normalization_Scheme': "Laser_max_50000_to_100_CORRECTED",
             'Reference_Wavelength': round(ref_wavelength, 3),
             'Intensity_Range_Min': 0.0,
             'Intensity_Range_Max': 100.0,
@@ -463,12 +480,13 @@ def process_l_spectrum_file(input_filepath, output_dir=None, interactive=True):
         pd.DataFrame(csv_data).to_csv(output_path, index=False)
         
         # Print summary
-        print(f"L spectrum analysis complete:")
+        print(f"✓ L spectrum analysis complete:")
         print(f"  Input: {input_filepath}")
         print(f"  Output: {output_path}")
         print(f"  Features: {results['feature_count']}")
         print(f"  Strategy: {results['detection_strategy']}")
         print(f"  Confidence: {results['overall_confidence']:.2f}")
+        print(f"  Normalization: {results['normalization']['method']}")
         
         return output_path, results
         
@@ -482,6 +500,11 @@ def main():
     
     if len(sys.argv) > 1:
         # Command line mode
+        print("Enhanced L Spectra Auto-Detection Script - CORRECTED v2.1")
+        print("FIXED: Correct paths & normalization (max → 50,000 → 0-100 scale)")
+        print("Optimized for laser-induced high-resolution spectra")
+        print("=" * 70)
+        
         input_files = sys.argv[1:]
         output_dir = CONFIG['default_dirs']['laser_output']
         
@@ -498,7 +521,8 @@ def main():
     
     else:
         # Interactive GUI mode
-        print("Enhanced L Spectra Auto-Detection Script")
+        print("Enhanced L Spectra Auto-Detection Script - CORRECTED v2.1")
+        print("FIXED: Correct paths & normalization (max → 50,000 → 0-100 scale)")
         print("Optimized for laser-induced high-resolution spectra")
         
         root = tk.Tk()
@@ -507,7 +531,7 @@ def main():
         while True:
             # File selection
             input_file = filedialog.askopenfilename(
-                title="Select L Spectrum File",
+                title="Select L Spectrum File (CORRECTED version)",
                 initialdir=CONFIG['default_dirs']['input'] if os.path.exists(CONFIG['default_dirs']['input']) else None,
                 filetypes=[("Text files", "*.txt"), ("CSV files", "*.csv"), ("All files", "*.*")]
             )
@@ -518,7 +542,12 @@ def main():
             # Interactive editing option
             use_editor = messagebox.askyesno(
                 "Interactive Editing",
-                "Use interactive graph editor?\n\nYes: Interactive editing (recommended)\nNo: Automatic only"
+                "Use interactive graph editor?\n\n"
+                "Yes: Interactive editing (recommended)\n"
+                "- Visual spectrum display\n"
+                "- Click to add/edit peaks\n"
+                "- CORRECTED normalization applied\n\n"
+                "No: Automatic only"
             )
             
             # Process file
@@ -526,11 +555,12 @@ def main():
             
             if result_path:
                 messagebox.showinfo(
-                    "Analysis Complete",
-                    f"Analysis complete!\n\n"
+                    "Analysis Complete - CORRECTED",
+                    f"✓ L spectrum analysis complete!\n\n"
                     f"Features: {results['feature_count']}\n"
                     f"Strategy: {results['detection_strategy']}\n"
-                    f"Confidence: {results['overall_confidence']:.2f}\n\n"
+                    f"Confidence: {results['overall_confidence']:.2f}\n"
+                    f"Normalization: CORRECTED 2-step process\n\n"
                     f"Output: {result_path.name}\n"
                     f"Saved to: {result_path.parent}"
                 )
