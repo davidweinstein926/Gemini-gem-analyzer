@@ -1,285 +1,405 @@
+#!/usr/bin/env python3
+"""
+Gemini Numerical Analysis Module - Simplified Standalone Version
+Advanced spectral comparison and gem identification system
+No external dependencies on config/utils modules
+"""
+
+import os
+import sys
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime
 from scipy.stats import pearsonr
-import os
 from pathlib import Path
 
-def normalize_spectrum(wavelengths, intensities, light_source):
-    if light_source == 'B':
-        anchor = 650
-        target = 50000
-        idx = np.argmin(np.abs(wavelengths - anchor))
-        scale = target / intensities[idx] if intensities[idx] != 0 else 1
-        return intensities * scale
-
-    elif light_source == 'L':
-        anchor = 450
-        target = 50000
-        idx = np.argmin(np.abs(wavelengths - anchor))
-        scale = target / intensities[idx] if intensities[idx] != 0 else 1
-        return intensities * scale
-
-    elif light_source == 'U':
-        mask = (wavelengths >= 810.5) & (wavelengths <= 811.5)
-        window = intensities[mask]
-        max_811 = window.max() if len(window) > 0 else 1
-        return intensities / max_811 if max_811 > 0 else intensities
-
-    else:
-        return intensities
-
-def load_spectrum(filename):
-    df = pd.read_csv(filename, header=None, names=['wavelength', 'intensity'])
-    return df['wavelength'].values, df['intensity'].values
-
-def compare_spectra(unk_wave, unk_int, db_wave, db_int):
-    mse = np.mean((unk_int - db_int)**2)
-    mae = np.mean(np.abs(unk_int - db_int))
-    mape = np.mean(np.abs((unk_int - db_int) / unk_int)) * 100
-    corr, _ = pearsonr(unk_int, db_int)
-    area_diff = np.abs(np.trapz(unk_int, unk_wave) - np.trapz(db_int, db_wave))
-    return mse, mae, mape, corr, area_diff
-
-def compute_match_score(unknown, reference):
-    merged = pd.merge(unknown, reference, on='wavelength', suffixes=('_unknown', '_ref'))
-    score = np.mean((merged['intensity_unknown'] - merged['intensity_ref']) ** 2)
-    log_score = np.log1p(score)
-    return log_score
-
-def plot_horizontal_comparison(unknown_files, existing_db, base_id, gem_best_names, gem_name_map):
-    fig, axs = plt.subplots(1, 3, figsize=(18, 5))
-    for i, light_source in enumerate(['B', 'L', 'U']):
-        try:
-            # Use the full path to unknown files
-            unknown_file_path = unknown_files[light_source]
-            if unknown_file_path.exists():
-                unknown = pd.read_csv(unknown_file_path, sep='[\s,]+', header=None, names=['wavelength', 'intensity'], skiprows=1, engine='python')
-                
-                # Check if database file exists in existing_db
-                if light_source in existing_db:
-                    db_file_path = existing_db[light_source]
-                    db = pd.read_csv(db_file_path)
-                    match_name = gem_best_names.get(base_id, {}).get(light_source)
-                    if match_name:
-                        reference = db[db['full_name'] == match_name]
-                        gem_desc = gem_name_map.get(str(base_id), f"Gem {base_id}")
-                        axs[i].plot(unknown['wavelength'], unknown['intensity'], label=f"Unknown {light_source}", color='orange', linewidth=0.5)
-                        axs[i].plot(reference['wavelength'], reference['intensity'], label=f"{gem_desc} {match_name}", color='black', linestyle='--', linewidth=0.5)
-                        axs[i].set_xlabel('Wavelength (nm)')
-                        axs[i].set_ylabel('Intensity')
-                        axs[i].set_title(f"{light_source} vs {gem_desc} {match_name}")
-                        axs[i].legend()
-                    else:
-                        axs[i].set_title(f"{light_source}: No Match Found")
-                else:
-                    axs[i].set_title(f"{light_source}: Database Missing")
-            else:
-                axs[i].set_title(f"{light_source}: Data Missing")
-        except FileNotFoundError:
-            axs[i].set_title(f"{light_source}: Data Missing")
-        except Exception as e:
-            axs[i].set_title(f"{light_source}: Error - {str(e)}")
-    plt.tight_layout()
-    plt.show()
-
-def main():
-    # Set up paths relative to script location
-    script_dir = Path(__file__).parent  # src/numerical_analysis/
-    project_root = script_dir.parent.parent  # Go up to gemini_gemological_analysis
+class GeminiNumericalAnalyzer:
+    """Simplified numerical analysis system for gemological spectral data"""
     
-    # Define file paths using proper directory structure
-    unknown_dir = project_root / 'data' / 'unknown'
-    raw_txt_dir = script_dir / 'raw_txt'  # src/numerical_analysis/raw_txt
+    def __init__(self):
+        print("🚀 Initializing Gemini Numerical Analyzer...")
+        
+        # Get current script location and derive project paths
+        current_file = Path(__file__).resolve()
+        print(f"📍 Script location: {current_file}")
+        
+        # Navigate up to find project root
+        # current_file is in src/numerical_analysis/gemini1.py
+        self.project_root = current_file.parent.parent.parent
+        print(f"📁 Project root: {self.project_root}")
+        
+        # Set up directory paths
+        self.data_dir = self.project_root / 'data'
+        self.unknown_dir = self.data_dir / 'unknown'         
+        self.database_dir = self.project_root / 'database'
+        self.reference_spectra_dir = self.database_dir / 'reference_spectra'  
+        self.output_dir = self.project_root / 'output' / 'numerical_analysis'
+        
+        # Print all paths for debugging
+        print(f"📂 Data directory: {self.data_dir}")
+        print(f"🔍 Unknown directory: {self.unknown_dir}")
+        print(f"📚 Database directory: {self.database_dir}")
+        print(f"🔬 Reference spectra: {self.reference_spectra_dir}")
+        print(f"💾 Output directory: {self.output_dir}")
+        
+        # Ensure output directory exists
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        print(f"✅ Output directory ready: {self.output_dir}")
+        
+        # Analysis data storage
+        self.unknown_spectra = {}
+        self.database_spectra = {}
+        self.analysis_results = {}
+        
+        print("✅ Gemini Numerical Analyzer initialized successfully")
+        print("="*60)
     
-    unknown_files = {
-        'B': unknown_dir / 'unkgemB.csv', 
-        'L': unknown_dir / 'unkgemL.csv', 
-        'U': unknown_dir / 'unkgemU.csv'
-    }
-    
-    # Database files in database/reference_spectra directory
-    db_dir = project_root / 'database' / 'reference_spectra'
-    db_files = {
-        'B': db_dir / 'gemini_db_long_B.csv', 
-        'L': db_dir / 'gemini_db_long_L.csv', 
-        'U': db_dir / 'gemini_db_long_U.csv'
-    }
-    
-    print("🔍 Gemini Gem Identification System")
-    print("=" * 50)
-    print(f"Project root: {project_root}")
-    print(f"Unknown files directory: {unknown_dir}")
-    print(f"Raw txt directory: {raw_txt_dir}")
-    print(f"Database directory: {db_dir}")
-    print()
-
-    # Determine available light sources from raw files
-    raw_sources = set()
-    if raw_txt_dir.exists():
-        for f in raw_txt_dir.glob('*.txt'):
-            filename = f.stem
-            if len(filename) >= 1:
-                # Look for B, L, U in filename
-                for char in filename.upper():
-                    if char in {'B', 'L', 'U'}:
-                        raw_sources.add(char)
-                        break
-        print(f"📁 Found raw_txt directory: {raw_txt_dir}")
-    else:
-        print("⚠️ raw_txt directory not found. Assuming all light sources present.")
-        raw_sources = {'B', 'L', 'U'}
-    
-    if not raw_sources:
-        print("⚠️ Could not determine light sources from filenames. Assuming B, L, U.")
-        raw_sources = {'B', 'L', 'U'}
-    
-    print(f"🔍 Unknown gem uses {len(raw_sources)} light sources: {', '.join(sorted(raw_sources))}")
-    
-    # Check which unknown files exist
-    existing_unknown = {}
-    for light_source in ['B', 'L', 'U']:
-        if unknown_files[light_source].exists():
-            existing_unknown[light_source] = unknown_files[light_source]
-            print(f"✅ Found: {unknown_files[light_source]}")
+    def check_file_exists(self, file_path, description="File"):
+        """Check if file exists and report status"""
+        if file_path.exists():
+            print(f"✅ {description} found: {file_path}")
+            return True
         else:
-            print(f"⚠️ Missing: {unknown_files[light_source]}")
+            print(f"❌ {description} NOT FOUND: {file_path}")
+            return False
     
-    if not existing_unknown:
-        print("\n❌ No unknown gem files found!")
-        print(f"Expected location: {unknown_dir}")
-        print("Please run txt_to_unkgem.py first to convert your raw files.")
-        return
-    
-    # Initialize existing_db dictionary BEFORE using it
-    existing_db = {}
-    
-    # Check if database directory exists
-    if not db_dir.exists():
-        print(f"\n❌ Database directory not found: {db_dir}")
-        print("Please make sure gemini_db_long_*.csv files are in database/reference_spectra/")
-        return
-    
-    # Check which database files exist
-    for light_source in ['B', 'L', 'U']:
-        if db_files[light_source].exists():
-            existing_db[light_source] = db_files[light_source]
-            print(f"✅ Found database: {db_files[light_source].name}")
-        else:
-            print(f"⚠️ Missing database: {db_files[light_source]}")
-    
-    if not existing_db:
-        print(f"\n❌ No database files found in: {db_dir}")
-        print("Please make sure gemini_db_long_*.csv files are available.")
-        return
-
-    all_matches = {}
-    gem_best_scores = {}
-    gem_best_names = {}
-    gems_by_light_source = {'B': set(), 'L': set(), 'U': set()}
-
-    for light_source in ['B', 'L', 'U']:
-        if light_source not in existing_unknown:
-            print(f"⚠️ Skipping {light_source} - unknown file not found")
-            continue
+    def load_unknown_spectra(self):
+        """Load unknown gem spectra from the data/unknown directory"""
+        print("\n🔍 LOADING UNKNOWN SPECTRA:")
+        print("-" * 40)
+        
+        unknown_files = {
+            'B': self.unknown_dir / 'unkgemB.csv',
+            'L': self.unknown_dir / 'unkgemL.csv', 
+            'U': self.unknown_dir / 'unkgemU.csv'
+        }
+        
+        loaded_sources = []
+        
+        for light_source, file_path in unknown_files.items():
+            print(f"\n📊 Loading {light_source} spectrum...")
             
-        if light_source not in existing_db:
-            print(f"⚠️ Skipping {light_source} - database file not found")
-            continue
-
+            if not self.check_file_exists(file_path, f"Unknown {light_source} spectrum"):
+                continue
+            
+            try:
+                # Try multiple parsing methods
+                df = None
+                
+                # Method 1: Standard CSV
+                try:
+                    df = pd.read_csv(file_path, header=None, names=['wavelength', 'intensity'])
+                    print(f"   ✅ Loaded using standard CSV parser")
+                except:
+                    # Method 2: Flexible separator
+                    try:
+                        df = pd.read_csv(file_path, sep='[\s,]+', header=None, 
+                                       names=['wavelength', 'intensity'], skiprows=1, engine='python')
+                        print(f"   ✅ Loaded using flexible separator parser")
+                    except:
+                        # Method 3: Tab separated
+                        try:
+                            df = pd.read_csv(file_path, sep='\t', header=None, names=['wavelength', 'intensity'])
+                            print(f"   ✅ Loaded using tab separator parser")
+                        except Exception as e:
+                            print(f"   ❌ Failed to parse file: {e}")
+                            continue
+                
+                if df is not None and len(df) > 0:
+                    self.unknown_spectra[light_source] = df
+                    loaded_sources.append(light_source)
+                    print(f"   📈 Data points: {len(df)}")
+                    print(f"   📊 Wavelength range: {df['wavelength'].min():.1f} - {df['wavelength'].max():.1f} nm")
+                    print(f"   💡 Intensity range: {df['intensity'].min():.2f} - {df['intensity'].max():.2f}")
+                else:
+                    print(f"   ❌ File appears to be empty or invalid")
+                    
+            except Exception as e:
+                print(f"   ❌ Error loading {light_source} spectrum: {e}")
+        
+        print(f"\n✅ Loaded spectra for: {loaded_sources}")
+        return loaded_sources
+    
+    def load_database_spectra(self):
+        """Load database spectra for comparison"""
+        print("\n📚 LOADING DATABASE SPECTRA:")
+        print("-" * 40)
+        
+        db_files = {
+            'B': 'gemini_db_long_B.csv',
+            'L': 'gemini_db_long_L.csv',
+            'U': 'gemini_db_long_U.csv'
+        }
+        
+        loaded_db = []
+        
+        for light_source, filename in db_files.items():
+            print(f"\n🔬 Loading {light_source} database...")
+            
+            db_path = self.reference_spectra_dir / filename
+            if not self.check_file_exists(db_path, f"Database {light_source} file"):
+                # Try alternative locations
+                alt_path = self.database_dir / filename
+                if self.check_file_exists(alt_path, f"Database {light_source} file (alternative)"):
+                    db_path = alt_path
+                else:
+                    continue
+            
+            try:
+                df = pd.read_csv(db_path)
+                self.database_spectra[light_source] = df
+                loaded_db.append(light_source)
+                
+                print(f"   ✅ Database loaded successfully")
+                print(f"   📊 Total records: {len(df)}")
+                if 'full_name' in df.columns:
+                    unique_gems = df['full_name'].nunique()
+                    print(f"   💎 Unique gems: {unique_gems}")
+                else:
+                    print(f"   ⚠️  No 'full_name' column found - may cause issues")
+                    print(f"   📋 Available columns: {list(df.columns)}")
+                
+            except Exception as e:
+                print(f"   ❌ Error loading {light_source} database: {e}")
+        
+        print(f"\n✅ Loaded databases for: {loaded_db}")
+        return loaded_db
+    
+    def compute_match_score(self, unknown_df, reference_df):
+        """Compute match score between unknown and reference spectra"""
         try:
-            print(f"🔄 Processing {light_source} spectra...")
-            unknown = pd.read_csv(existing_unknown[light_source], sep='[\s,]+', header=None, names=['wavelength', 'intensity'], skiprows=1, engine='python')
-            db = pd.read_csv(existing_db[light_source])
-
+            merged = pd.merge(unknown_df, reference_df, on='wavelength', suffixes=('_unknown', '_ref'))
+            if len(merged) == 0:
+                return float('inf')
+            
+            # Calculate MSE and convert to log score
+            score = np.mean((merged['intensity_unknown'] - merged['intensity_ref']) ** 2)
+            log_score = np.log1p(score)
+            return log_score
+        except Exception as e:
+            print(f"      ⚠️ Error computing match score: {e}")
+            return float('inf')
+    
+    def analyze_spectral_matches(self):
+        """Main spectral analysis and matching function"""
+        print("\n" + "="*60)
+        print("🔬 GEMINI SPECTRAL ANALYSIS STARTING")
+        print("="*60)
+        
+        # Load unknown spectra
+        available_sources = self.load_unknown_spectra()
+        
+        if not available_sources:
+            print("\n❌ ANALYSIS FAILED: No unknown spectra found")
+            print(f"   📁 Please ensure unkgem*.csv files are in: {self.unknown_dir}")
+            return False
+        
+        # Load database spectra
+        db_sources = self.load_database_spectra()
+        
+        if not db_sources:
+            print("\n❌ ANALYSIS FAILED: No database spectra found")
+            print(f"   📁 Please ensure database files are in: {self.reference_spectra_dir}")
+            return False
+        
+        # Find common light sources
+        common_sources = set(available_sources) & set(db_sources)
+        if not common_sources:
+            print("\n❌ ANALYSIS FAILED: No common light sources between unknown and database")
+            print(f"   🔍 Available: {available_sources}")
+            print(f"   📚 Database: {db_sources}")
+            return False
+        
+        print(f"\n🎯 ANALYZING {len(common_sources)} LIGHT SOURCES: {sorted(common_sources)}")
+        print("="*60)
+        
+        # Perform analysis for each light source
+        all_matches = {}
+        gem_best_scores = {}
+        gem_best_names = {}
+        
+        for light_source in sorted(common_sources):
+            print(f"\n🔍 ANALYZING {light_source} SPECTRA...")
+            print("-" * 30)
+            
+            unknown_df = self.unknown_spectra[light_source]
+            db_df = self.database_spectra[light_source]
+            
+            gem_names = db_df['full_name'].unique() if 'full_name' in db_df.columns else []
+            
+            if len(gem_names) == 0:
+                print(f"   ❌ No gem names found in database for {light_source}")
+                continue
+            
+            print(f"   📊 Comparing against {len(gem_names)} reference gems...")
+            
             scores = []
-            for gem_name in db['full_name'].unique():
-                reference = db[db['full_name'] == gem_name]
-                score = compute_match_score(unknown, reference)
-                scores.append((gem_name, score))
-                gems_by_light_source[light_source].add(gem_name)
-
+            for i, gem_name in enumerate(gem_names):
+                if i % 100 == 0:  # Progress indicator
+                    print(f"   🔄 Progress: {i}/{len(gem_names)} gems processed...")
+                
+                try:
+                    reference_df = db_df[db_df['full_name'] == gem_name]
+                    score = self.compute_match_score(unknown_df, reference_df)
+                    scores.append((gem_name, score))
+                except Exception as e:
+                    continue
+            
+            if not scores:
+                print(f"   ❌ No valid scores computed for {light_source}")
+                continue
+            
+            # Sort by score (lower is better)
             sorted_scores = sorted(scores, key=lambda x: x[1])
             all_matches[light_source] = sorted_scores
-
-            print(f"\n✅ Best Matches for {light_source}:")
-            for gem, score in sorted_scores[:5]:
-                print(f"  {gem}: Log Score = {score:.2f}")
-
+            
+            print(f"\n   🏆 TOP 5 MATCHES for {light_source}:")
+            for i, (gem, score) in enumerate(sorted_scores[:5], 1):
+                print(f"      {i}. {gem}: Score = {score:.2f}")
+            
+            # Track best scores per gem ID
             for gem_name, score in sorted_scores:
                 base_id = gem_name.split('B')[0].split('L')[0].split('U')[0]
                 if base_id not in gem_best_scores:
                     gem_best_scores[base_id] = {}
                     gem_best_names[base_id] = {}
-                if score < gem_best_scores[base_id].get(light_source, np.inf):
+                if score < gem_best_scores[base_id].get(light_source, float('inf')):
                     gem_best_scores[base_id][light_source] = score
                     gem_best_names[base_id][light_source] = gem_name
-
-        except FileNotFoundError as e:
-            print(f"❌ File not found for {light_source}: {e}")
+        
+        # Calculate final rankings
+        print(f"\n🏆 COMPUTING FINAL RANKINGS...")
+        print("-" * 40)
+        
+        # Only consider gems with data for all available light sources
+        valid_gems = {gid: scores for gid, scores in gem_best_scores.items() 
+                     if set(scores.keys()) == common_sources}
+        
+        if not valid_gems:
+            print("❌ No gems found with complete spectral data for all light sources")
+            return False
+        
+        # Calculate aggregated scores
+        aggregated_scores = {
+            base_id: sum(scores[ls] for ls in common_sources) 
+            for base_id, scores in valid_gems.items()
+        }
+        
+        final_rankings = sorted(aggregated_scores.items(), key=lambda x: x[1])
+        
+        # Display results
+        print(f"\n🎉 FINAL IDENTIFICATION RESULTS:")
+        print("="*80)
+        print(f"📊 Analysis Summary:")
+        print(f"   🔍 Light sources analyzed: {', '.join(sorted(common_sources))}")
+        print(f"   💎 Total candidates: {len(final_rankings)}")
+        print(f"   🏆 Best matches shown below:")
+        print("="*80)
+        
+        for rank, (base_id, total_score) in enumerate(final_rankings[:10], 1):
+            sources_analyzed = list(gem_best_scores[base_id].keys())
+            
+            print(f"\n🏅 RANK {rank}:")
+            print(f"   💎 Gem ID: {base_id}")
+            print(f"   📊 Total Score: {total_score:.2f} (lower = better match)")
+            print(f"   🔍 Light Sources: {', '.join(sorted(sources_analyzed))}")
+            print(f"   📋 Individual Scores:")
+            
+            for ls in sorted(sources_analyzed):
+                individual_score = gem_best_scores[base_id][ls]
+                gem_name = gem_best_names[base_id][ls]
+                print(f"      {ls}: {individual_score:.2f} ({gem_name})")
+        
+        # Save results
+        print(f"\n💾 SAVING RESULTS...")
+        self.save_analysis_results(final_rankings, gem_best_scores, gem_best_names, common_sources)
+        
+        print(f"\n✅ ANALYSIS COMPLETED SUCCESSFULLY!")
+        print(f"📁 Results saved to: {self.output_dir}")
+        print("="*60)
+        
+        return True
+    
+    def save_analysis_results(self, rankings, scores, gem_names, sources):
+        """Save analysis results to files"""
+        try:
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            
+            # Create results DataFrame
+            results_data = []
+            for rank, (gem_id, total_score) in enumerate(rankings, 1):
+                
+                result = {
+                    'rank': rank,
+                    'gem_id': gem_id,
+                    'total_score': total_score,
+                    'light_sources': ', '.join(sorted(scores[gem_id].keys()))
+                }
+                
+                # Add individual light source scores and names
+                for ls in ['B', 'L', 'U']:
+                    result[f'{ls}_score'] = scores[gem_id].get(ls, 'N/A')
+                    result[f'{ls}_gem_name'] = gem_names[gem_id].get(ls, 'N/A')
+                
+                results_data.append(result)
+            
+            # Save to CSV
+            results_df = pd.DataFrame(results_data)
+            results_file = self.output_dir / f'gemini_analysis_results_{timestamp}.csv'
+            results_df.to_csv(results_file, index=False)
+            print(f"   ✅ Detailed results: {results_file}")
+            
+            # Save summary report
+            report_file = self.output_dir / f'analysis_summary_{timestamp}.txt'
+            with open(report_file, 'w') as f:
+                f.write("="*60 + "\n")
+                f.write("GEMINI NUMERICAL ANALYSIS SUMMARY\n")
+                f.write("="*60 + "\n")
+                f.write(f"Analysis Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write(f"Light Sources Analyzed: {', '.join(sorted(sources))}\n")
+                f.write(f"Total Candidates Analyzed: {len(rankings)}\n\n")
+                
+                f.write("TOP 10 BEST MATCHES:\n")
+                f.write("-" * 40 + "\n")
+                for rank, (gem_id, total_score) in enumerate(rankings[:10], 1):
+                    f.write(f"Rank {rank}: Gem ID {gem_id}\n")
+                    f.write(f"  Total Score: {total_score:.2f}\n")
+                    f.write(f"  Light Sources: {', '.join(sorted(scores[gem_id].keys()))}\n")
+                    for ls in sorted(scores[gem_id].keys()):
+                        individual_score = scores[gem_id][ls]
+                        gem_name = gem_names[gem_id][ls]
+                        f.write(f"    {ls}: {individual_score:.2f} ({gem_name})\n")
+                    f.write("\n")
+            
+            print(f"   ✅ Summary report: {report_file}")
+            
         except Exception as e:
-            print(f"❌ Error processing {light_source}: {e}")
+            print(f"   ❌ Error saving results: {e}")
 
-    # Filter gems that have matches for available light sources
-    available_sources = set(existing_unknown.keys())
-    gem_best_scores = {gid: s for gid, s in gem_best_scores.items() if set(s.keys()) >= available_sources}
-    gem_best_names = {gid: n for gid, n in gem_best_names.items() if gid in gem_best_scores}
-
-    if not gem_best_scores:
-        print("\n❌ No gems found with matches across all available light sources")
-        return
-
-    aggregated_scores = {base_id: sum(scores[ls] for ls in available_sources) for base_id, scores in gem_best_scores.items()}
-    final_sorted = sorted(aggregated_scores.items(), key=lambda x: x[1])
-
-    # Load gem library
-    gem_name_map = {}
-    gemlib_path = project_root / 'gemlib_structural_ready.csv'
+def main():
+    """Main execution function"""
+    print("🚀 GEMINI NUMERICAL ANALYSIS SYSTEM")
+    print("="*60)
     
     try:
-        if gemlib_path.exists():
-            gemlib = pd.read_csv(gemlib_path)
-            gemlib.columns = gemlib.columns.str.strip()
-            if 'Reference' in gemlib.columns:
-                gemlib['Reference'] = gemlib['Reference'].astype(str).str.strip()
-                expected_columns = ['Nat./Syn.', 'Spec.', 'Var.', 'Treatment', 'Origin']
-                if all(col in gemlib.columns for col in expected_columns):
-                    gemlib['Gem Description'] = gemlib[expected_columns].apply(lambda x: ' '.join([v if pd.notnull(v) else '' for v in x]).strip(), axis=1)
-                    gem_name_map = dict(zip(gemlib['Reference'], gemlib['Gem Description']))
-                    print(f"✅ Loaded gem library: {len(gem_name_map)} entries")
-                else:
-                    print(f"⚠️ Expected columns {expected_columns} not found in gemlib_structural_ready.csv")
-            else:
-                print("⚠️ 'Reference' column not found in gemlib_structural_ready.csv")
-        else:
-            print(f"⚠️ Gem library not found: {gemlib_path}")
-    except Exception as e:
-        print(f"⚠️ Could not load gemlib_structural_ready.csv: {e}")
-
-    print("\n" + "="*70)
-    print("✅ Overall Best Matches:")
-    print("="*70)
-    
-    for i, (base_id, total_score) in enumerate(final_sorted, start=1):
-        gem_desc = gem_name_map.get(str(base_id), f"Gem {base_id}")
-        sources = gem_best_scores.get(base_id, {}).keys()
-        print(f"\n🏆 Rank {i}: {gem_desc} (Gem {base_id})")
-        print(f"   💎 Total Log Score = {total_score:.2f}")
-        print(f"   🔎 Light sources matched: {', '.join(sorted(sources))} ({len(sources)})")
-        for ls in sorted(sources):
-            val = gem_best_scores[base_id][ls]
-            gem_name = gem_best_names[base_id][ls]
-            print(f"      {ls} Score: {val:.2f} ({gem_name})")
+        analyzer = GeminiNumericalAnalyzer()
+        success = analyzer.analyze_spectral_matches()
         
-        # Show comparison plot for top 3 matches
-        if i <= 3 and existing_db:  # Make sure existing_db is available
-            print(f"   📊 Showing comparison plot...")
-            plot_horizontal_comparison(unknown_files, existing_db, base_id, gem_best_names, gem_name_map)
-    
-    if final_sorted:
-        top_gem = gem_name_map.get(str(final_sorted[0][0]), f'Gem {final_sorted[0][0]}')
-        print(f"\n🎉 Analysis complete! Top match: {top_gem}")
+        if success:
+            print(f"\n🎉 SUCCESS! Analysis completed!")
+        else:
+            print(f"\n❌ FAILED! Analysis could not be completed")
+            
+        # Keep window open
+        input("\n⏸️  Press Enter to close...")
+        
+    except KeyboardInterrupt:
+        print("\n🛑 Analysis interrupted by user")
+    except Exception as e:
+        print(f"\n💥 UNEXPECTED ERROR: {e}")
+        print("🔍 Please check your data files and directory structure")
+        input("\n⏸️  Press Enter to close...")
 
 if __name__ == "__main__":
     main()
