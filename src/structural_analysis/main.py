@@ -1,447 +1,441 @@
 #!/usr/bin/env python3
 """
-Enhanced Gemstone Analysis System Hub - Main Menu
-Supports both analytical analysis and database entry workflows
+main.py - COMPLETE GEMINI GEMOLOGICAL ANALYSIS SYSTEM
+Root directory main program with integrated gem selection
+Save as: gemini_gemological_analysis/main.py
 """
 
 import os
 import sys
 import subprocess
-import pandas as pd
+import sqlite3
 import shutil
-from pathlib import Path
-from datetime import datetime
+import pandas as pd
+import numpy as np
+from collections import defaultdict
 
-class GeminiWorkflowManager:
-    """Manages analytical analysis and database entry workflows"""
-    
+class GeminiAnalysisSystem:
     def __init__(self):
-        # Set up project paths
-        self.project_root = Path(__file__).parent
-        self.data_dir = self.project_root / 'data'
-        self.raw_dir = self.data_dir / 'raw'
-        self.raw_txt_dir = self.data_dir / 'raw_txt'
-        self.unknown_dir = self.data_dir / 'unknown'
-        self.database_dir = self.project_root / 'database'
-        self.reference_spectra_dir = self.database_dir / 'reference_spectra'
-        self.src_dir = self.project_root / 'src'
-        self.numerical_analysis_dir = self.src_dir / 'numerical_analysis'
+        self.db_path = "multi_structural_gem_data.db"
         
-        # Ensure directories exist
-        self.raw_txt_dir.mkdir(parents=True, exist_ok=True)
-        self.unknown_dir.mkdir(parents=True, exist_ok=True)
-        
-        print(f"Project Root: {self.project_root}")
-        print(f"Data Directory: {self.data_dir}")
-    
-    def show_raw_data_files(self):
-        """Show available raw data files for selection"""
-        if not self.raw_dir.exists():
-            print("❌ Raw data directory not found")
-            return []
-        
-        # Find all .txt files in raw directory
-        txt_files = list(self.raw_dir.glob('*.txt'))
-        
-        if not txt_files:
-            print("❌ No .txt files found in data/raw directory")
-            return []
-        
-        print(f"\n📁 Available raw data files in {self.raw_dir}:")
-        print("=" * 60)
-        
-        for i, file_path in enumerate(txt_files, 1):
-            file_size = file_path.stat().st_size
-            modified_time = datetime.fromtimestamp(file_path.stat().st_mtime)
-            print(f"{i:2d}. {file_path.name}")
-            print(f"     Size: {file_size:,} bytes | Modified: {modified_time.strftime('%Y-%m-%d %H:%M')}")
-        
-        return txt_files
-    
-    def select_raw_files_for_analysis(self):
-        """Interactive selection of raw files for analytical analysis"""
-        print("\n🔍 RAW DATA SELECTION FOR ANALYTICAL ANALYSIS")
-        print("=" * 60)
-        print("Select up to 3 spectra files (B/H, L, U light sources)")
-        
-        txt_files = self.show_raw_data_files()
-        if not txt_files:
-            return None
-        
-        selected_files = {}
-        light_sources = ['B', 'L', 'U']
-        
-        for light_source in light_sources:
-            print(f"\n🔬 Select file for {light_source} light source (or press Enter to skip):")
-            
-            try:
-                choice = input(f"Enter file number for {light_source} spectrum (1-{len(txt_files)}, or Enter to skip): ").strip()
-                
-                if not choice:
-                    print(f"   Skipping {light_source} light source")
-                    continue
-                
-                file_idx = int(choice) - 1
-                if 0 <= file_idx < len(txt_files):
-                    selected_file = txt_files[file_idx]
-                    selected_files[light_source] = selected_file
-                    print(f"   ✅ Selected for {light_source}: {selected_file.name}")
-                else:
-                    print(f"   ❌ Invalid selection for {light_source}")
-            
-            except (ValueError, KeyboardInterrupt):
-                print(f"   ⚠️ Skipping {light_source} light source")
-                continue
-        
-        if not selected_files:
-            print("❌ No files selected")
-            return None
-        
-        print(f"\n✅ Selected {len(selected_files)} files for analysis:")
-        for ls, file_path in selected_files.items():
-            print(f"   {ls}: {file_path.name}")
-        
-        return selected_files
-    
-    def copy_to_raw_txt(self, selected_files):
-        """Copy selected files to data/raw_txt with appropriate names"""
-        print(f"\n📋 COPYING FILES TO {self.raw_txt_dir}")
-        print("-" * 40)
-        
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        copied_files = {}
-        
-        for light_source, source_file in selected_files.items():
-            # Create destination filename with light source identifier
-            dest_filename = f"spectrum_{timestamp}_{light_source}.txt"
-            dest_path = self.raw_txt_dir / dest_filename
-            
-            try:
-                shutil.copy2(source_file, dest_path)
-                copied_files[light_source] = dest_path
-                print(f"✅ {light_source}: {source_file.name} → {dest_filename}")
-            except Exception as e:
-                print(f"❌ Error copying {light_source} file: {e}")
-        
-        return copied_files
-    
-    def convert_txt_to_unkgem_csv(self, raw_txt_files):
-        """Convert txt files to unkgem*.csv format in data/unknown"""
-        print(f"\n🔄 CONVERTING TXT TO UNKGEM CSV FORMAT")
-        print("-" * 40)
-        
-        converted_files = {}
-        
-        for light_source, txt_file in raw_txt_files.items():
-            try:
-                # Read txt file (assume wavelength, intensity format)
-                df = pd.read_csv(txt_file, sep='\s+', header=None, names=['wavelength', 'intensity'])
-                
-                if len(df) == 0:
-                    print(f"❌ {light_source}: Empty file")
-                    continue
-                
-                # Create unkgem filename
-                unkgem_file = self.unknown_dir / f'unkgem{light_source}.csv'
-                
-                # Save as CSV
-                df.to_csv(unkgem_file, index=False, header=False)
-                converted_files[light_source] = unkgem_file
-                
-                print(f"✅ {light_source}: {len(df)} data points → {unkgem_file.name}")
-                print(f"   Wavelength range: {df['wavelength'].min():.1f} - {df['wavelength'].max():.1f} nm")
-                
-            except Exception as e:
-                print(f"❌ Error converting {light_source}: {e}")
-        
-        return converted_files
-    
-    def run_numerical_analysis(self):
-        """Launch the numerical analysis (gemini1.py)"""
-        print(f"\n🚀 LAUNCHING NUMERICAL ANALYSIS")
-        print("-" * 40)
-        
-        gemini1_path = self.numerical_analysis_dir / 'gemini1.py'
-        
-        if not gemini1_path.exists():
-            print(f"❌ gemini1.py not found at: {gemini1_path}")
-            return False
-        
-        try:
-            print(f"📊 Starting spectral analysis...")
-            print(f"💻 Command: python {gemini1_path}")
-            
-            # Change to the numerical analysis directory
-            os.chdir(self.numerical_analysis_dir)
-            
-            # Run gemini1.py
-            result = subprocess.run([sys.executable, str(gemini1_path)], 
-                                  capture_output=False, text=True)
-            
-            if result.returncode == 0:
-                print(f"✅ Numerical analysis completed successfully")
-                return True
-            else:
-                print(f"❌ Numerical analysis failed with return code: {result.returncode}")
-                return False
-                
-        except Exception as e:
-            print(f"❌ Error launching numerical analysis: {e}")
-            return False
-        finally:
-            # Change back to project root
-            os.chdir(self.project_root)
-    
-    def check_database_files(self):
-        """Check if database files exist"""
-        db_files = {
-            'B': self.reference_spectra_dir / 'gemini_db_long_B.csv',
-            'L': self.reference_spectra_dir / 'gemini_db_long_L.csv',
-            'U': self.reference_spectra_dir / 'gemini_db_long_U.csv'
+        # System files to check
+        self.spectral_files = ['gemini_db_long_B.csv', 'gemini_db_long_L.csv', 'gemini_db_long_U.csv']
+        self.program_files = {
+            'src/structural_analysis/main.py': 'Structural Analysis Hub',
+            'src/structural_analysis/gemini_launcher.py': 'Structural Analyzers Launcher',
+            'src/numerical_analysis/gemini1.py': 'Numerical Analysis Engine',
+            'fast_gem_analysis.py': 'Fast Analysis Tool'
         }
-        
-        existing_files = {}
-        for ls, db_path in db_files.items():
-            if db_path.exists():
-                existing_files[ls] = db_path
-        
-        return existing_files
     
-    def append_to_database(self):
-        """Append unkgem*.csv files to corresponding database files"""
-        print(f"\n📚 DATABASE APPEND OPERATION")
-        print("=" * 60)
-        
-        # Check for unkgem files
-        unkgem_files = {
-            'B': self.unknown_dir / 'unkgemB.csv',
-            'L': self.unknown_dir / 'unkgemL.csv',
-            'U': self.unknown_dir / 'unkgemU.csv'
-        }
-        
-        available_unkgem = {ls: path for ls, path in unkgem_files.items() if path.exists()}
-        
-        if not available_unkgem:
-            print("❌ No unkgem*.csv files found in data/unknown")
-            print("   Run analytical analysis first to generate these files")
-            return False
-        
-        print(f"📁 Found unkgem files: {list(available_unkgem.keys())}")
+    def check_system_status(self):
+        """Check overall system status"""
+        print("GEMINI GEMOLOGICAL ANALYSIS SYSTEM STATUS")
+        print("=" * 50)
         
         # Check database files
-        db_files = self.check_database_files()
+        db_files_ok = 0
+        for db_file in self.spectral_files:
+            if os.path.exists(db_file):
+                size = os.path.getsize(db_file) // (1024*1024)  # MB
+                print(f"✅ {db_file} ({size} MB)")
+                db_files_ok += 1
+            else:
+                print(f"❌ {db_file} (missing)")
         
-        if not db_files:
-            print("❌ No database files found in database/reference_spectra")
-            return False
+        # Check program files
+        programs_ok = 0
+        for prog_file, description in self.program_files.items():
+            if os.path.exists(prog_file):
+                print(f"✅ {description}")
+                programs_ok += 1
+            else:
+                print(f"❌ {description} (missing)")
         
-        print(f"📚 Found database files: {list(db_files.keys())}")
+        # Check data directories
+        data_dirs = ['data/raw', 'data/unknown']
+        for data_dir in data_dirs:
+            if os.path.exists(data_dir):
+                files = len([f for f in os.listdir(data_dir) if f.endswith('.txt') or f.endswith('.csv')])
+                print(f"✅ {data_dir} ({files} files)")
+            else:
+                print(f"❌ {data_dir} (missing)")
         
-        # Get gem name for database entry
-        gem_name = input("\n💎 Enter gem name for database entry (e.g., 'ruby_natural_myanmar_001'): ").strip()
+        print(f"\nSystem Status: {db_files_ok}/3 databases, {programs_ok}/{len(self.program_files)} programs")
+        print("=" * 50)
         
-        if not gem_name:
-            print("❌ No gem name provided")
-            return False
+        return db_files_ok >= 3 and programs_ok >= 2
+    
+    def scan_available_gems(self):
+        """Scan data/raw for available gems"""
+        raw_dir = 'data/raw'
+        if not os.path.exists(raw_dir):
+            print(f"❌ Directory {raw_dir} not found!")
+            return None
         
-        # Process each light source
-        for light_source in available_unkgem.keys():
-            if light_source not in db_files:
-                print(f"⚠️ Skipping {light_source}: No corresponding database file")
-                continue
+        files = [f for f in os.listdir(raw_dir) if f.endswith('.txt')]
+        if not files:
+            print(f"❌ No .txt files in {raw_dir}")
+            return None
+        
+        # Group by gem number
+        gems = defaultdict(lambda: {'B': [], 'L': [], 'U': []})
+        
+        for file in files:
+            base = os.path.splitext(file)[0]
             
-            try:
-                print(f"\n🔍 Processing {light_source} spectrum...")
-                
-                # Load unknown spectrum
-                unkgem_path = available_unkgem[light_source]
-                unknown_df = pd.read_csv(unkgem_path, header=None, names=['wavelength', 'intensity'])
-                
-                # Load existing database
-                db_path = db_files[light_source]
-                db_df = pd.read_csv(db_path)
-                
-                # Check for duplicates
-                full_name = f"{gem_name}{light_source}"
-                
-                if 'full_name' in db_df.columns:
-                    if full_name in db_df['full_name'].values:
-                        print(f"   ⚠️ Duplicate found: {full_name} already exists in database")
-                        overwrite = input(f"   Overwrite existing entry? (y/n): ").strip().lower()
-                        
-                        if overwrite != 'y':
-                            print(f"   ⏭️ Skipping {light_source}")
-                            continue
-                        else:
-                            # Remove existing entry
-                            db_df = db_df[db_df['full_name'] != full_name]
-                            print(f"   🗑️ Removed existing entry: {full_name}")
-                
-                # Prepare new entries
-                new_entries = []
-                for _, row in unknown_df.iterrows():
-                    new_entry = {
-                        'wavelength': row['wavelength'],
-                        'intensity': row['intensity'],
-                        'full_name': full_name
-                    }
-                    new_entries.append(new_entry)
-                
-                # Append to database
-                new_df = pd.DataFrame(new_entries)
-                updated_db = pd.concat([db_df, new_df], ignore_index=True)
-                
-                # Sort by wavelength within each gem
-                updated_db = updated_db.sort_values(['full_name', 'wavelength'])
-                
-                # Save updated database
-                backup_path = db_path.with_suffix('.backup.csv')
-                shutil.copy2(db_path, backup_path)
-                print(f"   💾 Backup created: {backup_path.name}")
-                
-                updated_db.to_csv(db_path, index=False)
-                print(f"   ✅ Added {len(new_entries)} entries to {db_path.name}")
-                print(f"   📊 Database now has {len(updated_db)} total entries")
-                
-            except Exception as e:
-                print(f"   ❌ Error processing {light_source}: {e}")
+            # Find light source
+            light = None
+            for ls in ['B', 'L', 'U']:
+                if ls in base.upper():
+                    light = ls
+                    break
+            
+            if light:
+                # Extract gem number
+                for i, char in enumerate(base.upper()):
+                    if char == light:
+                        gem_num = base[:i]
+                        break
+                gems[gem_num][light].append(file)
         
-        print(f"\n✅ Database append operation completed")
-        return True
+        return dict(gems)
     
-    def analytical_analysis_workflow(self):
-        """Complete analytical analysis workflow"""
-        print("\n🔬 ANALYTICAL ANALYSIS WORKFLOW")
-        print("=" * 60)
-        print("This workflow will:")
-        print("1. Select raw data files from data/raw")
-        print("2. Copy selected files to data/raw_txt")
-        print("3. Convert to unkgem*.csv format in data/unknown")
-        print("4. Run numerical analysis for best match comparison")
-        print("5. Display top 10 matches with visual comparisons")
+    def show_available_gems(self, gems):
+        """Display available gems"""
+        print("\n📂 AVAILABLE GEMS FOR ANALYSIS")
+        print("=" * 50)
         
-        # Step 1: Select files
-        selected_files = self.select_raw_files_for_analysis()
-        if not selected_files:
-            return
+        complete_gems = []
+        partial_gems = []
         
-        # Step 2: Copy to raw_txt
-        raw_txt_files = self.copy_to_raw_txt(selected_files)
-        if not raw_txt_files:
-            print("❌ Failed to copy files to raw_txt")
-            return
+        for gem_num in sorted(gems.keys()):
+            gem_files = gems[gem_num]
+            available = [ls for ls in ['B', 'L', 'U'] if gem_files[ls]]
+            
+            if len(available) == 3:
+                complete_gems.append(gem_num)
+                files_summary = []
+                for ls in ['B', 'L', 'U']:
+                    count = len(gems[gem_num][ls])
+                    files_summary.append(f"{ls}:{count}")
+                print(f"   ✅ Gem {gem_num} ({', '.join(files_summary)})")
+            else:
+                partial_gems.append((gem_num, available))
+                print(f"   🟡 Gem {gem_num} (only: {'+'.join(available)})")
         
-        # Step 3: Convert to unkgem CSV
-        unkgem_files = self.convert_txt_to_unkgem_csv(raw_txt_files)
-        if not unkgem_files:
-            print("❌ Failed to convert files to unkgem format")
-            return
-        
-        # Step 4: Run numerical analysis
-        print(f"\n🎯 Ready to run numerical analysis with {len(unkgem_files)} light sources")
-        proceed = input("Proceed with numerical analysis? (y/n): ").strip().lower()
-        
-        if proceed == 'y':
-            self.run_numerical_analysis()
-        else:
-            print("⏸️ Analysis paused. unkgem files are ready in data/unknown")
+        return complete_gems, partial_gems
     
-    def database_entry_workflow(self):
-        """Database entry workflow"""
-        print("\n📚 DATABASE ENTRY WORKFLOW")
-        print("=" * 60)
-        print("This workflow will:")
-        print("1. Check for existing unkgem*.csv files in data/unknown")
-        print("2. Check for duplicate entries in database")
-        print("3. Append new spectral data to reference database")
+    def select_and_analyze_gem(self):
+        """Complete gem selection and analysis workflow"""
+        print("\n🎯 GEM SELECTION AND ANALYSIS")
+        print("=" * 40)
         
-        success = self.append_to_database()
+        # Scan gems
+        gems = self.scan_available_gems()
+        if not gems:
+            return
+        
+        # Show options
+        complete_gems, partial_gems = self.show_available_gems(gems)
+        
+        if not complete_gems:
+            print("\n❌ No complete gem sets found!")
+            print("Need gems with B, L, and U files for analysis")
+            return
+        
+        # Get choice
+        print(f"\n🔍 Available complete gems: {', '.join(complete_gems)}")
+        
+        while True:
+            gem_choice = input(f"\nEnter gem number to analyze (or 'back'): ").strip()
+            
+            if gem_choice.lower() == 'back':
+                return
+            
+            if gem_choice in gems:
+                break
+            
+            print(f"❌ Not found. Available: {', '.join(sorted(gems.keys()))}")
+        
+        # Auto-select files (first file of each type)
+        selected = {}
+        gem_files = gems[gem_choice]
+        
+        print(f"\n💎 SELECTING FILES FOR GEM {gem_choice}:")
+        for light in ['B', 'L', 'U']:
+            if gem_files[light]:
+                selected[light] = gem_files[light][0]
+                print(f"   {light}: {selected[light]}")
+                
+                # Show alternatives if available
+                if len(gem_files[light]) > 1:
+                    alternatives = gem_files[light][1:]
+                    print(f"       (alternatives: {', '.join(alternatives)})")
+        
+        if len(selected) < 3:
+            print(f"\n❌ Incomplete gem set - need B, L, and U files")
+            return
+        
+        # Convert files
+        print(f"\n🔄 PREPARING GEM {gem_choice} FOR ANALYSIS...")
+        success = self.convert_gem_files(selected, gem_choice)
+        
         if success:
-            print("\n✅ Database entry workflow completed successfully")
+            # Run analysis
+            print(f"\n✅ GEM {gem_choice} READY FOR ANALYSIS")
+            choice = input(f"Run numerical analysis now? (y/n): ").strip().lower()
+            
+            if choice == 'y':
+                self.run_numerical_analysis()
         else:
-            print("\n❌ Database entry workflow failed")
-
-def show_main_menu():
-    """Display the enhanced main menu"""
-    print("\n" + "=" * 80)
-    print("🔬 ENHANCED GEMSTONE ANALYSIS SYSTEM HUB")
-    print("=" * 80)
-    print()
-    print("ANALYSIS WORKFLOWS:")
-    print("1. Launch Structural Analyzers (manual + automated)")
-    print("2. Import CSV Structural Data") 
-    print("3. Analyze Unknown Stone (spectral matching)")
-    print("4. Launch Standalone Peak Detector")
-    print()
-    print("NEW: RAW DATA PROCESSING:")
-    print("5. 📊 Analytical Analysis Workflow")
-    print("   → Select raw data → Convert → Run numerical analysis")
-    print("6. 📚 Database Entry Workflow") 
-    print("   → Add unkgem data to reference database")
-    print()
-    print("SYSTEM MANAGEMENT:")
-    print("7. Show Database Statistics")
-    print("8. Show Analysis Options Guide")
-    print("9. System Status & Health Check")
-    print("10. Exit")
-    print()
-
-def main():
-    """Enhanced main function with new workflow options"""
-    workflow_manager = GeminiWorkflowManager()
+            print(f"\n❌ Failed to prepare Gem {gem_choice}")
     
-    while True:
-        show_main_menu()
+    def convert_gem_files(self, selected_files, gem_number):
+        """Convert selected gem files for analysis"""
+        try:
+            # Clear and create raw_txt
+            if os.path.exists('raw_txt'):
+                shutil.rmtree('raw_txt')
+            os.makedirs('raw_txt')
+            
+            # Copy files to raw_txt
+            print("   📁 Copying files to raw_txt...")
+            for light, filename in selected_files.items():
+                src = os.path.join('data/raw', filename)
+                dst = os.path.join('raw_txt', filename)
+                shutil.copy2(src, dst)
+                print(f"     ✅ {light}: {filename}")
+            
+            # Create data/unknown directory
+            os.makedirs('data/unknown', exist_ok=True)
+            
+            # Convert each file
+            print("   🔧 Converting and normalizing...")
+            
+            for light, filename in selected_files.items():
+                input_path = os.path.join('raw_txt', filename)
+                output_path = f'data/unknown/unkgem{light}.csv'
+                
+                # Read file
+                df = pd.read_csv(input_path, sep=r'\s+', header=None, names=['wavelength', 'intensity'])
+                wavelengths = np.array(df['wavelength'])
+                intensities = np.array(df['intensity'])
+                
+                # Apply normalization
+                if light == 'B':
+                    # Halogen: 650nm → 50000
+                    idx = np.argmin(np.abs(wavelengths - 650))
+                    if intensities[idx] != 0:
+                        normalized = intensities * (50000 / intensities[idx])
+                    else:
+                        normalized = intensities
+                elif light == 'L':
+                    # Laser: 450nm → 50000
+                    idx = np.argmin(np.abs(wavelengths - 450))
+                    if intensities[idx] != 0:
+                        normalized = intensities * (50000 / intensities[idx])
+                    else:
+                        normalized = intensities
+                elif light == 'U':
+                    # UV: 811nm window → 15000
+                    mask = (wavelengths >= 810.5) & (wavelengths <= 811.5)
+                    window = intensities[mask]
+                    if len(window) > 0 and window.max() > 0:
+                        normalized = intensities * (15000 / window.max())
+                    else:
+                        normalized = intensities
+                
+                # Save normalized data
+                output_df = pd.DataFrame({'wavelength': wavelengths, 'intensity': normalized})
+                output_df.to_csv(output_path, header=False, index=False)
+                
+                print(f"     ✅ {light}: {len(output_df)} points, range {normalized.min():.1f}-{normalized.max():.1f}")
+            
+            return True
+            
+        except Exception as e:
+            print(f"     ❌ Conversion error: {e}")
+            return False
+    
+    def run_numerical_analysis(self):
+        """Run numerical analysis"""
+        print(f"\n🚀 RUNNING NUMERICAL ANALYSIS...")
         
         try:
-            choice = input("Choice (1-10): ").strip()
-            
-            if choice == '1':
-                print("\n🚀 LAUNCHING STRUCTURAL ANALYZERS...")
-                # Your existing launcher code here
-                
-            elif choice == '2':
-                print("\n📥 IMPORTING CSV STRUCTURAL DATA...")
-                # Your existing CSV import code here
-                
-            elif choice == '3':
-                print("\n🔍 ANALYZING UNKNOWN STONE...")
-                # Your existing analysis code here
-                
-            elif choice == '4':
-                print("\n🎯 LAUNCHING PEAK DETECTOR...")
-                # Your existing peak detector code here
-                
-            elif choice == '5':
-                workflow_manager.analytical_analysis_workflow()
-                
-            elif choice == '6':
-                workflow_manager.database_entry_workflow()
-                
-            elif choice == '7':
-                print("\n📊 DATABASE STATISTICS...")
-                # Your existing database stats code here
-                
-            elif choice == '8':
-                print("\n📖 ANALYSIS OPTIONS GUIDE...")
-                # Your existing guide code here
-                
-            elif choice == '9':
-                print("\n🏥 SYSTEM STATUS & HEALTH CHECK...")
-                # Your existing health check code here
-                
-            elif choice == '10':
-                print("\n👋 Goodbye!")
-                break
-                
+            # Try fast analysis first
+            if os.path.exists('fast_gem_analysis.py'):
+                print("   Using optimized fast analysis...")
+                subprocess.run([sys.executable, 'fast_gem_analysis.py'])
+            elif os.path.exists('src/numerical_analysis/gemini1.py'):
+                print("   Using standard gemini1.py...")
+                result = subprocess.run([sys.executable, 'src/numerical_analysis/gemini1.py'], 
+                                      timeout=120, capture_output=True, text=True)
+                if result.stdout:
+                    print("Results:")
+                    print(result.stdout[-1000:])  # Show last 1000 chars
             else:
-                print("❌ Invalid choice. Please select 1-10.")
+                print("   ❌ No analysis program found")
                 
-        except KeyboardInterrupt:
-            print("\n\n👋 Goodbye!")
-            break
+        except subprocess.TimeoutExpired:
+            print("   ⚠️ Analysis timed out - try fast_gem_analysis.py")
         except Exception as e:
-            print(f"❌ Error: {e}")
+            print(f"   ❌ Analysis error: {e}")
+    
+    def run_structural_analysis_hub(self):
+        """Launch structural analysis hub"""
+        hub_path = 'src/structural_analysis/main.py'
+        if os.path.exists(hub_path):
+            try:
+                subprocess.run([sys.executable, hub_path])
+            except Exception as e:
+                print(f"Error launching structural hub: {e}")
+        else:
+            print(f"❌ {hub_path} not found")
+    
+    def run_structural_launcher(self):
+        """Launch structural analyzers launcher"""
+        launcher_path = 'src/structural_analysis/gemini_launcher.py'
+        if os.path.exists(launcher_path):
+            try:
+                subprocess.run([sys.executable, launcher_path])
+            except Exception as e:
+                print(f"Error launching structural launcher: {e}")
+        else:
+            print(f"❌ {launcher_path} not found")
+    
+    def run_raw_data_browser(self):
+        """Run raw data browser if available"""
+        if os.path.exists('raw_data_browser.py'):
+            try:
+                subprocess.run([sys.executable, 'raw_data_browser.py'])
+            except Exception as e:
+                print(f"Error launching raw data browser: {e}")
+        else:
+            print("❌ raw_data_browser.py not found")
+    
+    def run_analytical_workflow(self):
+        """Run analytical workflow"""
+        workflow_path = 'src/numerical_analysis/analytical_workflow.py'
+        if os.path.exists(workflow_path):
+            try:
+                subprocess.run([sys.executable, workflow_path])
+            except Exception as e:
+                print(f"Error launching analytical workflow: {e}")
+        else:
+            print(f"❌ {workflow_path} not found")
+    
+    def show_database_stats(self):
+        """Show database statistics"""
+        print("\n📊 DATABASE STATISTICS")
+        print("=" * 30)
+        
+        for db_file in self.spectral_files:
+            if os.path.exists(db_file):
+                try:
+                    df = pd.read_csv(db_file)
+                    if 'full_name' in df.columns:
+                        unique_gems = df['full_name'].nunique()
+                        print(f"✅ {db_file}:")
+                        print(f"   Records: {len(df):,}")
+                        print(f"   Unique gems: {unique_gems}")
+                    else:
+                        print(f"⚠️ {db_file}: {len(df):,} records (no gem names)")
+                except Exception as e:
+                    print(f"❌ {db_file}: Error reading - {e}")
+            else:
+                print(f"❌ {db_file}: Missing")
+        
+        # Check structural database
+        if os.path.exists(self.db_path):
+            try:
+                conn = sqlite3.connect(self.db_path)
+                cursor = conn.cursor()
+                count = cursor.execute("SELECT COUNT(*) FROM structural_features").fetchone()[0]
+                print(f"\n✅ Structural database: {count:,} records")
+                conn.close()
+            except Exception as e:
+                print(f"❌ Structural database error: {e}")
+    
+    def emergency_fix_files(self):
+        """Run emergency fix if available"""
+        if os.path.exists('emergency_fix.py'):
+            try:
+                subprocess.run([sys.executable, 'emergency_fix.py'])
+            except Exception as e:
+                print(f"Error running emergency fix: {e}")
+        else:
+            print("❌ emergency_fix.py not found")
+    
+    def main_menu(self):
+        """Main menu system"""
+        
+        menu_options = [
+            ("🔬 Launch Structural Analysis Hub", self.run_structural_analysis_hub),
+            ("🎯 Launch Structural Analyzers", self.run_structural_launcher),
+            ("📊 Analytical Analysis Workflow", self.run_analytical_workflow),
+            ("💎 Select Gem for Analysis", self.select_and_analyze_gem),
+            ("📂 Browse Raw Data Files", self.run_raw_data_browser),
+            ("🧮 Run Numerical Analysis (current files)", self.run_numerical_analysis),
+            ("📈 Show Database Statistics", self.show_database_stats),
+            ("🔧 Emergency Fix", self.emergency_fix_files),
+            ("❌ Exit", lambda: None)
+        ]
+        
+        while True:
+            print("\n" + "="*80)
+            print("🔬 GEMINI GEMOLOGICAL ANALYSIS SYSTEM")
+            print("="*80)
+            
+            # Show system status
+            system_ok = self.check_system_status()
+            
+            print(f"\n📋 MAIN MENU:")
+            print("-" * 40)
+            
+            for i, (description, _) in enumerate(menu_options, 1):
+                print(f"{i:2}. {description}")
+            
+            # Get user choice
+            try:
+                choice = input(f"\nChoice (1-{len(menu_options)}): ").strip()
+                choice_idx = int(choice) - 1
+                
+                if choice_idx == len(menu_options) - 1:  # Exit
+                    print("\n👋 Goodbye!")
+                    break
+                
+                if 0 <= choice_idx < len(menu_options) - 1:
+                    description, action = menu_options[choice_idx]
+                    print(f"\n🚀 {description.upper()}")
+                    print("-" * 50)
+                    
+                    if action:
+                        action()
+                    
+                    input("\n⏎ Press Enter to return to main menu...")
+                else:
+                    print("❌ Invalid choice")
+                    
+            except ValueError:
+                print("❌ Please enter a number")
+            except KeyboardInterrupt:
+                print("\n\n⚠️ Interrupted by user")
+                break
+            except Exception as e:
+                print(f"\n❌ Menu error: {e}")
+
+def main():
+    """Main entry point"""
+    try:
+        print("🔬 Starting Gemini Gemological Analysis System...")
+        system = GeminiAnalysisSystem()
+        system.main_menu()
+    except KeyboardInterrupt:
+        print("\n\nSystem interrupted - goodbye!")
+    except Exception as e:
+        print(f"System error: {e}")
+        import traceback
+        traceback.print_exc()
 
 if __name__ == "__main__":
     main()
