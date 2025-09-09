@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-COMPLETE FIXED MAIN.PY - GEMINI GEMOLOGICAL ANALYSIS SYSTEM, david
+COMPLETE FIXED MAIN.PY - GEMINI GEMOLOGICAL ANALYSIS SYSTEM
 All indentation errors corrected, full file selection implemented
 Enhanced visualization system with CONSOLIDATED SINGLE LEGEND
 """
@@ -712,7 +712,7 @@ class FixedGeminiAnalysisSystem:
                                                         label=f'#{i+1}: {match_id} (Score: {total_score:.3f})', alpha=0.8))
                 
                 ax1.set_title(f'{light} Light - Normalized Spectra (Database Values)', fontsize=14, fontweight='bold')
-                ax1.set_xlabel('Wavelength (nm)', fontsize=12)
+                #ax1.set_xlabel('Wavelength (nm)', fontsize=12)
                 ax1.set_ylabel('Normalized Intensity', fontsize=12)
                 ax1.grid(True, alpha=0.3)
                 
@@ -743,7 +743,7 @@ class FixedGeminiAnalysisSystem:
                                     color=colors[i], linewidth=0.5, alpha=0.8)
                 
                 ax2.set_title(f'{light} Light - 0-100 Scaled (Analysis Method)', fontsize=14, fontweight='bold')
-                ax2.set_xlabel('Wavelength (nm)', fontsize=12)
+                # Wavelength label removed as requested
                 ax2.set_ylabel('Scaled Intensity (0-100)', fontsize=12)
                 ax2.grid(True, alpha=0.3)
                 ax2.set_ylim(0, 100)  # Fixed scale for consistency
@@ -796,18 +796,18 @@ class FixedGeminiAnalysisSystem:
         ax_dist.legend(handles=dist_legend_elements, bbox_to_anchor=(1.02, 1), loc='upper left', fontsize=9)
         
         # Add summary text box
-        perfect_matches = sum(1 for s in all_scores if s < 1e-10)
-        excellent_matches = sum(1 for s in all_scores if s < 1e-6)
-        good_matches = sum(1 for s in all_scores if s < 1e-3)
+        #perfect_matches = sum(1 for s in all_scores if s < 1e-10)
+        #excellent_matches = sum(1 for s in all_scores if s < 1e-6)
+        #good_matches = sum(1 for s in all_scores if s < 1e-3)
         
-        summary_text = f'Analysis Summary:\n'
-        summary_text += f'Total gems: {len(all_scores)}\n'
-        summary_text += f'Perfect matches (<1e-10): {perfect_matches}\n'
-        summary_text += f'Excellent matches (<1e-6): {excellent_matches}\n'
-        summary_text += f'Good matches (<1e-3): {good_matches}'
+        #summary_text = f'Analysis Summary:\n'
+        #summary_text += f'Total gems: {len(all_scores)}\n'
+        #summary_text += f'Perfect matches (<1e-10): {perfect_matches}\n'
+        #summary_text += f'Excellent matches (<1e-6): {excellent_matches}\n'
+        #summary_text += f'Good matches (<1e-3): {good_matches}'
         
-        ax_dist.text(0.02, 0.98, summary_text, transform=ax_dist.transAxes, fontsize=10,
-                    verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+        #ax_dist.text(0.02, 0.98, summary_text, transform=ax_dist.transAxes, fontsize=10,
+                    #verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
         
         # CREATE SINGLE CONSOLIDATED LEGEND FOR SPECTRAL PLOTS
         # Position it prominently in the upper right area of the entire figure
