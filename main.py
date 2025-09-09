@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """
-main.py - COMPLETE GEMINI GEMOLOGICAL ANALYSIS SYSTEM WITH DEBUG
-Complete version with self-matching validation and debugging tools
-Save as: gemini_gemological_analysis/main.py
+COMPLETE FIXED MAIN.PY - GEMINI GEMOLOGICAL ANALYSIS SYSTEM
+All indentation errors corrected, full file selection implemented
 """
 
 import os
@@ -12,110 +11,100 @@ import sqlite3
 import shutil
 import pandas as pd
 import numpy as np
-import time
-import stat
 from collections import defaultdict
 
-class IntegratedGeminiSystem:
+class FixedGeminiAnalysisSystem:
     def __init__(self):
         self.db_path = "multi_structural_gem_data.db"
         
-        # System configuration
+        # System files to check
         self.spectral_files = ['gemini_db_long_B.csv', 'gemini_db_long_L.csv', 'gemini_db_long_U.csv']
-        self.programs = {
-            'structural_hub': 'src/structural_analysis/main.py',
-            'launcher': 'src/structural_analysis/gemini_launcher.py', 
-            'numerical': 'src/numerical_analysis/gemini1.py',
-            'converter': 'src/numerical_analysis/txt_to_unkgem.py',
-            'fast_analysis': 'fast_gem_analysis.py'
+        self.program_files = {
+            'src/structural_analysis/main.py': 'Structural Analysis Hub',
+            'src/structural_analysis/gemini_launcher.py': 'Structural Analyzers Launcher',
+            'src/numerical_analysis/gemini1.py': 'Numerical Analysis Engine',
+            'fast_gem_analysis.py': 'Fast Analysis Tool'
         }
-        
-        self.data_dirs = ['data/raw', 'data/unknown']
-        self.gem_descriptions = {}
-        self.load_gem_library()
     
-    def load_gem_library(self):
-        """Load gem descriptions from gemlib_structural_ready.csv"""
-        try:
-            gemlib = pd.read_csv('gemlib_structural_ready.csv')
-            gemlib.columns = gemlib.columns.str.strip()
-            
-            if 'Reference' in gemlib.columns:
-                gemlib['Reference'] = gemlib['Reference'].astype(str).str.strip()
-                expected_columns = ['Nat./Syn.', 'Spec.', 'Var.', 'Treatment', 'Origin']
-                
-                if all(col in gemlib.columns for col in expected_columns):
-                    gemlib['Description'] = gemlib[expected_columns].apply(
-                        lambda x: ' | '.join([str(v).strip() for v in x 
-                                            if pd.notnull(v) and str(v).strip()]), axis=1)
-                    self.gem_descriptions = dict(zip(gemlib['Reference'], gemlib['Description']))
-                    print(f"✅ Loaded {len(self.gem_descriptions)} gem descriptions from gemlib")
-                else:
-                    print(f"⚠️ Missing columns in gemlib: {[c for c in expected_columns if c not in gemlib.columns]}")
+    def correct_normalize_spectrum(self, wavelengths, intensities, light_source):
+        """DATABASE-MATCHING NORMALIZATION - matches corrected database exactly"""
+    
+        if light_source == 'B':
+            # B Light: 650nm -> 50000
+            anchor_idx = np.argmin(np.abs(wavelengths - 650))
+            if intensities[anchor_idx] != 0:
+                normalized = intensities * (50000 / intensities[anchor_idx])
+                return normalized
             else:
-                print("⚠️ 'Reference' column not found in gemlib_structural_ready.csv")
-                
-        except FileNotFoundError:
-            print("⚠️ gemlib_structural_ready.csv not found - descriptions will be generic")
-        except Exception as e:
-            print(f"⚠️ Error loading gemlib: {e}")
+                return intensities
     
-    def get_gem_description(self, gem_id):
-        """Get descriptive name for gem ID"""
-        base_id = str(gem_id).split('B')[0].split('L')[0].split('U')[0]
-        if base_id in self.gem_descriptions:
-            return f"{self.gem_descriptions[base_id]} (Gem {base_id})"
-        return f"Gem {base_id}"
+        elif light_source == 'L':
+            # L Light: Maximum -> 50000 (CORRECTED from 450nm)
+            max_intensity = intensities.max()
+            if max_intensity != 0:
+                normalized = intensities * (50000 / max_intensity)
+                return normalized
+            else:
+                return intensities
+        elif light_source == 'U':
+            # U Light: 811nm window max -> 15000 (matches database method)
+            mask = (wavelengths >= 810.5) & (wavelengths <= 811.5)
+            window = intensities[mask]
+            if len(window) > 0 and window.max() > 0:
+                normalized = intensities * (15000 / window.max())
+                return normalized
+        else:
+            return intensities
     
-    def check_system_components(self):
-        """Check system status with optimized validation"""
-        print("GEMINI GEMOLOGICAL ANALYSIS SYSTEM STATUS")
+    def apply_0_100_scaling(self, wavelengths, intensities):
+        """Apply 0-100 scaling for analysis and visualization"""
+        min_val, max_val = intensities.min(), intensities.max()
+        if max_val != min_val:
+            scaled = (intensities - min_val) * 100 / (max_val - min_val)
+            return scaled
+        else:
+            return intensities
+    
+    def check_system_status(self):
+        """Check overall system status"""
+        print("FIXED GEMINI GEMOLOGICAL ANALYSIS SYSTEM STATUS")
         print("=" * 50)
         
-        # Database files
-        db_status = {}
+        # Check database files
+        db_files_ok = 0
         for db_file in self.spectral_files:
             if os.path.exists(db_file):
-                size_mb = os.path.getsize(db_file) // (1024*1024)
-                print(f"✅ {db_file} ({size_mb} MB)")
-                db_status[db_file] = True
+                size = os.path.getsize(db_file) // (1024*1024)  # MB
+                print(f"✅ {db_file} ({size} MB)")
+                db_files_ok += 1
             else:
                 print(f"❌ {db_file} (missing)")
-                db_status[db_file] = False
         
-        # Program files
-        program_status = {}
-        for name, path in self.programs.items():
-            if os.path.exists(path):
-                print(f"✅ {name.replace('_', ' ').title()}")
-                program_status[name] = True
+        # Check program files
+        programs_ok = 0
+        for prog_file, description in self.program_files.items():
+            if os.path.exists(prog_file):
+                print(f"✅ {description}")
+                programs_ok += 1
             else:
-                print(f"❌ {name.replace('_', ' ').title()} (missing)")
-                program_status[name] = False
+                print(f"❌ {description} (missing)")
         
-        # Gem library
-        gemlib_status = "✅ Loaded" if self.gem_descriptions else "❌ Not available"
-        print(f"📚 Gem Library (gemlib_structural_ready.csv): {gemlib_status}")
-        
-        # Data directories
-        for data_dir in self.data_dirs:
+        # Check data directories
+        data_dirs = ['data/raw', 'data/unknown']
+        for data_dir in data_dirs:
             if os.path.exists(data_dir):
-                files = len([f for f in os.listdir(data_dir) 
-                           if f.endswith(('.txt', '.csv'))])
+                files = len([f for f in os.listdir(data_dir) if f.endswith('.txt') or f.endswith('.csv')])
                 print(f"✅ {data_dir} ({files} files)")
             else:
                 print(f"❌ {data_dir} (missing)")
         
-        # System health summary
-        db_ok = sum(db_status.values())
-        prog_ok = sum(program_status.values())
-        print(f"\nSystem Health: {db_ok}/3 databases, {prog_ok}/{len(self.programs)} programs")
+        print(f"\nSystem Status: {db_files_ok}/3 databases, {programs_ok}/{len(self.program_files)} programs")
         print("=" * 50)
         
-        return db_ok >= 3 and prog_ok >= 3
+        return db_files_ok >= 3 and programs_ok >= 2
     
     def scan_available_gems(self):
-        """Scan and organize available gem files"""
+        """Scan data/raw for available gems"""
         raw_dir = 'data/raw'
         if not os.path.exists(raw_dir):
             print(f"❌ Directory {raw_dir} not found!")
@@ -126,662 +115,1157 @@ class IntegratedGeminiSystem:
             print(f"❌ No .txt files in {raw_dir}")
             return None
         
-        # Group files by gem number
+        # Group by gem number
         gems = defaultdict(lambda: {'B': [], 'L': [], 'U': []})
         
         for file in files:
-            base = os.path.splitext(file)[0].upper()
+            base = os.path.splitext(file)[0]
             
-            # Extract light source and gem number
-            for light in ['B', 'L', 'U']:
-                if light in base:
-                    idx = base.index(light)
-                    gem_num = base[:idx]
-                    gems[gem_num][light].append(file)
+            # Find light source
+            light = None
+            for ls in ['B', 'L', 'U']:
+                if ls in base.upper():
+                    light = ls
                     break
+            
+            if light:
+                # Extract gem number
+                for i, char in enumerate(base.upper()):
+                    if char == light:
+                        gem_num = base[:i]
+                        break
+                gems[gem_num][light].append(file)
         
         return dict(gems)
     
-    def display_gem_options_enhanced(self, gems):
-        """Display available gems with enhanced descriptions"""
+    def show_available_gems(self, gems):
+        """Display available gems"""
         print("\n📂 AVAILABLE GEMS FOR ANALYSIS")
-        print("=" * 80)
+        print("=" * 50)
         
-        complete_gems, partial_gems = [], []
+        complete_gems = []
+        partial_gems = []
         
-        # Safe sorting that handles mixed string/numeric gem IDs
-        try:
-            sorted_gem_keys = sorted(gems.keys(), key=lambda x: (len(str(x)), str(x)))
-        except Exception:
-            sorted_gem_keys = sorted(gems.keys(), key=str)
-        
-        for gem_num in sorted_gem_keys:
-            gem_data = gems[gem_num]
-            available_lights = [ls for ls in ['B', 'L', 'U'] if gem_data[ls]]
-            description = self.get_gem_description(gem_num)
+        for gem_num in sorted(gems.keys()):
+            gem_files = gems[gem_num]
+            available = [ls for ls in ['B', 'L', 'U'] if gem_files[ls]]
             
-            if len(available_lights) == 3:
+            if len(available) == 3:
                 complete_gems.append(gem_num)
-                file_counts = [f"{ls}:{len(gem_data[ls])}" for ls in ['B', 'L', 'U']]
-                print(f"   ✅ {description}")
-                print(f"      Files: {', '.join(file_counts)}")
+                files_summary = []
+                for ls in ['B', 'L', 'U']:
+                    count = len(gems[gem_num][ls])
+                    files_summary.append(f"{ls}:{count}")
+                print(f"   ✅ Gem {gem_num} ({', '.join(files_summary)})")
             else:
-                partial_gems.append((gem_num, available_lights))
-                print(f"   🟡 {description}")
-                print(f"      Only available: {'+'.join(available_lights)}")
+                partial_gems.append((gem_num, available))
+                print(f"   🟡 Gem {gem_num} (only: {'+'.join(available)})")
         
         return complete_gems, partial_gems
     
-    def select_gem_for_analysis(self):
-        """Enhanced gem selection workflow"""
+    def select_and_analyze_gem(self):
+        """Complete gem selection and analysis workflow with full file selection"""
         print("\n🎯 GEM SELECTION AND ANALYSIS")
         print("=" * 40)
-        
-        # Scan available gems
+
+        # Clear any previous analysis results to prevent caching issues
+        for file in ['unkgemB.csv', 'unkgemL.csv', 'unkgemU.csv']:
+            if os.path.exists(file):
+                os.remove(file)
+            if os.path.exists(f'data/unknown/{file}'):
+                os.remove(f'data/unknown/{file}')
+
+        # Scan gems
         gems = self.scan_available_gems()
         if not gems:
-            return False
-        
-        # Display options with descriptions
-        complete_gems, partial_gems = self.display_gem_options_enhanced(gems)
-        
-        if not complete_gems:
+            return
+
+        # Show ALL available files with numbers
+        print("\n📂 AVAILABLE FILES FOR ANALYSIS")
+        print("=" * 50)
+
+        all_files = []
+        for gem_num in sorted(gems.keys()):
+            gem_files = gems[gem_num]
+            available = [ls for ls in ['B', 'L', 'U'] if gem_files[ls]]
+
+            if len(available) == 3:  # Only show complete gems
+                print(f"\n✅ Gem {gem_num}:")
+                for light in ['B', 'L', 'U']:
+                    for file in gem_files[light]:
+                        file_base = file.replace('.txt', '')
+                        all_files.append((file_base, file, gem_num, light))
+                        print(f"   {len(all_files)}. {file_base}")
+
+        if not all_files:
             print("\n❌ No complete gem sets found!")
-            print("Analysis requires gems with B, L, and U files")
-            return False
-        
-        # Get user selection
-        print(f"\n🔍 Complete gems available: {', '.join(complete_gems)}")
-        
-        while True:
-            choice = input(f"\nEnter gem number to analyze (or 'back'): ").strip()
-            
-            if choice.lower() == 'back':
-                return False
-            
-            if choice in complete_gems:
-                return self.prepare_gem_for_analysis(choice, gems[choice])
-            
-            print(f"❌ Invalid choice. Available: {', '.join(complete_gems)}")
-    
-    def prepare_gem_for_analysis(self, gem_num, gem_files):
-        """Prepare gem files with enhanced feedback"""
-        gem_desc = self.get_gem_description(gem_num)
-        print(f"\n💎 PREPARING {gem_desc.upper()}")
-        print("-" * 60)
-        
-        # Auto-select first file of each type
-        selected_files = {}
-        for light in ['B', 'L', 'U']:
-            if gem_files[light]:
-                selected_files[light] = gem_files[light][0]
-                print(f"   {light}: {selected_files[light]}")
-                
-                # Show alternatives if available
-                if len(gem_files[light]) > 1:
-                    alts = gem_files[light][1:]
-                    print(f"       (alternatives: {', '.join(alts)})")
-        
-        # Convert using proper normalization
-        success = self.convert_with_fixed_normalization(selected_files, gem_num)
-        
-        if success:
-            print(f"\n✅ {gem_desc.upper()} READY FOR ANALYSIS")
-            return self.offer_analysis_options(gem_num, gem_desc)
-        else:
-            print(f"\n❌ Failed to prepare {gem_desc}")
-            return False
-    
-    def convert_with_fixed_normalization(self, selected_files, gem_number):
-        """Convert files using FIXED normalization scheme with Windows compatibility"""
+            return
+
+        print(f"\n🔍 SELECTION METHOD:")
+        print("Enter 3 file numbers (B, L, U) separated by spaces")
+        print("Example: 1 5 9 (for files 1, 5, and 9)")
+        print("Or enter a gem base number like 'C0045' for auto-selection")
+
+        choice = input("\nYour selection: ").strip()
+
+        selected = {}
+
+        # Try parsing as numbers first
         try:
-            # Setup directories with Windows compatibility
-            success, raw_txt_path = self.setup_analysis_directories_safe()
-            if not success:
-                return False
+            numbers = [int(x) for x in choice.split()]
+            if len(numbers) == 3:
+                selected_files = []
+                for num in numbers:
+                    if 1 <= num <= len(all_files):
+                        selected_files.append(all_files[num-1])
+                    else:
+                        print(f"❌ Number {num} out of range (1-{len(all_files)})")
+                        return
+
+                # Check if we have B, L, U
+                lights_found = {f[3] for f in selected_files}
+                if lights_found != {'B', 'L', 'U'}:
+                    print(f"❌ Need one file from each light source (B, L, U)")
+                    print(f"You selected: {lights_found}")
+                    return
+
+                # Store selected files
+                for file_info in selected_files:
+                    file_base, file_full, gem_num, light = file_info
+                    selected[light] = file_full
+                    print(f"   Selected {light}: {file_base}")
+
+                gem_choice = selected_files[0][2]  # Use gem number from first file
+
+            else:
+                print("❌ Please enter exactly 3 numbers")
+                return
+
+        except ValueError:
+            # Try as gem base number (old method)
+            if choice in gems:
+                gem_choice = choice
+                gem_files = gems[gem_choice]
+
+                print(f"\n💎 AUTO-SELECTING FILES FOR GEM {gem_choice}:")
+                for light in ['B', 'L', 'U']:
+                    if gem_files[light]:
+                        selected[light] = gem_files[light][0]
+                        file_base = selected[light].replace('.txt', '')
+                        print(f"   {light}: {file_base}")
+            else:
+                print(f"❌ Invalid selection. Use numbers or gem base like 'C0045'")
+                return
+
+        if len(selected) != 3:
+            print("\n❌ Incomplete selection - need B, L, and U files")
+            return
+
+        # Convert files with CORRECTED normalization
+        print(f"\n🔄 PREPARING ANALYSIS...")
+        success = self.convert_gem_files_corrected(selected, gem_choice)
+
+        if success:
+            # Run validation check
+            print(f"\n🔍 VALIDATING NORMALIZATION...")
+            self.validate_normalization(gem_choice)
+
+            # Run analysis
+            print(f"\n✅ FILES READY FOR ANALYSIS")
+            analysis_choice = input(f"Run numerical analysis now? (y/n): ").strip().lower()
+
+            if analysis_choice == 'y':
+                self.run_numerical_analysis_fixed()
+
+                # Offer visualization
+                viz_choice = input(f"\nShow spectral comparison plots? (y/n): ").strip().lower()
+                if viz_choice == 'y':
+                    self.create_spectral_comparison_plots(gem_choice)
+        else:
+            print(f"\n❌ Failed to prepare analysis")
+    
+    def convert_gem_files_corrected(self, selected_files, gem_number):
+        """Convert selected gem files with CORRECTED normalization - Windows Permission Fix"""
+        try:
+            # Try the normal method first
+            if os.path.exists('raw_txt'):
+                shutil.rmtree('raw_txt')
+            os.makedirs('raw_txt')
             
-            # Copy files safely
+            # Copy files to raw_txt
             print("   📁 Copying files to raw_txt...")
-            copied_files = self.safe_copy_files('data/raw', raw_txt_path, selected_files)
+            for light, filename in selected_files.items():
+                src = os.path.join('data/raw', filename)
+                dst = os.path.join('raw_txt', filename)
+                shutil.copy2(src, dst)
+                print(f"     ✅ {light}: {filename}")
             
-            if len(copied_files) != len(selected_files):
-                print(f"   ⚠️ Only copied {len(copied_files)}/{len(selected_files)} files")
+            # Create data/unknown directory
+            os.makedirs('data/unknown', exist_ok=True)
             
-            if not copied_files:
-                print("   ❌ No files copied successfully")
-                return False
+            # Convert each file with CORRECTED normalization
+            print("   🔧 Converting and normalizing (CORRECTED)...")
             
-            # Apply FIXED normalization and create unkgem files
-            print("   🔧 Applying FIXED normalization...")
-            
-            for light, filename in copied_files.items():
-                input_path = os.path.join(raw_txt_path, filename)
+            for light, filename in selected_files.items():
+                input_path = os.path.join('raw_txt', filename)
                 output_path = f'data/unknown/unkgem{light}.csv'
                 
-                try:
-                    # Load spectrum data
-                    df = pd.read_csv(input_path, sep=r'\s+', header=None, 
-                                   names=['wavelength', 'intensity'])
-                    wavelengths = np.array(df['wavelength'])
-                    intensities = np.array(df['intensity'])
-                    
-                    # Apply correct FIXED normalization
-                    normalized = self.apply_fixed_normalization(wavelengths, intensities, light)
-                    
-                    # Remove 0-100 scaling to match database format
-                    final_intensities = normalized
-                    
-                    # Save with proper format
-                    output_df = pd.DataFrame({
-                        'wavelength': wavelengths, 
-                        'intensity': final_intensities
-                    })
-                    
-                    # Safe file writing with Windows compatibility
-                    try:
-                        output_df.to_csv(output_path, header=False, index=False)
-                        print(f"     ✅ {light}: {len(output_df)} points, "
-                              f"range {final_intensities.min():.1f}-{final_intensities.max():.1f}")
-                    except PermissionError:
-                        # Try alternative output location
-                        alt_output = f'unkgem{light}_{gem_number}.csv'
-                        output_df.to_csv(alt_output, header=False, index=False)
-                        print(f"     ✅ {light}: Saved as {alt_output} (permission workaround)")
-                        
-                except Exception as e:
-                    print(f"     ❌ Error processing {light}: {e}")
-                    continue
+                # Read file
+                df = pd.read_csv(input_path, sep=r'\s+', header=None, names=['wavelength', 'intensity'])
+                wavelengths = np.array(df['wavelength'])
+                intensities = np.array(df['intensity'])
+                
+                # Apply CORRECTED normalization
+                normalized = self.correct_normalize_spectrum(wavelengths, intensities, light)
+                
+                # Save normalized data
+                output_df = pd.DataFrame({'wavelength': wavelengths, 'intensity': normalized})
+                output_df.to_csv(output_path, header=False, index=False)
+                
+                print(f"     ✅ {light}: {len(output_df)} points, range {normalized.min():.3f}-{normalized.max():.3f}")
             
             return True
             
+        except (PermissionError, OSError) as e:
+            print(f"     ⚠️ Permission error with raw_txt: {e}")
+            print("     🔄 Switching to BYPASS MODE (direct conversion)...")
+            return self.convert_gem_files_bypass(selected_files, gem_number)
         except Exception as e:
             print(f"     ❌ Conversion error: {e}")
             return False
     
-    def apply_fixed_normalization(self, wavelengths, intensities, light_source):
-        """Apply correct FIXED normalization per project documentation"""
+    def convert_gem_files_bypass(self, selected_files, gem_number):
+        """Convert files directly without raw_txt copying - Windows Permission Bypass"""
         try:
-            if light_source == 'B':
-                # Halogen: 650nm → 50,000
-                idx = np.argmin(np.abs(wavelengths - 650))
-                if intensities[idx] > 0:
-                    return intensities * (50000 / intensities[idx])
-                else:
-                    print(f"     ⚠️ Zero intensity at 650nm for {light_source}, using max normalization")
-                    max_val = intensities.max()
-                    return intensities * (50000 / max_val) if max_val > 0 else intensities
-                    
-            elif light_source == 'L':
-                # Laser: Max intensity → 50,000 (NOT 450nm!)
-                max_intensity = intensities.max()
-                if max_intensity > 0:
-                    return intensities * (50000 / max_intensity)
-                else:
-                    print(f"     ⚠️ Zero max intensity for {light_source}")
-                    return intensities
-                    
-            elif light_source == 'U':
-                # UV: 811nm window → 15,000
-                mask = (wavelengths >= 810.5) & (wavelengths <= 811.5)
-                window_values = intensities[mask]
-                if len(window_values) > 0 and window_values.max() > 0:
-                    return intensities * (15000 / window_values.max())
-                else:
-                    print(f"     ⚠️ No valid 811nm window for {light_source}, using max normalization")
-                    max_val = intensities.max()
-                    return intensities * (15000 / max_val) if max_val > 0 else intensities
+            # Create data/unknown directory only
+            os.makedirs('data/unknown', exist_ok=True)
             
-            return intensities
+            print("   🔧 Converting directly (BYPASS MODE)...")
+            
+            for light, filename in selected_files.items():
+                input_path = os.path.join('data/raw', filename)
+                output_path = f'data/unknown/unkgem{light}.csv'
+                
+                # Read and normalize directly from data/raw
+                df = pd.read_csv(input_path, sep=r'\s+', header=None, names=['wavelength', 'intensity'])
+                wavelengths = np.array(df['wavelength'])
+                intensities = np.array(df['intensity'])
+                
+                # Apply CORRECTED normalization
+                normalized = self.correct_normalize_spectrum(wavelengths, intensities, light)
+                
+                # Save normalized data
+                output_df = pd.DataFrame({'wavelength': wavelengths, 'intensity': normalized})
+                output_df.to_csv(output_path, header=False, index=False)
+                
+                print(f"     ✅ {light}: {len(output_df)} points, range {normalized.min():.3f}-{normalized.max():.3f}")
+            
+            return True
             
         except Exception as e:
-            print(f"     ❌ Normalization error for {light_source}: {e}")
-            return intensities
-    
-    def setup_analysis_directories_safe(self):
-        """Windows-safe version of directory setup"""
-        try:
-            # Define paths
-            raw_txt_path = 'raw_txt'
-            data_unknown_path = 'data/unknown'
-            
-            # Create data directory if needed
-            os.makedirs('data', exist_ok=True)
-            
-            # Handle raw_txt directory
-            if os.path.exists(raw_txt_path):
-                # Try to clean existing directory
-                try:
-                    for file in os.listdir(raw_txt_path):
-                        file_path = os.path.join(raw_txt_path, file)
-                        if os.path.isfile(file_path):
-                            try:
-                                os.chmod(file_path, stat.S_IWRITE)
-                                os.remove(file_path)
-                            except Exception:
-                                pass
-                except Exception:
-                    # If cleaning fails, try to remove and recreate
-                    if not self.force_remove_directory(raw_txt_path):
-                        # Use timestamp-based alternative name
-                        timestamp = str(int(time.time()))
-                        raw_txt_path = f'raw_txt_{timestamp}'
-            
-            # Create directories
-            os.makedirs(raw_txt_path, exist_ok=True)
-            os.makedirs(data_unknown_path, exist_ok=True)
-            
-            return True, raw_txt_path
-            
-        except Exception as e:
-            print(f"     ❌ Directory setup error: {e}")
-            return False, None
-    
-    def force_remove_directory(self, path):
-        """Force remove directory with Windows permission handling"""
-        try:
-            if os.path.exists(path):
-                try:
-                    shutil.rmtree(path)
-                    return True
-                except PermissionError:
-                    # Try permission fix
-                    def handle_remove_readonly(func, path, exc):
-                        os.chmod(path, stat.S_IWRITE)
-                        func(path)
-                    
-                    shutil.rmtree(path, onerror=handle_remove_readonly)
-                    return True
-        except Exception:
+            print(f"     ❌ Bypass conversion error: {e}")
             return False
     
-    def safe_copy_files(self, source_dir, dest_dir, selected_files):
-        """Safely copy files with Windows compatibility"""
-        copied_files = {}
+    def validate_normalization(self, gem_number):
+        """Validate that normalization produces expected results"""
+        print("   🔍 Checking normalization against database...")
         
-        for light, filename in selected_files.items():
-            source_path = os.path.join(source_dir, filename)
-            dest_path = os.path.join(dest_dir, filename)
-            
+        for light in ['B', 'L', 'U']:
             try:
-                if not os.path.exists(source_path):
-                    print(f"     ❌ Source file not found: {source_path}")
-                    continue
+                # Load our normalized data
+                unknown_path = f'data/unknown/unkgem{light}.csv'
+                unknown_df = pd.read_csv(unknown_path, header=None, names=['wavelength', 'intensity'])
                 
-                # Copy with retries
-                max_retries = 3
-                for attempt in range(max_retries):
-                    try:
-                        shutil.copy2(source_path, dest_path)
-                        print(f"     ✅ {light}: {filename}")
-                        copied_files[light] = filename
-                        break
-                    except PermissionError:
-                        if attempt < max_retries - 1:
-                            time.sleep(0.5)
-                        else:
-                            print(f"     ❌ Permission denied copying {filename}")
-                    except Exception as e:
-                        print(f"     ❌ Error copying {filename}: {e}")
-                        break
+                # Load database
+                db_path = f'gemini_db_long_{light}.csv'
+                if os.path.exists(db_path):
+                    db_df = pd.read_csv(db_path)
+                    
+                    # Look for exact gem match in database
+                    gem_matches = db_df[db_df['full_name'].str.contains(gem_number, na=False)]
+                    
+                    if not gem_matches.empty:
+                        # Get first match
+                        match = gem_matches.iloc[0]
+                        print(f"     🎯 {light}: Found {match['full_name']} in database")
                         
+                        # Compare ranges
+                        unknown_range = f"{unknown_df['intensity'].min():.3f}-{unknown_df['intensity'].max():.3f}"
+                        db_subset = db_df[db_df['full_name'] == match['full_name']]
+                        db_range = f"{db_subset['intensity'].min():.3f}-{db_subset['intensity'].max():.3f}"
+                        
+                        print(f"         Unknown range: {unknown_range}")
+                        print(f"         Database range: {db_range}")
+                    else:
+                        print(f"     ⚠️ {light}: No match for {gem_number} in database")
+                else:
+                    print(f"     ❌ {light}: Database file {db_path} not found")
+                    
             except Exception as e:
-                print(f"     ❌ Unexpected error with {filename}: {e}")
-        
-        return copied_files
+                print(f"     ❌ {light}: Validation error - {e}")
     
-    def offer_analysis_options(self, gem_num, gem_desc):
-        """Enhanced analysis options"""
-        while True:
-            print(f"\n🔬 ANALYSIS OPTIONS FOR {gem_desc.upper()}:")
-            print("-" * 50)
-            print("1. 🧮 Run Numerical Analysis (gemini1.py)")
-            print("2. 📊 Advanced Analysis with txt_to_unkgem.py")
-            print("3. 🎯 Structural Analysis (Manual/Auto)")
-            print("4. 🔙 Back to main menu")
-            
-            choice = input(f"\nSelect option (1-4): ").strip()
-            
-            if choice == '1':
-                self.run_numerical_analysis()
-                break
-            elif choice == '2':
-                self.run_txt_to_unkgem_analysis()
-                break
-            elif choice == '3':
-                self.launch_structural_analysis()
-                break
-            elif choice == '4':
-                break
-            else:
-                print("❌ Invalid choice")
-        
-        return True
-    
-    def debug_database_structure(self):
-        """Debug database structure and entries"""
-        print("\n" + "="*60)
-        print("🔍 DATABASE STRUCTURE ANALYSIS")
-        print("="*60)
-        
-        for light in ['B', 'L', 'U']:
-            db_file = f'gemini_db_long_{light}.csv'
-            if os.path.exists(db_file):
-                df = pd.read_csv(db_file)
-                print(f"\n📊 {light} Database:")
-                print(f"   Columns: {list(df.columns)}")
-                print(f"   Total entries: {len(df)}")
-                
-                # Look for C0034 entries specifically
-                c0034_entries = df[df['full_name'].str.contains('C0034', na=False)]
-                print(f"   C0034 entries found: {len(c0034_entries)}")
-                if len(c0034_entries) > 0:
-                    print(f"   C0034 full_names: {c0034_entries['full_name'].tolist()}")
-                    # Show sample intensity values
-                    if 'intensity' in df.columns:
-                        sample_intensities = c0034_entries['intensity'].head(5).tolist()
-                        print(f"   Sample intensities: {sample_intensities}")
-                        print(f"   Intensity range: {c0034_entries['intensity'].min():.3f} to {c0034_entries['intensity'].max():.3f}")
-                
-                # Show sample of other entries for context
-                print(f"   Sample full_names from database:")
-                sample_names = df['full_name'].head(10).tolist()
-                for name in sample_names:
-                    print(f"     {name}")
-            else:
-                print(f"❌ {db_file} not found")
-    
-    def debug_normalization_pipeline(self, gem_id='C0034'):
-        """Debug normalization pipeline for specific gem"""
-        print(f"\n" + "="*60)
-        print(f"🔧 NORMALIZATION DEBUG FOR {gem_id}")
-        print("="*60)
-        
-        for light in ['B', 'L', 'U']:
-            print(f"\n📈 {light} Light Source Analysis:")
-            
-            # Check raw file
-            raw_file = f'data/raw/{gem_id}{light}C1.txt'
-            if os.path.exists(raw_file):
-                try:
-                    raw_df = pd.read_csv(raw_file, sep=r'\s+', header=None, names=['wavelength', 'intensity'])
-                    print(f"   Raw file: {raw_file}")
-                    print(f"   Raw data points: {len(raw_df)}")
-                    print(f"   Raw intensity range: {raw_df['intensity'].min():.3f} to {raw_df['intensity'].max():.3f}")
-                    print(f"   Raw wavelength range: {raw_df['wavelength'].min():.1f} to {raw_df['wavelength'].max():.1f} nm")
-                    
-                    # Apply your normalization step by step
-                    wavelengths = raw_df['wavelength'].values
-                    intensities = raw_df['intensity'].values
-                    
-                    print(f"   Applying {light} normalization...")
-                    normalized = self.apply_fixed_normalization(wavelengths, intensities, light)
-                    print(f"   After normalization: {normalized.min():.3f} to {normalized.max():.3f}")
-                    
-                    # Final 0-100 scaling
-                    final = normalized * (100.0 / normalized.max()) if normalized.max() > 0 else normalized
-                    print(f"   After 0-100 scaling: {final.min():.3f} to {final.max():.3f}")
-                    
-                    # Check what gets saved to unkgem file
-                    unkgem_file = f'data/unknown/unkgem{light}.csv'
-                    if os.path.exists(unkgem_file):
-                        unkgem_df = pd.read_csv(unkgem_file, header=None, names=['wavelength', 'intensity'])
-                        print(f"   Unkgem file range: {unkgem_df['intensity'].min():.3f} to {unkgem_df['intensity'].max():.3f}")
-                        
-                        # Compare first few values
-                        print(f"   First 5 processed values: {final[:5]}")
-                        print(f"   First 5 unkgem values: {unkgem_df['intensity'].head(5).tolist()}")
-                    
-                except Exception as e:
-                    print(f"   ❌ Error reading raw file: {e}")
-            else:
-                print(f"   ❌ Raw file not found: {raw_file}")
-            
-            # Check database entry
-            db_file = f'gemini_db_long_{light}.csv'
-            if os.path.exists(db_file):
-                try:
-                    db_df = pd.read_csv(db_file)
-                    # Look for exact match and similar matches
-                    exact_match = db_df[db_df['full_name'] == f'{gem_id}{light}C1']
-                    similar_matches = db_df[db_df['full_name'].str.contains(gem_id, na=False)]
-                    
-                    print(f"   Database entries for {gem_id}:")
-                    if len(exact_match) > 0:
-                        print(f"     Exact match ({gem_id}{light}C1): Found")
-                        print(f"     DB intensity range: {exact_match['intensity'].min():.3f} to {exact_match['intensity'].max():.3f}")
-                        if 'wavelength' in exact_match.columns:
-                            print(f"     DB wavelength range: {exact_match['wavelength'].min():.1f} to {exact_match['wavelength'].max():.1f} nm")
-                        print(f"     First 5 DB values: {exact_match['intensity'].head(5).tolist()}")
-                    else:
-                        print(f"     Exact match ({gem_id}{light}C1): NOT FOUND")
-                    
-                    if len(similar_matches) > 0:
-                        print(f"     Similar matches found: {len(similar_matches)}")
-                        print(f"     Similar full_names: {similar_matches['full_name'].tolist()}")
-                    else:
-                        print(f"     No similar matches found for {gem_id}")
-                        
-                except Exception as e:
-                    print(f"   ❌ Error reading database: {e}")
-    
-    def debug_matching_algorithm(self, gem_id='C0034'):
-        """Debug the actual matching computation"""
-        print(f"\n" + "="*60)
-        print(f"🎯 MATCHING ALGORITHM DEBUG FOR {gem_id}")
-        print("="*60)
+    def run_numerical_analysis_fixed(self):
+        """Run numerical analysis with fixed normalization - DIRECT IN-PROCESS VERSION"""
+        print(f"\n🚀 RUNNING FIXED NUMERICAL ANALYSIS (DIRECT)...")
         
         try:
-            # Load the unkgem files (your processed unknown)
-            unknown_data = {}
-            for light in ['B', 'L', 'U']:
-                unkgem_file = f'data/unknown/unkgem{light}.csv'
-                if os.path.exists(unkgem_file):
-                    df = pd.read_csv(unkgem_file, header=None, names=['wavelength', 'intensity'])
-                    unknown_data[light] = df
-                    print(f"Unknown {light}: {len(df)} points, range {df['intensity'].min():.3f}-{df['intensity'].max():.3f}")
+            # Run analysis directly in this process to avoid encoding issues
+            self.direct_numerical_analysis()
+                
+        except Exception as e:
+            print(f"   ❌ Analysis error: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    def direct_numerical_analysis(self):
+        """Direct numerical analysis with CLEAR result caching and exact file tracking - SUPPORTS PARTIAL GEMS"""
+        print("   📊 Starting analysis with cache clearing and exact file tracking...")
+        
+        # Clear any previous analysis variables to prevent caching
+        self.current_analysis_results = {}
+        self.current_gem_identifier = None
+        
+        # Check for unknown files - allow partial sets
+        unknown_files = {}
+        available_lights = []
+        
+        for light in ['B', 'L', 'U']:
+            found = False
+            for base_path in ['data/unknown', '.']:
+                test_path = os.path.join(base_path, f'unkgem{light}.csv')
+                if os.path.exists(test_path):
+                    unknown_files[light] = test_path
+                    available_lights.append(light)
+                    found = True
+                    break
+        
+        if len(available_lights) < 2:
+            print(f"   ❌ Need at least 2 light sources, found: {available_lights}")
+            return
+        
+        print(f"   ✅ Found {len(available_lights)} light sources: {'+'.join(available_lights)}")
+        
+        db_files = {'B': 'gemini_db_long_B.csv', 'L': 'gemini_db_long_L.csv', 'U': 'gemini_db_long_U.csv'}
+        
+        # Check database files for available lights
+        for light in available_lights:
+            if not os.path.exists(db_files[light]):
+                print(f"   ❌ Database file {db_files[light]} not found")
+                return
+        
+        print("   ✅ All required database files found")
+        
+        # Determine which gem we're analyzing by checking unknown file contents
+        actual_gem_id = self.identify_unknown_gem(unknown_files)
+        print(f"   🎯 Analyzing unknown gem: {actual_gem_id}")
+        print(f"   📋 Using light sources: {'+'.join(available_lights)}")
+        
+        # Load gem library for descriptions
+        gem_name_map = {}
+        try:
+            gemlib = pd.read_csv('gemlib_structural_ready.csv')
+            gemlib.columns = gemlib.columns.str.strip()
+            if 'Reference' in gemlib.columns:
+                gemlib['Reference'] = gemlib['Reference'].astype(str).str.strip()
+                expected_columns = ['Nat./Syn.', 'Spec.', 'Var.', 'Treatment', 'Origin']
+                if all(col in gemlib.columns for col in expected_columns):
+                    gemlib['Gem Description'] = gemlib[expected_columns].apply(
+                        lambda x: ' '.join([v if pd.notnull(v) else '' for v in x]).strip(), axis=1)
+                    gem_name_map = dict(zip(gemlib['Reference'], gemlib['Gem Description']))
+        except Exception as e:
+            print(f"   ⚠️ Could not load gem descriptions: {e}")
+        
+        # Process each available light source
+        all_matches = {}
+        gem_best_scores = {}
+        gem_best_names = {}
+        
+        for light_source in available_lights:
+            print(f"\n   🔍 Processing {light_source} light (PARTIAL ANALYSIS)...")
             
-            # Now test matching against database entries for the same gem
-            for light in ['B', 'L', 'U']:
-                if light not in unknown_data:
-                    continue
+            try:
+                # Load unknown spectrum (normalized values from our processing)
+                unknown = pd.read_csv(unknown_files[light_source], header=None, names=['wavelength', 'intensity'])
+                print(f"      Unknown: {len(unknown)} points, range {unknown['intensity'].min():.3f}-{unknown['intensity'].max():.3f}")
+                
+                # Load database (normalized values)
+                db = pd.read_csv(db_files[light_source])
+                print(f"      Database: {len(db)} points, {db['full_name'].nunique()} unique gems")
+                
+                # Apply 0-100 scaling to unknown data
+                unknown_scaled = unknown.copy()
+                unknown_scaled['intensity'] = self.apply_0_100_scaling(unknown['wavelength'].values, unknown['intensity'].values)
+                print(f"      Unknown scaled: range {unknown_scaled['intensity'].min():.3f}-{unknown_scaled['intensity'].max():.3f}")
+                
+                # Compute scores for all gems with fresh variables
+                current_scores = []  # Use fresh variable name
+                for gem_name in db['full_name'].unique():
+                    reference = db[db['full_name'] == gem_name].copy()
                     
-                print(f"\n🔍 {light} Light Matching Test:")
+                    # Apply 0-100 scaling to database reference
+                    reference_scaled = reference.copy()
+                    reference_scaled['intensity'] = self.apply_0_100_scaling(reference['wavelength'].values, reference['intensity'].values)
+                    
+                    # Compute match score using 0-100 scaled values
+                    merged = pd.merge(unknown_scaled, reference_scaled, on='wavelength', suffixes=('_unknown', '_ref'))
+                    if len(merged) > 0:
+                        mse = np.mean((merged['intensity_unknown'] - merged['intensity_ref']) ** 2)
+                        log_score = np.log1p(mse)
+                        current_scores.append((gem_name, log_score))
+                
+                # Sort by score (best = lowest) with fresh variable
+                current_sorted_scores = sorted(current_scores, key=lambda x: x[1])
+                all_matches[light_source] = current_sorted_scores
+                
+                print(f"      ✅ Best matches for {light_source} (PARTIAL ANALYSIS):")
+                for i, (gem, score) in enumerate(current_sorted_scores[:5], 1):
+                    print(f"         {i}. {gem}: {score:.6f}")
+                
+                # Track best scores per gem ID with fresh tracking
+                for gem_name, score in current_sorted_scores:
+                    base_id = gem_name.split('B')[0].split('L')[0].split('U')[0]
+                    if base_id not in gem_best_scores:
+                        gem_best_scores[base_id] = {}
+                        gem_best_names[base_id] = {}
+                    if score < gem_best_scores[base_id].get(light_source, np.inf):
+                        gem_best_scores[base_id][light_source] = score
+                        gem_best_names[base_id][light_source] = gem_name
+                
+            except Exception as e:
+                print(f"      ❌ Error processing {light_source}: {e}")
+        
+        # Filter to gems with ALL available light sources (not necessarily all 3)
+        complete_gems = {gid: scores for gid, scores in gem_best_scores.items() 
+                        if set(scores.keys()) >= set(available_lights)}
+        
+        # Calculate combined scores with fresh aggregation
+        fresh_aggregated_scores = {base_id: sum(scores.values()) 
+                                 for base_id, scores in complete_gems.items()}
+        
+        # Sort final results with fresh sorting
+        fresh_final_sorted = sorted(fresh_aggregated_scores.items(), key=lambda x: x[1])
+        
+        print(f"\n🏆 PARTIAL ANALYSIS RESULTS - TOP 20 MATCHES:")
+        print("=" * 70)
+        print(f"   Analysis using: {'+'.join(available_lights)} light sources")
+        print("=" * 70)
+        
+        for i, (base_id, total_score) in enumerate(fresh_final_sorted[:20], start=1):
+            gem_desc = gem_name_map.get(str(base_id), f"Gem {base_id}")
+            sources = complete_gems.get(base_id, {})
+            
+            print(f"  Rank {i:2}: {gem_desc} (ID: {base_id})")
+            print(f"          Total Score: {total_score:.6f}")
+            for ls in sorted(available_lights):
+                if ls in sources:
+                    score_val = sources[ls]
+                    best_file = gem_best_names[base_id][ls]
+                    print(f"          {ls} Score: {score_val:.6f} (vs {best_file})")
+            print()
+        
+        # Check for self-matching with the ACTUAL gem we analyzed
+        if actual_gem_id in fresh_aggregated_scores:
+            self_rank = next(i for i, (gid, _) in enumerate(fresh_final_sorted, 1) if gid == actual_gem_id)
+            self_score = fresh_aggregated_scores[actual_gem_id]
+            print(f"🎯 {actual_gem_id} SELF-MATCH RESULT (PARTIAL ANALYSIS):")
+            print(f"   Rank: {self_rank}")
+            print(f"   Total Score: {self_score:.6f}")
+            print(f"   Light sources used: {'+'.join(available_lights)}")
+            
+            if self_score < 1e-10:
+                print(f"   ✅ PERFECT SELF-MATCH!")
+            elif self_score < 1e-6:
+                print(f"   ✅ EXCELLENT SELF-MATCH!")
+            elif self_score < 1e-3:
+                print(f"   ✅ GOOD SELF-MATCH!")
+            else:
+                print(f"   ⚠️ POOR SELF-MATCH - check normalization")
+        else:
+            print(f"🎯 {actual_gem_id} NOT FOUND in results - check database entries")
+        
+        print(f"\n📊 PARTIAL ANALYSIS SUMMARY:")
+        print(f"   Analyzed gem: {actual_gem_id}")
+        print(f"   Light sources: {'+'.join(available_lights)} ({len(available_lights)}/3)")
+        print(f"   Database: Normalized values stored (~15K-50K ranges)")
+        print(f"   Analysis: 0-100 scaling applied to both sides for comparison")
+        print(f"   Total gems analyzed: {len(fresh_final_sorted)}")
+        print(f"   Perfect matches (score < 1e-10): {sum(1 for _, score in fresh_final_sorted if score < 1e-10)}")
+        
+        # Store results for visualization
+        self.current_analysis_results = fresh_final_sorted
+        self.current_gem_identifier = actual_gem_id
+        
+        return fresh_final_sorted
+    
+    def identify_unknown_gem(self, unknown_files):
+        """Identify which gem we're actually analyzing by checking file contents"""
+        # Try to determine from source files in raw_txt if available
+        if os.path.exists('raw_txt'):
+            txt_files = [f for f in os.listdir('raw_txt') if f.endswith('.txt')]
+            if txt_files:
+                # Extract gem ID from first file
+                first_file = txt_files[0]
+                file_base = first_file.replace('.txt', '')
+                # Extract everything before the light source letter
+                for light in ['B', 'L', 'U']:
+                    if light in file_base.upper():
+                        return file_base[:file_base.upper().find(light)]
+        
+        # Fallback: check if unknown file matches known patterns in database
+        try:
+            unknown_b = pd.read_csv(unknown_files['B'], header=None, names=['wavelength', 'intensity'])
+            db_b = pd.read_csv('gemini_db_long_B.csv')
+            
+            # Find exact matches in database
+            for gem_name in db_b['full_name'].unique():
+                reference = db_b[db_b['full_name'] == gem_name]
+                merged = pd.merge(unknown_b, reference, on='wavelength', suffixes=('_unknown', '_ref'))
+                if len(merged) > 0:
+                    mse = np.mean((merged['intensity_unknown'] - merged['intensity_ref']) ** 2)
+                    if mse < 1e-10:  # Perfect match
+                        base_id = gem_name.split('B')[0].split('L')[0].split('U')[0]
+                        return base_id
+        except:
+            pass
+        
+        return "UNKNOWN"
+    
+    def create_spectral_comparison_plots(self, gem_identifier):
+        """Create comprehensive spectral comparison plots"""
+        print(f"\n📊 CREATING SPECTRAL COMPARISON PLOTS FOR {gem_identifier}")
+        print("=" * 60)
+        
+        try:
+            import matplotlib.pyplot as plt
+        except ImportError:
+            print("❌ matplotlib not available - cannot create plots")
+            return
+        
+        if not hasattr(self, 'current_analysis_results') or not self.current_analysis_results:
+            print("❌ No analysis results available - run analysis first")
+            return
+        
+        # Get top 5 matches
+        top_matches = self.current_analysis_results[:5]
+        
+        # Create comprehensive plots
+        fig, axes = plt.subplots(3, 4, figsize=(20, 15))
+        fig.suptitle(f'Spectral Analysis: {gem_identifier} vs Top Matches', fontsize=16, fontweight='bold')
+        
+        colors = ['red', 'blue', 'green', 'orange', 'purple']
+        
+        for light_idx, light in enumerate(['B', 'L', 'U']):
+            print(f"🔍 Creating {light} light plots...")
+            
+            try:
+                # Load unknown spectrum
+                unknown_file = f'unkgem{light}.csv'
+                if os.path.exists(unknown_file):
+                    unknown = pd.read_csv(unknown_file, header=None, names=['wavelength', 'intensity'])
+                else:
+                    unknown_file = f'data/unknown/unkgem{light}.csv'
+                    unknown = pd.read_csv(unknown_file, header=None, names=['wavelength', 'intensity'])
+                
+                # Load database
+                db = pd.read_csv(f'gemini_db_long_{light}.csv')
+                
+                # Plot 1: Raw normalized comparison
+                axes[light_idx, 0].plot(unknown['wavelength'], unknown['intensity'], 
+                                      'black', linewidth=2, label=f'{gem_identifier} (Unknown)', alpha=0.8)
+                
+                for i, (match_id, score) in enumerate(top_matches[:3]):
+                    match_entries = db[db['full_name'].str.startswith(match_id)]
+                    if not match_entries.empty:
+                        # Get best matching file for this light
+                        match_file = f"{match_id}{light}C1"
+                        if match_file not in match_entries['full_name'].values:
+                            match_file = match_entries['full_name'].iloc[0]
+                        
+                        match_data = db[db['full_name'] == match_file]
+                        if not match_data.empty:
+                            axes[light_idx, 0].plot(match_data['wavelength'], match_data['intensity'], 
+                                                  colors[i], linewidth=1, label=f'{match_file} (Score: {score:.3f})', alpha=0.7)
+                
+                axes[light_idx, 0].set_title(f'{light} Light - Normalized Spectra')
+                axes[light_idx, 0].set_xlabel('Wavelength (nm)')
+                axes[light_idx, 0].set_ylabel('Normalized Intensity')
+                axes[light_idx, 0].legend(fontsize=8)
+                axes[light_idx, 0].grid(True, alpha=0.3)
+                
+                # Plot 2: 0-100 Scaled comparison
+                unknown_scaled = unknown.copy()
+                unknown_scaled['intensity'] = self.apply_0_100_scaling(unknown['wavelength'].values, unknown['intensity'].values)
+                
+                axes[light_idx, 1].plot(unknown_scaled['wavelength'], unknown_scaled['intensity'], 
+                                      'black', linewidth=2, label=f'{gem_identifier} (0-100 scaled)', alpha=0.8)
+                
+                for i, (match_id, score) in enumerate(top_matches[:3]):
+                    match_entries = db[db['full_name'].str.startswith(match_id)]
+                    if not match_entries.empty:
+                        match_file = f"{match_id}{light}C1"
+                        if match_file not in match_entries['full_name'].values:
+                            match_file = match_entries['full_name'].iloc[0]
+                        
+                        match_data = db[db['full_name'] == match_file]
+                        if not match_data.empty:
+                            match_scaled = match_data.copy()
+                            match_scaled['intensity'] = self.apply_0_100_scaling(match_data['wavelength'].values, match_data['intensity'].values)
+                            axes[light_idx, 1].plot(match_scaled['wavelength'], match_scaled['intensity'], 
+                                                  colors[i], linewidth=1, label=f'{match_file}', alpha=0.7)
+                
+                axes[light_idx, 1].set_title(f'{light} Light - 0-100 Scaled (Analysis Method)')
+                axes[light_idx, 1].set_xlabel('Wavelength (nm)')
+                axes[light_idx, 1].set_ylabel('Scaled Intensity (0-100)')
+                axes[light_idx, 1].legend(fontsize=8)
+                axes[light_idx, 1].grid(True, alpha=0.3)
+                
+                # Plot 3: Difference plot (unknown vs best match)
+                best_match_id = top_matches[0][0]
+                best_match_entries = db[db['full_name'].str.startswith(best_match_id)]
+                if not best_match_entries.empty:
+                    best_match_file = f"{best_match_id}{light}C1"
+                    if best_match_file not in best_match_entries['full_name'].values:
+                        best_match_file = best_match_entries['full_name'].iloc[0]
+                    
+                    best_match_data = db[db['full_name'] == best_match_file]
+                    if not best_match_data.empty:
+                        # Scale both for difference calculation
+                        unknown_for_diff = self.apply_0_100_scaling(unknown['wavelength'].values, unknown['intensity'].values)
+                        match_for_diff = self.apply_0_100_scaling(best_match_data['wavelength'].values, best_match_data['intensity'].values)
+                        
+                        # Calculate difference
+                        merged_for_diff = pd.merge(pd.DataFrame({'wavelength': unknown['wavelength'], 'intensity': unknown_for_diff}),
+                                                 pd.DataFrame({'wavelength': best_match_data['wavelength'], 'intensity': match_for_diff}),
+                                                 on='wavelength', suffixes=('_unknown', '_match'))
+                        
+                        if not merged_for_diff.empty:
+                            difference = merged_for_diff['intensity_unknown'] - merged_for_diff['intensity_match']
+                            axes[light_idx, 2].plot(merged_for_diff['wavelength'], difference, 'red', linewidth=1)
+                            axes[light_idx, 2].axhline(y=0, color='black', linestyle='--', alpha=0.5)
+                            
+                            rms_diff = np.sqrt(np.mean(difference**2))
+                            axes[light_idx, 2].set_title(f'{light} Light - Difference (RMS: {rms_diff:.3f})')
+                            axes[light_idx, 2].text(0.02, 0.98, f'vs {best_match_file}', transform=axes[light_idx, 2].transAxes,
+                                                   verticalalignment='top', fontsize=8, bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+                
+                axes[light_idx, 2].set_xlabel('Wavelength (nm)')
+                axes[light_idx, 2].set_ylabel('Intensity Difference')
+                axes[light_idx, 2].grid(True, alpha=0.3)
+                
+                # Plot 4: Match scores histogram
+                all_scores = [score for _, score in self.current_analysis_results]
+                axes[light_idx, 3].hist(all_scores, bins=30, alpha=0.7, color='lightblue', edgecolor='black')
+                axes[light_idx, 3].axvline(x=top_matches[0][1], color='red', linestyle='--', linewidth=2, label='Best Match')
+                if len(top_matches) > 1:
+                    axes[light_idx, 3].axvline(x=top_matches[1][1], color='orange', linestyle='--', linewidth=1, label='2nd Best')
+                
+                axes[light_idx, 3].set_title(f'Score Distribution (All Gems)')
+                axes[light_idx, 3].set_xlabel('Log Score')
+                axes[light_idx, 3].set_ylabel('Number of Gems')
+                axes[light_idx, 3].legend(fontsize=8)
+                axes[light_idx, 3].grid(True, alpha=0.3)
+                
+            except Exception as e:
+                print(f"❌ Error creating {light} light plots: {e}")
+                # Fill with error message
+                axes[light_idx, 0].text(0.5, 0.5, f'Error: {e}', ha='center', va='center', transform=axes[light_idx, 0].transAxes)
+                for j in range(1, 4):
+                    axes[light_idx, j].text(0.5, 0.5, 'Error', ha='center', va='center', transform=axes[light_idx, j].transAxes)
+        
+        plt.tight_layout()
+        
+        # Save the plot
+        plot_filename = f'spectral_analysis_{gem_identifier}_{pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")}.png'
+        plt.savefig(plot_filename, dpi=150, bbox_inches='tight')
+        print(f"💾 Plot saved as: {plot_filename}")
+        
+        try:
+            plt.show()
+        except:
+            print("⚠️ Cannot display plot interactively, but file saved successfully")
+        
+        # Create summary report
+        self.create_analysis_summary_report(gem_identifier, top_matches)
+    
+    def create_enhanced_analysis_report(self, gem_identifier, top_matches):
+        """Create enhanced text summary report with detailed analysis"""
+        report_filename = f'enhanced_report_{gem_identifier}_{pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")}.txt'
+        
+        with open(report_filename, 'w') as f:
+            f.write(f"ENHANCED GEMINI SPECTRAL ANALYSIS REPORT\n")
+            f.write(f"========================================\n\n")
+            f.write(f"Analysis Date: {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write(f"Unknown Gem: {gem_identifier}\n")
+            f.write(f"Analysis Type: 0-100 Scaled Comparison\n\n")
+            
+            f.write(f"TOP 10 MATCHES (with detailed scores):\n")
+            f.write(f"-" * 60 + "\n")
+            
+            for i, (match_id, score) in enumerate(top_matches[:10], 1):
+                # Load gem description if available
+                try:
+                    gemlib = pd.read_csv('gemlib_structural_ready.csv')
+                    gemlib['Reference'] = gemlib['Reference'].astype(str).str.strip()
+                    match_desc = gemlib[gemlib['Reference'] == str(match_id)]
+                    if not match_desc.empty:
+                        desc = match_desc.iloc[0]['Nat./Syn.'] + " " + match_desc.iloc[0]['Spec.']
+                    else:
+                        desc = f"Gem {match_id}"
+                except:
+                    desc = f"Gem {match_id}"
+                
+                f.write(f"Rank {i:2}: {desc} (ID: {match_id})\n")
+                f.write(f"         Total Score: {score:.6f}\n")
+                
+                # Quality assessment with more detail
+                if score < 1e-10:
+                    f.write(f"         Quality: ★★★★★ PERFECT MATCH (Identical spectra)\n")
+                elif score < 1e-6:
+                    f.write(f"         Quality: ★★★★☆ EXCELLENT MATCH (Near identical)\n")
+                elif score < 1e-3:
+                    f.write(f"         Quality: ★★★☆☆ GOOD MATCH (Very similar)\n")
+                elif score < 1:
+                    f.write(f"         Quality: ★★☆☆☆ MODERATE MATCH (Some similarity)\n")
+                else:
+                    f.write(f"         Quality: ★☆☆☆☆ POOR MATCH (Different spectra)\n")
+                f.write(f"\n")
+            
+            # Add statistical summary
+            all_scores = [score for _, score in self.current_analysis_results]
+            f.write(f"\nSTATISTICAL SUMMARY:\n")
+            f.write(f"-" * 20 + "\n")
+            f.write(f"Total gems analyzed: {len(self.current_analysis_results)}\n")
+            f.write(f"Best match score: {min(all_scores):.6f}\n")
+            f.write(f"Median score: {np.median(all_scores):.6f}\n")
+            f.write(f"Average score: {np.mean(all_scores):.6f}\n")
+            f.write(f"Perfect matches (< 1e-10): {sum(1 for s in all_scores if s < 1e-10)}\n")
+            f.write(f"Excellent matches (< 1e-6): {sum(1 for s in all_scores if s < 1e-6)}\n")
+            
+            f.write(f"\nANALYSIS PARAMETERS:\n")
+            f.write(f"-" * 20 + "\n")
+            f.write(f"Normalization: B(650nm→50K), L(Max→50K), U(811nm→15K)\n")
+            f.write(f"Comparison: 0-100 scaling applied to both unknown and database\n")
+            f.write(f"Scoring: Mean Squared Error with log transformation\n")
+            f.write(f"Line thickness: 0.5 for matches, 1.5 for unknown\n")
+            f.write(f"Plot resolution: 200 DPI for detailed viewing\n")
+        
+        print(f"📄 Enhanced analysis report saved as: {report_filename}")
+    
+    def show_enhanced_file_listing(self, gems, all_analyzable_gems):
+        """Show enhanced, organized file listing for better gem selection"""
+        print("\n📂 ENHANCED FILE SELECTION INTERFACE")
+        print("=" * 80)
+        
+        all_files = []
+        current_number = 1
+        
+        # Organize by gem type (Complete vs Partial)
+        complete_gems = []
+        partial_gems = []
+        
+        for gem_num in sorted(all_analyzable_gems):
+            gem_files = gems[gem_num]
+            available = [ls for ls in ['B', 'L', 'U'] if gem_files[ls]]
+            
+            if len(available) == 3:
+                complete_gems.append(gem_num)
+            else:
+                partial_gems.append(gem_num)
+        
+        # Show complete gems first
+        if complete_gems:
+            print(f"\n🟢 COMPLETE GEMS (B+L+U available) - {len(complete_gems)} gems")
+            print("-" * 50)
+            
+            for gem_num in complete_gems:
+                gem_files = gems[gem_num]
+                print(f"\n💎 Gem {gem_num}:")
+                
+                # Group by light source for cleaner display
+                for light in ['B', 'L', 'U']:
+                    if light in gem_files and gem_files[light]:
+                        print(f"  {light} Light:")
+                        for file in gem_files[light]:
+                            file_base = file.replace('.txt', '')
+                            all_files.append((file_base, file, gem_num, light))
+                            # Show measurement type
+                            measurement_type = "C1 (Standard)" if "C1" in file else "P1/P2 (Alternative)"
+                            print(f"    {current_number:3}. {file_base:<15} ({measurement_type})")
+                            current_number += 1
+        
+        # Show partial gems
+        if partial_gems:
+            print(f"\n🟡 PARTIAL GEMS (2 light sources) - {len(partial_gems)} gems")
+            print("-" * 50)
+            
+            for gem_num in partial_gems:
+                gem_files = gems[gem_num]
+                available = [ls for ls in ['B', 'L', 'U'] if gem_files[ls]]
+                
+                print(f"\n💎 Gem {gem_num} - Available: {'+'.join(available)}:")
+                
+                for light in ['B', 'L', 'U']:
+                    if light in available and gem_files[light]:
+                        print(f"  {light} Light:")
+                        for file in gem_files[light]:
+                            file_base = file.replace('.txt', '')
+                            all_files.append((file_base, file, gem_num, light))
+                            measurement_type = "C1 (Standard)" if "C1" in file else "P1/P2 (Alternative)"
+                            print(f"    {current_number:3}. {file_base:<15} ({measurement_type})")
+                            current_number += 1
+        
+        return all_files
+    
+    def visualize_individual_spectrum(self):
+        """Visualize a specific spectrum from the database"""
+        print("\n📊 INDIVIDUAL SPECTRUM VISUALIZATION")
+        print("=" * 40)
+        
+        try:
+            import matplotlib.pyplot as plt
+        except ImportError:
+            print("❌ matplotlib not available")
+            return
+        
+        # Get gem selection
+        gem_name = input("Enter full gem name (e.g., C0045BC1, 140LC1): ").strip()
+        
+        if not gem_name:
+            print("❌ No gem name provided")
+            return
+        
+        # Find in databases
+        found_spectra = {}
+        db_files = {'B': 'gemini_db_long_B.csv', 'L': 'gemini_db_long_L.csv', 'U': 'gemini_db_long_U.csv'}
+        
+        for light, db_file in db_files.items():
+            if os.path.exists(db_file):
+                df = pd.read_csv(db_file)
+                matches = df[df['full_name'] == gem_name]
+                if not matches.empty:
+                    found_spectra[light] = matches
+        
+        if not found_spectra:
+            print(f"❌ {gem_name} not found in any database")
+            return
+        
+        print(f"✅ Found {gem_name} in {len(found_spectra)} light sources")
+    
+    def run_debug_analysis(self):
+        """Run comprehensive debug analysis to validate fixes"""
+        print("\n🔍 RUNNING COMPREHENSIVE DEBUG ANALYSIS")
+        print("=" * 50)
+        
+        # Check which gem files are available
+        gems = self.scan_available_gems()
+        if not gems:
+            print("❌ No gems available for debug analysis")
+            return
+        
+        # Find a gem that exists in database
+        test_gems = ['C0034', '140', 'C0001']  # Common test gems
+        found_gem = None
+        
+        for test_gem in test_gems:
+            if test_gem in gems and len(gems[test_gem]) >= 3:
+                available_lights = [ls for ls in ['B', 'L', 'U'] if gems[test_gem][ls]]
+                if len(available_lights) == 3:
+                    found_gem = test_gem
+                    break
+        
+        if not found_gem:
+            # Use any complete gem
+            complete_gems = [g for g in gems.keys() if len([ls for ls in ['B', 'L', 'U'] if gems[g][ls]]) == 3]
+            if complete_gems:
+                found_gem = complete_gems[0]
+        
+        if not found_gem:
+            print("❌ No complete gems found for debug analysis")
+            return
+        
+        print(f"🎯 Testing with Gem {found_gem}")
+        
+        # Process the gem with corrected normalization
+        selected = {}
+        for light in ['B', 'L', 'U']:
+            if gems[found_gem][light]:
+                selected[light] = gems[found_gem][light][0]
+        
+        # Convert with corrected normalization
+        success = self.convert_gem_files_corrected(selected, found_gem)
+        
+        if success:
+            # Run validation
+            self.validate_normalization(found_gem)
+            
+            # Quick analysis to check scores
+            print("\n🔬 RUNNING QUICK MATCH TEST...")
+            self.quick_match_test(found_gem)
+        else:
+            print("❌ Failed to process test gem")
+    
+    def quick_match_test(self, gem_number):
+        """Quick test to see if gem matches itself with score ~0"""
+        for light in ['B', 'L', 'U']:
+            try:
+                # Load our processed data
+                unknown = pd.read_csv(f'data/unknown/unkgem{light}.csv', header=None, names=['wavelength', 'intensity'])
+                
+                # Load database
+                db = pd.read_csv(f'gemini_db_long_{light}.csv')
+                
+                # Find matching entries
+                matches = db[db['full_name'].str.contains(gem_number, na=False)]
+                
+                if not matches.empty:
+                    # Test against first match
+                    match_name = matches.iloc[0]['full_name']
+                    reference = db[db['full_name'] == match_name]
+                    
+                    # Compute score
+                    merged = pd.merge(unknown, reference, on='wavelength', suffixes=('_unknown', '_ref'))
+                    mse = np.mean((merged['intensity_unknown'] - merged['intensity_ref']) ** 2)
+                    log_score = np.log1p(mse)
+                    
+                    print(f"   {light}: vs {match_name} -> MSE: {mse:.3f}, Log Score: {log_score:.3f}")
+                    
+                    if log_score < 1.0:
+                        print(f"      ✅ Excellent match!")
+                    elif log_score < 5.0:
+                        print(f"      ✅ Good match!")
+                    else:
+                        print(f"      ⚠️ Poor match - may need further normalization adjustment")
+                else:
+                    print(f"   {light}: No database match found for {gem_number}")
+            
+            except Exception as e:
+                print(f"   {light}: Test error - {e}")
+    
+    def debug_exact_normalization(self):
+        """Deep debug of exact normalization discrepancy"""
+        print("\n🔬 DEEP NORMALIZATION DEBUGGING")
+        print("=" * 50)
+        print("Finding EXACT discrepancy between our normalization and database...")
+        
+        # Test with C0034 specifically
+        gem_files = self.scan_available_gems()
+        if 'C0034' not in gem_files:
+            print("❌ C0034 not found")
+            return
+        
+        print("\n🎯 ANALYZING C0034 NORMALIZATION DISCREPANCY")
+        
+        for light in ['B', 'L', 'U']:
+            print(f"\n📊 {light} LIGHT ANALYSIS:")
+            print("-" * 30)
+            
+            try:
+                # Load raw data
+                raw_file = os.path.join('data/raw', gem_files['C0034'][light][0])
+                df = pd.read_csv(raw_file, sep=r'\s+', header=None, names=['wavelength', 'intensity'])
+                wavelengths = np.array(df['wavelength'])
+                raw_intensities = np.array(df['intensity'])
+                
+                print(f"   Raw data: {len(df)} points")
+                print(f"   Raw wavelength range: {wavelengths.min():.1f} - {wavelengths.max():.1f} nm")
+                print(f"   Raw intensity range: {raw_intensities.min():.3f} - {raw_intensities.max():.3f}")
+                
+                # Apply our normalization
+                normalized = self.correct_normalize_spectrum(wavelengths, raw_intensities, light)
+                print(f"   Our normalized range: {normalized.min():.3f} - {normalized.max():.3f}")
+                
+                # Load database and find C0034 entries
                 db_file = f'gemini_db_long_{light}.csv'
                 if os.path.exists(db_file):
                     db_df = pd.read_csv(db_file)
+                    c0034_entries = db_df[db_df['full_name'].str.contains('C0034', na=False)]
                     
-                    # Find entries for this gem
-                    gem_entries = db_df[db_df['full_name'].str.contains(gem_id, na=False)]
-                    
-                    for _, entry in gem_entries.head(3).iterrows():  # Test first 3 entries
-                        entry_name = entry['full_name']
-                        print(f"   Testing against: {entry_name}")
+                    if not c0034_entries.empty:
+                        print(f"   Database C0034 entries found: {len(c0034_entries['full_name'].unique())}")
                         
-                        # Create reference dataframe for this entry
-                        reference_df = db_df[db_df['full_name'] == entry_name].copy()
-                        
-                        # Compute score manually
-                        unknown_df = unknown_data[light]
-                        try:
-                            # Merge on wavelength
-                            merged = pd.merge(unknown_df, reference_df, on='wavelength', suffixes=('_unknown', '_ref'))
-                            if len(merged) > 0:
-                                # Calculate MSE
-                                mse = np.mean((merged['intensity_unknown'] - merged['intensity_ref']) ** 2)
-                                log_score = np.log1p(mse)
-                                print(f"     Points compared: {len(merged)}")
-                                print(f"     MSE: {mse:.6f}")
-                                print(f"     Log score: {log_score:.6f}")
+                        for entry_name in c0034_entries['full_name'].unique():
+                            entry_data = db_df[db_df['full_name'] == entry_name]
+                            db_wavelengths = entry_data['wavelength'].values
+                            db_intensities = entry_data['intensity'].values
+                            
+                            print(f"   \n   📋 Database entry: {entry_name}")
+                            print(f"      DB wavelength range: {db_wavelengths.min():.1f} - {db_wavelengths.max():.1f} nm")
+                            print(f"      DB intensity range: {db_intensities.min():.3f} - {db_intensities.max():.3f}")
+                            
+                            # Check if wavelength ranges match
+                            wave_match = np.allclose(wavelengths, db_wavelengths, rtol=1e-6)
+                            print(f"      Wavelength match: {wave_match}")
+                            
+                            if wave_match:
+                                # Compare intensities directly
+                                intensity_diff = normalized - db_intensities
+                                mse = np.mean(intensity_diff**2)
+                                max_diff = np.max(np.abs(intensity_diff))
                                 
-                                # Show some sample differences
-                                diff = merged['intensity_unknown'] - merged['intensity_ref']
-                                print(f"     Sample differences: {diff.head(5).tolist()}")
-                                print(f"     Max difference: {diff.abs().max():.6f}")
-                                print(f"     Mean abs difference: {diff.abs().mean():.6f}")
+                                print(f"      Intensity MSE: {mse:.6f}")
+                                print(f"      Max difference: {max_diff:.6f}")
+                                print(f"      First 5 differences: {intensity_diff[:5]}")
+                                
+                                if mse < 1e-10:
+                                    print(f"      ✅ PERFECT MATCH!")
+                                elif mse < 1e-6:
+                                    print(f"      ✅ Very close match")
+                                elif mse < 1e-3:
+                                    print(f"      ⚠️ Small differences")
+                                else:
+                                    print(f"      ❌ SIGNIFICANT DIFFERENCES")
                             else:
-                                print(f"     ❌ No wavelength overlap for merging!")
-                        except Exception as e:
-                            print(f"     ❌ Error computing score: {e}")
+                                print(f"      ❌ Wavelength ranges don't match - interpolation needed")
+                    else:
+                        print(f"   ❌ No C0034 entries found in {db_file}")
                 else:
-                    print(f"   ❌ Database file not found: {db_file}")
+                    print(f"   ❌ Database file {db_file} not found")
                     
-        except Exception as e:
-            print(f"❌ Debug matching error: {e}")
-    
-    def run_complete_debug_analysis(self, gem_id='C0034'):
-        """Run complete debug analysis for a gem"""
-        print("\n" + "🔍" + "="*60)
-        print("COMPLETE DEBUG ANALYSIS - SELF MATCHING VALIDATION")
-        print("="*60 + "🔍")
-        
-        # Step 1: Database structure
-        self.debug_database_structure()
-        
-        # Step 2: Normalization pipeline
-        self.debug_normalization_pipeline(gem_id)
-        
-        # Step 3: Matching algorithm
-        self.debug_matching_algorithm(gem_id)
-        
-        print(f"\n" + "="*60)
-        print("🎯 SUMMARY AND RECOMMENDATIONS")
-        print("="*60)
-        print("If C0034 scores 0.0 against itself, the system is working correctly.")
-        print("If C0034 scores > 0.0 against itself, there's a fundamental issue:")
-        print("  1. Database normalization differs from analysis normalization")
-        print("  2. Wavelength ranges don't match between files and database")
-        print("  3. Database entries don't exist for the expected gem ID")
-        print("  4. Floating point precision issues in matching algorithm")
-        print("="*60)
-    
-    def debug_menu(self):
-        """Debug menu for self-matching validation"""
-        print("\n🔍 DEBUG SELF-MATCHING VALIDATION")
-        print("=" * 50)
-        print("This analysis tests if gems score 0.0 when compared to themselves")
-        print("Critical for validating the normalization and matching pipeline")
-        print()
-        print("1. Debug C0034 (Client gem)")
-        print("2. Debug 140 (Personal collection)")
-        print("3. Debug 58 (Personal collection)")
-        print("4. Debug custom gem ID")
-        print("5. Database structure only")
-        print("6. Back to main menu")
-        
-        choice = input("\nSelect option (1-6): ").strip()
-        
-        if choice == '1':
-            self.run_complete_debug_analysis('C0034')
-        elif choice == '2':
-            self.run_complete_debug_analysis('140')
-        elif choice == '3':
-            self.run_complete_debug_analysis('58')
-        elif choice == '4':
-            custom_id = input("Enter gem ID to debug: ").strip()
-            if custom_id:
-                self.run_complete_debug_analysis(custom_id)
-        elif choice == '5':
-            self.debug_database_structure()
-        elif choice == '6':
-            return
-        else:
-            print("Invalid choice")
-    
-    def run_txt_to_unkgem_analysis(self):
-        """Run analysis using txt_to_unkgem.py"""
-        converter_path = self.programs['converter']
-        
-        if os.path.exists(converter_path):
-            print(f"\n🚀 RUNNING txt_to_unkgem.py ANALYSIS...")
-            try:
-                result = subprocess.run([sys.executable, converter_path], 
-                                      capture_output=True, text=True, timeout=300,
-                                      encoding='utf-8', errors='ignore')
-                if result.stdout:
-                    print("Analysis Results:")
-                    print(result.stdout)
-                if result.stderr:
-                    print("Warnings/Errors:")
-                    print(result.stderr)
-            except subprocess.TimeoutExpired:
-                print("   ⚠️ Analysis timed out")
             except Exception as e:
-                print(f"   ❌ Analysis error: {e}")
+                print(f"   ❌ Error analyzing {light}: {e}")
+    
+    def direct_analysis_bypass(self):
+        """Direct analysis that bypasses file copying issues"""
+        print("\n🚀 DIRECT ANALYSIS (BYPASS MODE)")
+        print("=" * 40)
+        print("This mode processes files directly without copying to avoid permission issues.")
+        
+        # Scan gems
+        gems = self.scan_available_gems()
+        if not gems:
+            return
+        
+        # Show options
+        complete_gems, partial_gems = self.show_available_gems(gems)
+        
+        if not complete_gems:
+            print("\n❌ No complete gem sets found!")
+            return
+        
+        # Get choice
+        print(f"\n🔍 Available complete gems: {', '.join(complete_gems)}")
+        
+        while True:
+            gem_choice = input(f"\nEnter gem number to analyze (or 'back'): ").strip()
+            
+            if gem_choice.lower() == 'back':
+                return
+            
+            if gem_choice in gems:
+                break
+            
+            print(f"❌ Not found. Available: {', '.join(sorted(gems.keys()))}")
+        
+        # Process directly
+        selected = {}
+        gem_files = gems[gem_choice]
+        
+        print(f"\n💎 PROCESSING GEM {gem_choice} DIRECTLY:")
+        for light in ['B', 'L', 'U']:
+            if gem_files[light]:
+                selected[light] = gem_files[light][0]
+                print(f"   {light}: {selected[light]}")
+        
+        # Direct conversion
+        try:
+            for light, filename in selected.items():
+                # Read directly from data/raw
+                input_path = os.path.join('data/raw', filename)
+                output_path = f'unkgem{light}.csv'
+                
+                # Read and normalize
+                df = pd.read_csv(input_path, sep=r'\s+', header=None, names=['wavelength', 'intensity'])
+                wavelengths = np.array(df['wavelength'])
+                intensities = np.array(df['intensity'])
+                
+                # Apply corrected normalization
+                normalized = self.correct_normalize_spectrum(wavelengths, intensities, light)
+                
+                # Save to current directory
+                output_df = pd.DataFrame({'wavelength': wavelengths, 'intensity': normalized})
+                output_df.to_csv(output_path, header=False, index=False)
+                
+                print(f"   ✅ {light}: {len(output_df)} points, range {normalized.min():.3f}-{normalized.max():.3f}")
+            
+            print(f"\n✅ Files created in current directory: unkgemB.csv, unkgemL.csv, unkgemU.csv")
+            
+            print("🚀 Running analysis...")
+            
+            # Run analysis
+            self.run_numerical_analysis_fixed()
+            
+        except Exception as e:
+            print(f"\n❌ Direct analysis error: {e}")
+    
+    def run_structural_analysis_hub(self):
+        """Launch structural analysis hub"""
+        hub_path = 'src/structural_analysis/main.py'
+        if os.path.exists(hub_path):
+            try:
+                subprocess.run([sys.executable, hub_path])
+            except Exception as e:
+                print(f"Error launching structural hub: {e}")
         else:
-            print(f"❌ {converter_path} not found")
+            print(f"❌ {hub_path} not found")
     
-    def run_numerical_analysis(self):
-        """Run numerical analysis with complete results display"""
-        print(f"\n🚀 RUNNING NUMERICAL ANALYSIS...")
-        
-        # Try fast analysis first, then standard
-        analysis_programs = [
-            (self.programs['fast_analysis'], "optimized fast analysis"),
-            (self.programs['numerical'], "standard gemini1.py")
-        ]
-        
-        for prog_path, description in analysis_programs:
-            if os.path.exists(prog_path):
-                try:
-                    print(f"   Using {description}...")
-                    result = subprocess.run([sys.executable, prog_path], 
-                                          timeout=120, capture_output=True, text=True,
-                                          encoding='utf-8', errors='ignore')
-                    if result.stdout:
-                        print("Results:")
-                        print(result.stdout)  # Show ALL results, not truncated
-                    return
-                except subprocess.TimeoutExpired:
-                    print(f"   ⚠️ {description} timed out")
-                except Exception as e:
-                    print(f"   ❌ {description} error: {e}")
-        
-        print("   ❌ No working analysis program found")
-    
-    def launch_structural_analysis(self):
-        """Launch structural analysis tools"""
-        launcher_path = self.programs['launcher']
+    def run_structural_launcher(self):
+        """Launch structural analyzers launcher"""
+        launcher_path = 'src/structural_analysis/gemini_launcher.py'
         if os.path.exists(launcher_path):
             try:
-                subprocess.run([sys.executable, launcher_path], encoding='utf-8', errors='ignore')
+                subprocess.run([sys.executable, launcher_path])
             except Exception as e:
-                print(f"Error launching structural analysis: {e}")
+                print(f"Error launching structural launcher: {e}")
         else:
             print(f"❌ {launcher_path} not found")
     
-    def show_database_statistics(self):
-        """Display comprehensive database statistics"""
+    def run_raw_data_browser(self):
+        """Run raw data browser if available"""
+        if os.path.exists('raw_data_browser.py'):
+            try:
+                subprocess.run([sys.executable, 'raw_data_browser.py'])
+            except Exception as e:
+                print(f"Error launching raw data browser: {e}")
+        else:
+            print("❌ raw_data_browser.py not found")
+    
+    def run_analytical_workflow(self):
+        """Run analytical workflow"""
+        workflow_path = 'src/numerical_analysis/analytical_workflow.py'
+        if os.path.exists(workflow_path):
+            try:
+                subprocess.run([sys.executable, workflow_path])
+            except Exception as e:
+                print(f"Error launching analytical workflow: {e}")
+        else:
+            print(f"❌ {workflow_path} not found")
+    
+    def show_database_stats(self):
+        """Show database statistics"""
         print("\n📊 DATABASE STATISTICS")
-        print("=" * 50)
+        print("=" * 30)
         
-        # Spectral databases
-        total_gems = set()
         for db_file in self.spectral_files:
             if os.path.exists(db_file):
                 try:
                     df = pd.read_csv(db_file)
-                    unique_gems = df['full_name'].nunique() if 'full_name' in df.columns else 'N/A'
-                    print(f"✅ {db_file}:")
-                    print(f"   Records: {len(df):,}")
-                    print(f"   Unique gems: {unique_gems}")
-                    
-                    # Add to total gem count
                     if 'full_name' in df.columns:
-                        gem_ids = df['full_name'].apply(lambda x: str(x).split('B')[0].split('L')[0].split('U')[0])
-                        total_gems.update(gem_ids.unique())
+                        unique_gems = df['full_name'].nunique()
+                        print(f"✅ {db_file}:")
+                        print(f"   Records: {len(df):,}")
+                        print(f"   Unique gems: {unique_gems}")
                         
+                        # Show sample intensity ranges
+                        intensity_range = f"{df['intensity'].min():.3f} to {df['intensity'].max():.3f}"
+                        print(f"   Intensity range: {intensity_range}")
+                    else:
+                        print(f"⚠️ {db_file}: {len(df):,} records (no gem names)")
                 except Exception as e:
-                    print(f"❌ {db_file}: Error - {e}")
+                    print(f"❌ {db_file}: Error reading - {e}")
             else:
                 print(f"❌ {db_file}: Missing")
         
-        # Gem library statistics
-        if self.gem_descriptions:
-            print(f"\n📚 Gem Library Information:")
-            print(f"   Described gems: {len(self.gem_descriptions)}")
-            print(f"   Coverage: {len(total_gems & set(self.gem_descriptions.keys()))}/{len(total_gems)} database gems")
-        
-        # Structural database
+        # Check structural database
         if os.path.exists(self.db_path):
             try:
                 conn = sqlite3.connect(self.db_path)
@@ -792,59 +1276,62 @@ class IntegratedGeminiSystem:
             except Exception as e:
                 print(f"❌ Structural database error: {e}")
     
-    def launch_program(self, program_key):
-        """Generic program launcher"""
-        program_path = self.programs.get(program_key)
-        if program_path and os.path.exists(program_path):
+    def emergency_fix_files(self):
+        """Run emergency fix if available"""
+        if os.path.exists('emergency_fix.py'):
             try:
-                subprocess.run([sys.executable, program_path], encoding='utf-8', errors='ignore')
+                subprocess.run([sys.executable, 'emergency_fix.py'])
             except Exception as e:
-                print(f"Error launching {program_key}: {e}")
+                print(f"Error running emergency fix: {e}")
         else:
-            print(f"❌ Program not found: {program_key}")
+            print("❌ emergency_fix.py not found")
     
     def main_menu(self):
-        """Enhanced main menu system with debug option"""
-        menu_items = [
-            ("🔬 Launch Structural Analysis Hub", lambda: self.launch_program('structural_hub')),
-            ("🎯 Launch Structural Analyzers", lambda: self.launch_program('launcher')),
-            ("💎 Select and Analyze Gem", self.select_gem_for_analysis),
-            ("🧮 Run Numerical Analysis (current)", self.run_numerical_analysis),
-            ("🔍 Debug Self-Matching Validation", self.debug_menu),
-            ("📈 Show Database Statistics", self.show_database_statistics),
+        """Main menu system"""
+        
+        menu_options = [
+            ("🔬 Launch Structural Analysis Hub", self.run_structural_analysis_hub),
+            ("🎯 Launch Structural Analyzers", self.run_structural_launcher),
+            ("📊 Analytical Analysis Workflow", self.run_analytical_workflow),
+            ("💎 Select Gem for Analysis (FIXED)", self.select_and_analyze_gem),
+            ("⚡ Direct Analysis (BYPASS PERMISSIONS)", self.direct_analysis_bypass),
+            ("🔍 Run Debug Analysis (VALIDATION)", self.run_debug_analysis),
+            ("📊 Visualize Individual Spectrum", self.visualize_individual_spectrum),
+            ("🔬 Deep Normalization Debug", self.debug_exact_normalization),
+            ("📂 Browse Raw Data Files", self.run_raw_data_browser),
+            ("🧮 Run Fixed Numerical Analysis", self.run_numerical_analysis_fixed),
+            ("📈 Show Database Statistics", self.show_database_stats),
+            ("🔧 Emergency Fix", self.emergency_fix_files),
             ("❌ Exit", lambda: None)
         ]
         
         while True:
             print("\n" + "="*80)
-            print("🔬 INTEGRATED GEMINI GEMOLOGICAL ANALYSIS SYSTEM")
-            if self.gem_descriptions:
-                print(f"   📚 Gem Library: {len(self.gem_descriptions)} described gems")
+            print("🔬 FIXED GEMINI GEMOLOGICAL ANALYSIS SYSTEM")
             print("="*80)
             
-            # System status check
-            self.check_system_components()
+            # Show system status
+            system_ok = self.check_system_status()
             
-            # Menu display
-            print(f"\n📋 MAIN MENU:")
+            print(f"\n📋 MAIN MENU (NORMALIZATION FIXED):")
             print("-" * 40)
             
-            for i, (description, _) in enumerate(menu_items, 1):
+            for i, (description, _) in enumerate(menu_options, 1):
                 print(f"{i:2}. {description}")
             
-            # Handle user input
+            # Get user choice
             try:
-                choice = input(f"\nChoice (1-{len(menu_items)}): ").strip()
+                choice = input(f"\nChoice (1-{len(menu_options)}): ").strip()
                 choice_idx = int(choice) - 1
                 
-                if choice_idx == len(menu_items) - 1:  # Exit
+                if choice_idx == len(menu_options) - 1:  # Exit
                     print("\n👋 Goodbye!")
                     break
                 
-                if 0 <= choice_idx < len(menu_items):
-                    description, action = menu_items[choice_idx]
+                if 0 <= choice_idx < len(menu_options) - 1:
+                    description, action = menu_options[choice_idx]
                     print(f"\n🚀 {description.upper()}")
-                    print("-" * 60)
+                    print("-" * 50)
                     
                     if action:
                         action()
@@ -862,14 +1349,11 @@ class IntegratedGeminiSystem:
                 print(f"\n❌ Menu error: {e}")
 
 def main():
-    """Main entry point with enhanced error handling"""
+    """Main entry point"""
     try:
-        print("🔬 Starting Integrated Gemini Gemological Analysis System...")
-        print("📚 Loading gem library integration...")
-        
-        system = IntegratedGeminiSystem()
+        print("🔬 Starting FIXED Gemini Gemological Analysis System...")
+        system = FixedGeminiAnalysisSystem()
         system.main_menu()
-        
     except KeyboardInterrupt:
         print("\n\nSystem interrupted - goodbye!")
     except Exception as e:
