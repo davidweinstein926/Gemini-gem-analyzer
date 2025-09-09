@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-COMPLETE FIXED MAIN.PY - GEMINI GEMOLOGICAL ANALYSIS SYSTEM
+COMPLETE FIXED MAIN.PY - GEMINI GEMOLOGICAL ANALYSIS SYSTEM, david
 All indentation errors corrected, full file selection implemented
 Enhanced visualization system with CONSOLIDATED SINGLE LEGEND
 """
