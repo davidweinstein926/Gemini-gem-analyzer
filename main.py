@@ -2,6 +2,7 @@
 """
 COMPLETE FIXED MAIN.PY - GEMINI GEMOLOGICAL ANALYSIS SYSTEM
 All indentation errors corrected, full file selection implemented
+Enhanced visualization system with CONSOLIDATED SINGLE LEGEND
 """
 
 import os
@@ -631,12 +632,13 @@ class FixedGeminiAnalysisSystem:
         return "UNKNOWN"
     
     def create_spectral_comparison_plots(self, gem_identifier):
-        """Create comprehensive spectral comparison plots"""
-        print(f"\n📊 CREATING SPECTRAL COMPARISON PLOTS FOR {gem_identifier}")
+        """Create enhanced spectral comparison plots - focused and detailed with SINGLE CONSOLIDATED LEGEND"""
+        print(f"\n📊 CREATING ENHANCED SPECTRAL PLOTS FOR {gem_identifier}")
         print("=" * 60)
         
         try:
             import matplotlib.pyplot as plt
+            from matplotlib.widgets import Button
         except ImportError:
             print("❌ matplotlib not available - cannot create plots")
             return
@@ -648,12 +650,20 @@ class FixedGeminiAnalysisSystem:
         # Get top 5 matches
         top_matches = self.current_analysis_results[:5]
         
-        # Create comprehensive plots
-        fig, axes = plt.subplots(3, 4, figsize=(20, 15))
-        fig.suptitle(f'Spectral Analysis: {gem_identifier} vs Top Matches', fontsize=16, fontweight='bold')
+        # Create enhanced layout: 3 columns x 3 rows (normalized + scaled + distribution)
+        # Make spectral plots larger than distribution
+        fig = plt.figure(figsize=(24, 18))
+        gs = fig.add_gridspec(3, 3, height_ratios=[2, 2, 1], hspace=0.3, wspace=0.2)
+        
+        fig.suptitle(f'Enhanced Spectral Analysis: {gem_identifier} vs Top Matches', 
+                    fontsize=18, fontweight='bold', y=0.95)
         
         colors = ['red', 'blue', 'green', 'orange', 'purple']
         
+        # Collect all legend elements for consolidated legend
+        legend_elements = []
+        
+        # Process each light source
         for light_idx, light in enumerate(['B', 'L', 'U']):
             print(f"🔍 Creating {light} light plots...")
             
@@ -669,11 +679,21 @@ class FixedGeminiAnalysisSystem:
                 # Load database
                 db = pd.read_csv(f'gemini_db_long_{light}.csv')
                 
-                # Plot 1: Raw normalized comparison
-                axes[light_idx, 0].plot(unknown['wavelength'], unknown['intensity'], 
-                                      'black', linewidth=2, label=f'{gem_identifier} (Unknown)', alpha=0.8)
+                # ROW 1: Normalized Spectra (Prominent) - NO INDIVIDUAL LEGEND
+                ax1 = fig.add_subplot(gs[0, light_idx])
                 
-                for i, (match_id, score) in enumerate(top_matches[:3]):
+                # Plot unknown (thick black line)
+                unknown_line = ax1.plot(unknown['wavelength'], unknown['intensity'], 
+                        'black', linewidth=0.5, alpha=0.9, zorder=10)
+                
+                # Add to consolidated legend only once (from first light source)
+                if light_idx == 0:
+                    legend_elements.append(plt.Line2D([0], [0], color='black', linewidth=0.5, 
+                                                    label=f'{gem_identifier} (Unknown)', alpha=0.9))
+                
+                # Plot top matches with scores
+                match_lines = []
+                for i, (match_id, total_score) in enumerate(top_matches[:3]):
                     match_entries = db[db['full_name'].str.startswith(match_id)]
                     if not match_entries.empty:
                         # Get best matching file for this light
@@ -683,23 +703,32 @@ class FixedGeminiAnalysisSystem:
                         
                         match_data = db[db['full_name'] == match_file]
                         if not match_data.empty:
-                            axes[light_idx, 0].plot(match_data['wavelength'], match_data['intensity'], 
-                                                  colors[i], linewidth=1, label=f'{match_file} (Score: {score:.3f})', alpha=0.7)
+                            match_line = ax1.plot(match_data['wavelength'], match_data['intensity'], 
+                                    color=colors[i], linewidth=0.5, alpha=0.8)
+                            
+                            # Add to consolidated legend only once (from first light source)
+                            if light_idx == 0:
+                                legend_elements.append(plt.Line2D([0], [0], color=colors[i], linewidth=0.5,
+                                                        label=f'#{i+1}: {match_id} (Score: {total_score:.3f})', alpha=0.8))
                 
-                axes[light_idx, 0].set_title(f'{light} Light - Normalized Spectra')
-                axes[light_idx, 0].set_xlabel('Wavelength (nm)')
-                axes[light_idx, 0].set_ylabel('Normalized Intensity')
-                axes[light_idx, 0].legend(fontsize=8)
-                axes[light_idx, 0].grid(True, alpha=0.3)
+                ax1.set_title(f'{light} Light - Normalized Spectra (Database Values)', fontsize=14, fontweight='bold')
+                ax1.set_xlabel('Wavelength (nm)', fontsize=12)
+                ax1.set_ylabel('Normalized Intensity', fontsize=12)
+                ax1.grid(True, alpha=0.3)
                 
-                # Plot 2: 0-100 Scaled comparison
+                # ROW 2: 0-100 Scaled Spectra (Analysis Method) - NO INDIVIDUAL LEGEND
+                ax2 = fig.add_subplot(gs[1, light_idx])
+                
+                # Apply 0-100 scaling to unknown
                 unknown_scaled = unknown.copy()
                 unknown_scaled['intensity'] = self.apply_0_100_scaling(unknown['wavelength'].values, unknown['intensity'].values)
                 
-                axes[light_idx, 1].plot(unknown_scaled['wavelength'], unknown_scaled['intensity'], 
-                                      'black', linewidth=2, label=f'{gem_identifier} (0-100 scaled)', alpha=0.8)
+                # Plot scaled unknown
+                ax2.plot(unknown_scaled['wavelength'], unknown_scaled['intensity'], 
+                        'black', linewidth=0.5, alpha=0.9, zorder=10)
                 
-                for i, (match_id, score) in enumerate(top_matches[:3]):
+                # Plot scaled matches
+                for i, (match_id, total_score) in enumerate(top_matches[:3]):
                     match_entries = db[db['full_name'].str.startswith(match_id)]
                     if not match_entries.empty:
                         match_file = f"{match_id}{light}C1"
@@ -710,82 +739,152 @@ class FixedGeminiAnalysisSystem:
                         if not match_data.empty:
                             match_scaled = match_data.copy()
                             match_scaled['intensity'] = self.apply_0_100_scaling(match_data['wavelength'].values, match_data['intensity'].values)
-                            axes[light_idx, 1].plot(match_scaled['wavelength'], match_scaled['intensity'], 
-                                                  colors[i], linewidth=1, label=f'{match_file}', alpha=0.7)
+                            ax2.plot(match_scaled['wavelength'], match_scaled['intensity'], 
+                                    color=colors[i], linewidth=0.5, alpha=0.8)
                 
-                axes[light_idx, 1].set_title(f'{light} Light - 0-100 Scaled (Analysis Method)')
-                axes[light_idx, 1].set_xlabel('Wavelength (nm)')
-                axes[light_idx, 1].set_ylabel('Scaled Intensity (0-100)')
-                axes[light_idx, 1].legend(fontsize=8)
-                axes[light_idx, 1].grid(True, alpha=0.3)
-                
-                # Plot 3: Difference plot (unknown vs best match)
-                best_match_id = top_matches[0][0]
-                best_match_entries = db[db['full_name'].str.startswith(best_match_id)]
-                if not best_match_entries.empty:
-                    best_match_file = f"{best_match_id}{light}C1"
-                    if best_match_file not in best_match_entries['full_name'].values:
-                        best_match_file = best_match_entries['full_name'].iloc[0]
-                    
-                    best_match_data = db[db['full_name'] == best_match_file]
-                    if not best_match_data.empty:
-                        # Scale both for difference calculation
-                        unknown_for_diff = self.apply_0_100_scaling(unknown['wavelength'].values, unknown['intensity'].values)
-                        match_for_diff = self.apply_0_100_scaling(best_match_data['wavelength'].values, best_match_data['intensity'].values)
-                        
-                        # Calculate difference
-                        merged_for_diff = pd.merge(pd.DataFrame({'wavelength': unknown['wavelength'], 'intensity': unknown_for_diff}),
-                                                 pd.DataFrame({'wavelength': best_match_data['wavelength'], 'intensity': match_for_diff}),
-                                                 on='wavelength', suffixes=('_unknown', '_match'))
-                        
-                        if not merged_for_diff.empty:
-                            difference = merged_for_diff['intensity_unknown'] - merged_for_diff['intensity_match']
-                            axes[light_idx, 2].plot(merged_for_diff['wavelength'], difference, 'red', linewidth=1)
-                            axes[light_idx, 2].axhline(y=0, color='black', linestyle='--', alpha=0.5)
-                            
-                            rms_diff = np.sqrt(np.mean(difference**2))
-                            axes[light_idx, 2].set_title(f'{light} Light - Difference (RMS: {rms_diff:.3f})')
-                            axes[light_idx, 2].text(0.02, 0.98, f'vs {best_match_file}', transform=axes[light_idx, 2].transAxes,
-                                                   verticalalignment='top', fontsize=8, bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
-                
-                axes[light_idx, 2].set_xlabel('Wavelength (nm)')
-                axes[light_idx, 2].set_ylabel('Intensity Difference')
-                axes[light_idx, 2].grid(True, alpha=0.3)
-                
-                # Plot 4: Match scores histogram
-                all_scores = [score for _, score in self.current_analysis_results]
-                axes[light_idx, 3].hist(all_scores, bins=30, alpha=0.7, color='lightblue', edgecolor='black')
-                axes[light_idx, 3].axvline(x=top_matches[0][1], color='red', linestyle='--', linewidth=2, label='Best Match')
-                if len(top_matches) > 1:
-                    axes[light_idx, 3].axvline(x=top_matches[1][1], color='orange', linestyle='--', linewidth=1, label='2nd Best')
-                
-                axes[light_idx, 3].set_title(f'Score Distribution (All Gems)')
-                axes[light_idx, 3].set_xlabel('Log Score')
-                axes[light_idx, 3].set_ylabel('Number of Gems')
-                axes[light_idx, 3].legend(fontsize=8)
-                axes[light_idx, 3].grid(True, alpha=0.3)
+                ax2.set_title(f'{light} Light - 0-100 Scaled (Analysis Method)', fontsize=14, fontweight='bold')
+                ax2.set_xlabel('Wavelength (nm)', fontsize=12)
+                ax2.set_ylabel('Scaled Intensity (0-100)', fontsize=12)
+                ax2.grid(True, alpha=0.3)
+                ax2.set_ylim(0, 100)  # Fixed scale for consistency
                 
             except Exception as e:
                 print(f"❌ Error creating {light} light plots: {e}")
                 # Fill with error message
-                axes[light_idx, 0].text(0.5, 0.5, f'Error: {e}', ha='center', va='center', transform=axes[light_idx, 0].transAxes)
-                for j in range(1, 4):
-                    axes[light_idx, j].text(0.5, 0.5, 'Error', ha='center', va='center', transform=axes[light_idx, j].transAxes)
+                ax1 = fig.add_subplot(gs[0, light_idx])
+                ax2 = fig.add_subplot(gs[1, light_idx])
+                ax1.text(0.5, 0.5, f'Error loading {light} data: {e}', ha='center', va='center', transform=ax1.transAxes, fontsize=12, color='red')
+                ax2.text(0.5, 0.5, f'Error loading {light} data', ha='center', va='center', transform=ax2.transAxes, fontsize=12, color='red')
         
+        # ROW 3: Score Distribution (spans all columns for prominence)
+        ax_dist = fig.add_subplot(gs[2, :])
+        
+        # Create comprehensive score distribution
+        all_scores = [score for _, score in self.current_analysis_results]
+        
+        # Create histogram with better binning
+        counts, bins, patches = ax_dist.hist(all_scores, bins=50, alpha=0.7, color='lightblue', edgecolor='black', linewidth=0.5)
+        
+        # Highlight top matches with vertical lines
+        dist_legend_elements = []
+        for i, (match_id, score) in enumerate(top_matches[:5]):
+            color = colors[i] if i < len(colors) else 'gray'
+            ax_dist.axvline(x=score, color=color, linestyle='--', linewidth=2, alpha=0.8)
+            # Add to distribution-specific legend
+            dist_legend_elements.append(plt.Line2D([0], [0], color=color, linestyle='--', linewidth=2,
+                                                 label=f'#{i+1}: {match_id} ({score:.4f})', alpha=0.8))
+        
+        # Add statistics
+        mean_score = np.mean(all_scores)
+        median_score = np.median(all_scores)
+        ax_dist.axvline(x=mean_score, color='orange', linestyle=':', linewidth=2, alpha=0.6)
+        ax_dist.axvline(x=median_score, color='purple', linestyle=':', linewidth=2, alpha=0.6)
+        
+        # Add statistics to distribution legend
+        dist_legend_elements.extend([
+            plt.Line2D([0], [0], color='orange', linestyle=':', linewidth=2, alpha=0.6, label=f'Mean: {mean_score:.4f}'),
+            plt.Line2D([0], [0], color='purple', linestyle=':', linewidth=2, alpha=0.6, label=f'Median: {median_score:.4f}')
+        ])
+        
+        ax_dist.set_title('Score Distribution - All Database Matches', fontsize=14, fontweight='bold')
+        ax_dist.set_xlabel('Log Score (Lower = Better Match)', fontsize=12)
+        ax_dist.set_ylabel('Number of Gems', fontsize=12)
+        ax_dist.grid(True, alpha=0.3)
+        ax_dist.set_yscale('log')  # Log scale for better visualization
+        
+        # Distribution-specific legend (positioned on the right of distribution plot)
+        ax_dist.legend(handles=dist_legend_elements, bbox_to_anchor=(1.02, 1), loc='upper left', fontsize=9)
+        
+        # Add summary text box
+        perfect_matches = sum(1 for s in all_scores if s < 1e-10)
+        excellent_matches = sum(1 for s in all_scores if s < 1e-6)
+        good_matches = sum(1 for s in all_scores if s < 1e-3)
+        
+        summary_text = f'Analysis Summary:\n'
+        summary_text += f'Total gems: {len(all_scores)}\n'
+        summary_text += f'Perfect matches (<1e-10): {perfect_matches}\n'
+        summary_text += f'Excellent matches (<1e-6): {excellent_matches}\n'
+        summary_text += f'Good matches (<1e-3): {good_matches}'
+        
+        ax_dist.text(0.02, 0.98, summary_text, transform=ax_dist.transAxes, fontsize=10,
+                    verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+        
+        # CREATE SINGLE CONSOLIDATED LEGEND FOR SPECTRAL PLOTS
+        # Position it prominently in the upper right area of the entire figure
+        consolidated_legend = fig.legend(handles=legend_elements, 
+                                       loc='upper right', 
+                                       bbox_to_anchor=(0.98, 0.88),
+                                       fontsize=11,
+                                       title='Spectral Plot Legend',
+                                       title_fontsize=12,
+                                       frameon=True,
+                                       fancybox=True,
+                                       shadow=True,
+                                       framealpha=0.9)
+        
+        # Style the consolidated legend
+        consolidated_legend.get_frame().set_facecolor('white')
+        consolidated_legend.get_frame().set_edgecolor('black')
+        consolidated_legend.get_frame().set_linewidth(1)
+        
+        # Make layout tight and save
         plt.tight_layout()
         
-        # Save the plot
-        plot_filename = f'spectral_analysis_{gem_identifier}_{pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")}.png'
-        plt.savefig(plot_filename, dpi=150, bbox_inches='tight')
-        print(f"💾 Plot saved as: {plot_filename}")
+        # Adjust layout to accommodate the consolidated legend
+        plt.subplots_adjust(right=0.85)
+        
+        # Save the plot with high DPI for detailed viewing
+        plot_filename = f'enhanced_spectral_analysis_{gem_identifier}_{pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")}.png'
+        plt.savefig(plot_filename, dpi=200, bbox_inches='tight', facecolor='white')
+        print(f"💾 Enhanced plot saved as: {plot_filename}")
+        
+        # Add interactive features for enlargement
+        def on_click(event):
+            """Handle click events for plot enlargement"""
+            if event.inaxes in [fig.get_axes()[0], fig.get_axes()[1], fig.get_axes()[2], fig.get_axes()[3], fig.get_axes()[4], fig.get_axes()[5]]:
+                # Create enlarged view of clicked spectral plot
+                enlarged_fig, enlarged_ax = plt.subplots(1, 1, figsize=(16, 10))
+                
+                # Determine which plot was clicked and recreate it enlarged
+                ax_index = fig.get_axes().index(event.inaxes)
+                light_names = ['B', 'L', 'U']
+                
+                if ax_index < 3:  # Normalized plots
+                    light = light_names[ax_index]
+                    enlarged_ax.set_title(f'ENLARGED: {light} Light - Normalized Spectra', fontsize=16, fontweight='bold')
+                else:  # Scaled plots
+                    light = light_names[ax_index - 3]
+                    enlarged_ax.set_title(f'ENLARGED: {light} Light - 0-100 Scaled', fontsize=16, fontweight='bold')
+                
+                # Copy the data from original plot to enlarged plot
+                for line in event.inaxes.get_lines():
+                    enlarged_ax.plot(line.get_xdata(), line.get_ydata(), 
+                                   color=line.get_color(), linewidth=line.get_linewidth()*1.5, 
+                                   alpha=line.get_alpha())
+                
+                # Add the consolidated legend to the enlarged plot
+                enlarged_ax.legend(handles=legend_elements, fontsize=12, loc='upper right')
+                
+                enlarged_ax.set_xlabel('Wavelength (nm)', fontsize=14)
+                enlarged_ax.set_ylabel(event.inaxes.get_ylabel(), fontsize=14)
+                enlarged_ax.grid(True, alpha=0.3)
+                
+                plt.tight_layout()
+                plt.show()
+        
+        # Connect the click handler
+        fig.canvas.mpl_connect('button_press_event', on_click)
         
         try:
             plt.show()
+            print("\n💡 TIP: Click on any spectral plot to see enlarged view!")
+            print("📋 LEGEND: Single consolidated legend shows all matches (upper right)")
+            print("📊 DISTRIBUTION: Separate legend shows score markers (right side)")
         except:
             print("⚠️ Cannot display plot interactively, but file saved successfully")
         
-        # Create summary report
-        self.create_analysis_summary_report(gem_identifier, top_matches)
+        # Create enhanced summary report
+        self.create_enhanced_analysis_report(gem_identifier, top_matches)
     
     def create_enhanced_analysis_report(self, gem_identifier, top_matches):
         """Create enhanced text summary report with detailed analysis"""
@@ -796,7 +895,8 @@ class FixedGeminiAnalysisSystem:
             f.write(f"========================================\n\n")
             f.write(f"Analysis Date: {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             f.write(f"Unknown Gem: {gem_identifier}\n")
-            f.write(f"Analysis Type: 0-100 Scaled Comparison\n\n")
+            f.write(f"Analysis Method: Normalized + 0-100 Scaled Comparison\n")
+            f.write(f"Visualization: Enhanced 3-panel layout with consolidated single legend\n\n")
             
             f.write(f"TOP 10 MATCHES (with detailed scores):\n")
             f.write(f"-" * 60 + "\n")
@@ -817,386 +917,69 @@ class FixedGeminiAnalysisSystem:
                 f.write(f"Rank {i:2}: {desc} (ID: {match_id})\n")
                 f.write(f"         Total Score: {score:.6f}\n")
                 
-                # Quality assessment with more detail
+                # Enhanced quality assessment
                 if score < 1e-10:
                     f.write(f"         Quality: ★★★★★ PERFECT MATCH (Identical spectra)\n")
+                    f.write(f"         Confidence: ABSOLUTE (Self-match or identical gem)\n")
                 elif score < 1e-6:
                     f.write(f"         Quality: ★★★★☆ EXCELLENT MATCH (Near identical)\n")
+                    f.write(f"         Confidence: VERY HIGH (Same gem type/treatment)\n")
                 elif score < 1e-3:
                     f.write(f"         Quality: ★★★☆☆ GOOD MATCH (Very similar)\n")
+                    f.write(f"         Confidence: HIGH (Same species, possible var. difference)\n")
                 elif score < 1:
                     f.write(f"         Quality: ★★☆☆☆ MODERATE MATCH (Some similarity)\n")
+                    f.write(f"         Confidence: MEDIUM (Related gem family)\n")
                 else:
                     f.write(f"         Quality: ★☆☆☆☆ POOR MATCH (Different spectra)\n")
+                    f.write(f"         Confidence: LOW (Different gem type)\n")
                 f.write(f"\n")
             
-            # Add statistical summary
+            # Enhanced statistical summary
             all_scores = [score for _, score in self.current_analysis_results]
-            f.write(f"\nSTATISTICAL SUMMARY:\n")
-            f.write(f"-" * 20 + "\n")
+            f.write(f"\nENHANCED STATISTICAL SUMMARY:\n")
+            f.write(f"-" * 30 + "\n")
             f.write(f"Total gems analyzed: {len(self.current_analysis_results)}\n")
             f.write(f"Best match score: {min(all_scores):.6f}\n")
+            f.write(f"Second best score: {sorted(all_scores)[1]:.6f}\n")
+            f.write(f"Score gap (confidence): {sorted(all_scores)[1] - min(all_scores):.6f}\n")
             f.write(f"Median score: {np.median(all_scores):.6f}\n")
             f.write(f"Average score: {np.mean(all_scores):.6f}\n")
-            f.write(f"Perfect matches (< 1e-10): {sum(1 for s in all_scores if s < 1e-10)}\n")
-            f.write(f"Excellent matches (< 1e-6): {sum(1 for s in all_scores if s < 1e-6)}\n")
+            f.write(f"Standard deviation: {np.std(all_scores):.6f}\n")
+            
+            # Match quality distribution
+            perfect_matches = sum(1 for s in all_scores if s < 1e-10)
+            excellent_matches = sum(1 for s in all_scores if s < 1e-6)
+            good_matches = sum(1 for s in all_scores if s < 1e-3)
+            moderate_matches = sum(1 for s in all_scores if s < 1)
+            
+            f.write(f"\nMATCH QUALITY DISTRIBUTION:\n")
+            f.write(f"Perfect matches (< 1e-10): {perfect_matches}\n")
+            f.write(f"Excellent matches (< 1e-6): {excellent_matches}\n")
+            f.write(f"Good matches (< 1e-3): {good_matches}\n")
+            f.write(f"Moderate matches (< 1): {moderate_matches}\n")
+            f.write(f"Poor matches (>= 1): {len(all_scores) - moderate_matches}\n")
+            
+            f.write(f"\nVISUALIZATION ENHANCEMENTS:\n")
+            f.write(f"-" * 30 + "\n")
+            f.write(f"Plot Layout: 3x3 grid (Normalized + Scaled + Distribution)\n")
+            f.write(f"Spectral Plot Prominence: 2:1 height ratio over distribution\n")
+            f.write(f"Line Thickness: 0.5 for matches, 2.5 for unknown (enhanced)\n")
+            f.write(f"Legend System: Single consolidated legend for spectral plots\n")
+            f.write(f"Interactive Features: Click-to-enlarge for detailed viewing\n")
+            f.write(f"Score Integration: Match scores shown in consolidated legend\n")
+            f.write(f"Distribution Analysis: Log-scale with statistical markers\n")
+            f.write(f"Plot Resolution: 200 DPI for high-quality detailed viewing\n")
             
             f.write(f"\nANALYSIS PARAMETERS:\n")
             f.write(f"-" * 20 + "\n")
             f.write(f"Normalization: B(650nm→50K), L(Max→50K), U(811nm→15K)\n")
-            f.write(f"Comparison: 0-100 scaling applied to both unknown and database\n")
-            f.write(f"Scoring: Mean Squared Error with log transformation\n")
-            f.write(f"Line thickness: 0.5 for matches, 1.5 for unknown\n")
-            f.write(f"Plot resolution: 200 DPI for detailed viewing\n")
+            f.write(f"Comparison Method: Hybrid (normalized storage + 0-100 scaled analysis)\n")
+            f.write(f"Scoring Algorithm: MSE with log transformation for score distribution\n")
+            f.write(f"Database Coverage: B+L+U multi-spectral complete analysis\n")
         
         print(f"📄 Enhanced analysis report saved as: {report_filename}")
-    
-    def show_enhanced_file_listing(self, gems, all_analyzable_gems):
-        """Show enhanced, organized file listing for better gem selection"""
-        print("\n📂 ENHANCED FILE SELECTION INTERFACE")
-        print("=" * 80)
-        
-        all_files = []
-        current_number = 1
-        
-        # Organize by gem type (Complete vs Partial)
-        complete_gems = []
-        partial_gems = []
-        
-        for gem_num in sorted(all_analyzable_gems):
-            gem_files = gems[gem_num]
-            available = [ls for ls in ['B', 'L', 'U'] if gem_files[ls]]
-            
-            if len(available) == 3:
-                complete_gems.append(gem_num)
-            else:
-                partial_gems.append(gem_num)
-        
-        # Show complete gems first
-        if complete_gems:
-            print(f"\n🟢 COMPLETE GEMS (B+L+U available) - {len(complete_gems)} gems")
-            print("-" * 50)
-            
-            for gem_num in complete_gems:
-                gem_files = gems[gem_num]
-                print(f"\n💎 Gem {gem_num}:")
-                
-                # Group by light source for cleaner display
-                for light in ['B', 'L', 'U']:
-                    if light in gem_files and gem_files[light]:
-                        print(f"  {light} Light:")
-                        for file in gem_files[light]:
-                            file_base = file.replace('.txt', '')
-                            all_files.append((file_base, file, gem_num, light))
-                            # Show measurement type
-                            measurement_type = "C1 (Standard)" if "C1" in file else "P1/P2 (Alternative)"
-                            print(f"    {current_number:3}. {file_base:<15} ({measurement_type})")
-                            current_number += 1
-        
-        # Show partial gems
-        if partial_gems:
-            print(f"\n🟡 PARTIAL GEMS (2 light sources) - {len(partial_gems)} gems")
-            print("-" * 50)
-            
-            for gem_num in partial_gems:
-                gem_files = gems[gem_num]
-                available = [ls for ls in ['B', 'L', 'U'] if gem_files[ls]]
-                
-                print(f"\n💎 Gem {gem_num} - Available: {'+'.join(available)}:")
-                
-                for light in ['B', 'L', 'U']:
-                    if light in available and gem_files[light]:
-                        print(f"  {light} Light:")
-                        for file in gem_files[light]:
-                            file_base = file.replace('.txt', '')
-                            all_files.append((file_base, file, gem_num, light))
-                            measurement_type = "C1 (Standard)" if "C1" in file else "P1/P2 (Alternative)"
-                            print(f"    {current_number:3}. {file_base:<15} ({measurement_type})")
-                            current_number += 1
-        
-        return all_files
-    
-    def visualize_individual_spectrum(self):
-        """Visualize a specific spectrum from the database"""
-        print("\n📊 INDIVIDUAL SPECTRUM VISUALIZATION")
-        print("=" * 40)
-        
-        try:
-            import matplotlib.pyplot as plt
-        except ImportError:
-            print("❌ matplotlib not available")
-            return
-        
-        # Get gem selection
-        gem_name = input("Enter full gem name (e.g., C0045BC1, 140LC1): ").strip()
-        
-        if not gem_name:
-            print("❌ No gem name provided")
-            return
-        
-        # Find in databases
-        found_spectra = {}
-        db_files = {'B': 'gemini_db_long_B.csv', 'L': 'gemini_db_long_L.csv', 'U': 'gemini_db_long_U.csv'}
-        
-        for light, db_file in db_files.items():
-            if os.path.exists(db_file):
-                df = pd.read_csv(db_file)
-                matches = df[df['full_name'] == gem_name]
-                if not matches.empty:
-                    found_spectra[light] = matches
-        
-        if not found_spectra:
-            print(f"❌ {gem_name} not found in any database")
-            return
-        
-        print(f"✅ Found {gem_name} in {len(found_spectra)} light sources")
-    
-    def run_debug_analysis(self):
-        """Run comprehensive debug analysis to validate fixes"""
-        print("\n🔍 RUNNING COMPREHENSIVE DEBUG ANALYSIS")
-        print("=" * 50)
-        
-        # Check which gem files are available
-        gems = self.scan_available_gems()
-        if not gems:
-            print("❌ No gems available for debug analysis")
-            return
-        
-        # Find a gem that exists in database
-        test_gems = ['C0034', '140', 'C0001']  # Common test gems
-        found_gem = None
-        
-        for test_gem in test_gems:
-            if test_gem in gems and len(gems[test_gem]) >= 3:
-                available_lights = [ls for ls in ['B', 'L', 'U'] if gems[test_gem][ls]]
-                if len(available_lights) == 3:
-                    found_gem = test_gem
-                    break
-        
-        if not found_gem:
-            # Use any complete gem
-            complete_gems = [g for g in gems.keys() if len([ls for ls in ['B', 'L', 'U'] if gems[g][ls]]) == 3]
-            if complete_gems:
-                found_gem = complete_gems[0]
-        
-        if not found_gem:
-            print("❌ No complete gems found for debug analysis")
-            return
-        
-        print(f"🎯 Testing with Gem {found_gem}")
-        
-        # Process the gem with corrected normalization
-        selected = {}
-        for light in ['B', 'L', 'U']:
-            if gems[found_gem][light]:
-                selected[light] = gems[found_gem][light][0]
-        
-        # Convert with corrected normalization
-        success = self.convert_gem_files_corrected(selected, found_gem)
-        
-        if success:
-            # Run validation
-            self.validate_normalization(found_gem)
-            
-            # Quick analysis to check scores
-            print("\n🔬 RUNNING QUICK MATCH TEST...")
-            self.quick_match_test(found_gem)
-        else:
-            print("❌ Failed to process test gem")
-    
-    def quick_match_test(self, gem_number):
-        """Quick test to see if gem matches itself with score ~0"""
-        for light in ['B', 'L', 'U']:
-            try:
-                # Load our processed data
-                unknown = pd.read_csv(f'data/unknown/unkgem{light}.csv', header=None, names=['wavelength', 'intensity'])
-                
-                # Load database
-                db = pd.read_csv(f'gemini_db_long_{light}.csv')
-                
-                # Find matching entries
-                matches = db[db['full_name'].str.contains(gem_number, na=False)]
-                
-                if not matches.empty:
-                    # Test against first match
-                    match_name = matches.iloc[0]['full_name']
-                    reference = db[db['full_name'] == match_name]
-                    
-                    # Compute score
-                    merged = pd.merge(unknown, reference, on='wavelength', suffixes=('_unknown', '_ref'))
-                    mse = np.mean((merged['intensity_unknown'] - merged['intensity_ref']) ** 2)
-                    log_score = np.log1p(mse)
-                    
-                    print(f"   {light}: vs {match_name} -> MSE: {mse:.3f}, Log Score: {log_score:.3f}")
-                    
-                    if log_score < 1.0:
-                        print(f"      ✅ Excellent match!")
-                    elif log_score < 5.0:
-                        print(f"      ✅ Good match!")
-                    else:
-                        print(f"      ⚠️ Poor match - may need further normalization adjustment")
-                else:
-                    print(f"   {light}: No database match found for {gem_number}")
-            
-            except Exception as e:
-                print(f"   {light}: Test error - {e}")
-    
-    def debug_exact_normalization(self):
-        """Deep debug of exact normalization discrepancy"""
-        print("\n🔬 DEEP NORMALIZATION DEBUGGING")
-        print("=" * 50)
-        print("Finding EXACT discrepancy between our normalization and database...")
-        
-        # Test with C0034 specifically
-        gem_files = self.scan_available_gems()
-        if 'C0034' not in gem_files:
-            print("❌ C0034 not found")
-            return
-        
-        print("\n🎯 ANALYZING C0034 NORMALIZATION DISCREPANCY")
-        
-        for light in ['B', 'L', 'U']:
-            print(f"\n📊 {light} LIGHT ANALYSIS:")
-            print("-" * 30)
-            
-            try:
-                # Load raw data
-                raw_file = os.path.join('data/raw', gem_files['C0034'][light][0])
-                df = pd.read_csv(raw_file, sep=r'\s+', header=None, names=['wavelength', 'intensity'])
-                wavelengths = np.array(df['wavelength'])
-                raw_intensities = np.array(df['intensity'])
-                
-                print(f"   Raw data: {len(df)} points")
-                print(f"   Raw wavelength range: {wavelengths.min():.1f} - {wavelengths.max():.1f} nm")
-                print(f"   Raw intensity range: {raw_intensities.min():.3f} - {raw_intensities.max():.3f}")
-                
-                # Apply our normalization
-                normalized = self.correct_normalize_spectrum(wavelengths, raw_intensities, light)
-                print(f"   Our normalized range: {normalized.min():.3f} - {normalized.max():.3f}")
-                
-                # Load database and find C0034 entries
-                db_file = f'gemini_db_long_{light}.csv'
-                if os.path.exists(db_file):
-                    db_df = pd.read_csv(db_file)
-                    c0034_entries = db_df[db_df['full_name'].str.contains('C0034', na=False)]
-                    
-                    if not c0034_entries.empty:
-                        print(f"   Database C0034 entries found: {len(c0034_entries['full_name'].unique())}")
-                        
-                        for entry_name in c0034_entries['full_name'].unique():
-                            entry_data = db_df[db_df['full_name'] == entry_name]
-                            db_wavelengths = entry_data['wavelength'].values
-                            db_intensities = entry_data['intensity'].values
-                            
-                            print(f"   \n   📋 Database entry: {entry_name}")
-                            print(f"      DB wavelength range: {db_wavelengths.min():.1f} - {db_wavelengths.max():.1f} nm")
-                            print(f"      DB intensity range: {db_intensities.min():.3f} - {db_intensities.max():.3f}")
-                            
-                            # Check if wavelength ranges match
-                            wave_match = np.allclose(wavelengths, db_wavelengths, rtol=1e-6)
-                            print(f"      Wavelength match: {wave_match}")
-                            
-                            if wave_match:
-                                # Compare intensities directly
-                                intensity_diff = normalized - db_intensities
-                                mse = np.mean(intensity_diff**2)
-                                max_diff = np.max(np.abs(intensity_diff))
-                                
-                                print(f"      Intensity MSE: {mse:.6f}")
-                                print(f"      Max difference: {max_diff:.6f}")
-                                print(f"      First 5 differences: {intensity_diff[:5]}")
-                                
-                                if mse < 1e-10:
-                                    print(f"      ✅ PERFECT MATCH!")
-                                elif mse < 1e-6:
-                                    print(f"      ✅ Very close match")
-                                elif mse < 1e-3:
-                                    print(f"      ⚠️ Small differences")
-                                else:
-                                    print(f"      ❌ SIGNIFICANT DIFFERENCES")
-                            else:
-                                print(f"      ❌ Wavelength ranges don't match - interpolation needed")
-                    else:
-                        print(f"   ❌ No C0034 entries found in {db_file}")
-                else:
-                    print(f"   ❌ Database file {db_file} not found")
-                    
-            except Exception as e:
-                print(f"   ❌ Error analyzing {light}: {e}")
-    
-    def direct_analysis_bypass(self):
-        """Direct analysis that bypasses file copying issues"""
-        print("\n🚀 DIRECT ANALYSIS (BYPASS MODE)")
-        print("=" * 40)
-        print("This mode processes files directly without copying to avoid permission issues.")
-        
-        # Scan gems
-        gems = self.scan_available_gems()
-        if not gems:
-            return
-        
-        # Show options
-        complete_gems, partial_gems = self.show_available_gems(gems)
-        
-        if not complete_gems:
-            print("\n❌ No complete gem sets found!")
-            return
-        
-        # Get choice
-        print(f"\n🔍 Available complete gems: {', '.join(complete_gems)}")
-        
-        while True:
-            gem_choice = input(f"\nEnter gem number to analyze (or 'back'): ").strip()
-            
-            if gem_choice.lower() == 'back':
-                return
-            
-            if gem_choice in gems:
-                break
-            
-            print(f"❌ Not found. Available: {', '.join(sorted(gems.keys()))}")
-        
-        # Process directly
-        selected = {}
-        gem_files = gems[gem_choice]
-        
-        print(f"\n💎 PROCESSING GEM {gem_choice} DIRECTLY:")
-        for light in ['B', 'L', 'U']:
-            if gem_files[light]:
-                selected[light] = gem_files[light][0]
-                print(f"   {light}: {selected[light]}")
-        
-        # Direct conversion
-        try:
-            for light, filename in selected.items():
-                # Read directly from data/raw
-                input_path = os.path.join('data/raw', filename)
-                output_path = f'unkgem{light}.csv'
-                
-                # Read and normalize
-                df = pd.read_csv(input_path, sep=r'\s+', header=None, names=['wavelength', 'intensity'])
-                wavelengths = np.array(df['wavelength'])
-                intensities = np.array(df['intensity'])
-                
-                # Apply corrected normalization
-                normalized = self.correct_normalize_spectrum(wavelengths, intensities, light)
-                
-                # Save to current directory
-                output_df = pd.DataFrame({'wavelength': wavelengths, 'intensity': normalized})
-                output_df.to_csv(output_path, header=False, index=False)
-                
-                print(f"   ✅ {light}: {len(output_df)} points, range {normalized.min():.3f}-{normalized.max():.3f}")
-            
-            print(f"\n✅ Files created in current directory: unkgemB.csv, unkgemL.csv, unkgemU.csv")
-            
-            print("🚀 Running analysis...")
-            
-            # Run analysis
-            self.run_numerical_analysis_fixed()
-            
-        except Exception as e:
-            print(f"\n❌ Direct analysis error: {e}")
-    
+
     def run_structural_analysis_hub(self):
         """Launch structural analysis hub"""
         hub_path = 'src/structural_analysis/main.py'
@@ -1293,11 +1076,7 @@ class FixedGeminiAnalysisSystem:
             ("🔬 Launch Structural Analysis Hub", self.run_structural_analysis_hub),
             ("🎯 Launch Structural Analyzers", self.run_structural_launcher),
             ("📊 Analytical Analysis Workflow", self.run_analytical_workflow),
-            ("💎 Select Gem for Analysis (FIXED)", self.select_and_analyze_gem),
-            ("⚡ Direct Analysis (BYPASS PERMISSIONS)", self.direct_analysis_bypass),
-            ("🔍 Run Debug Analysis (VALIDATION)", self.run_debug_analysis),
-            ("📊 Visualize Individual Spectrum", self.visualize_individual_spectrum),
-            ("🔬 Deep Normalization Debug", self.debug_exact_normalization),
+            ("💎 Select Gem for Analysis (ENHANCED)", self.select_and_analyze_gem),
             ("📂 Browse Raw Data Files", self.run_raw_data_browser),
             ("🧮 Run Fixed Numerical Analysis", self.run_numerical_analysis_fixed),
             ("📈 Show Database Statistics", self.show_database_stats),
@@ -1307,13 +1086,13 @@ class FixedGeminiAnalysisSystem:
         
         while True:
             print("\n" + "="*80)
-            print("🔬 FIXED GEMINI GEMOLOGICAL ANALYSIS SYSTEM")
+            print("🔬 ENHANCED GEMINI GEMOLOGICAL ANALYSIS SYSTEM")
             print("="*80)
             
             # Show system status
             system_ok = self.check_system_status()
             
-            print(f"\n📋 MAIN MENU (NORMALIZATION FIXED):")
+            print(f"\n📋 MAIN MENU (CONSOLIDATED LEGEND VISUALIZATION):")
             print("-" * 40)
             
             for i, (description, _) in enumerate(menu_options, 1):
@@ -1351,7 +1130,7 @@ class FixedGeminiAnalysisSystem:
 def main():
     """Main entry point"""
     try:
-        print("🔬 Starting FIXED Gemini Gemological Analysis System...")
+        print("🔬 Starting ENHANCED Gemini Gemological Analysis System...")
         system = FixedGeminiAnalysisSystem()
         system.main_menu()
     except KeyboardInterrupt:
