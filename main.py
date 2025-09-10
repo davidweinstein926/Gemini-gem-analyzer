@@ -3,6 +3,7 @@
 COMPLETE FIXED MAIN.PY - GEMINI GEMOLOGICAL ANALYSIS SYSTEM
 All indentation errors corrected, full file selection implemented
 Enhanced visualization system with CONSOLIDATED SINGLE LEGEND
+DATABASE PATHS UPDATED: Points to database/reference_spectra/ folder
 """
 
 import os
@@ -18,8 +19,12 @@ class FixedGeminiAnalysisSystem:
     def __init__(self):
         self.db_path = "multi_structural_gem_data.db"
         
-        # System files to check
-        self.spectral_files = ['gemini_db_long_B.csv', 'gemini_db_long_L.csv', 'gemini_db_long_U.csv']
+        # System files to check - UPDATED to point to database folder
+        self.spectral_files = [
+            'database/reference_spectra/gemini_db_long_B.csv', 
+            'database/reference_spectra/gemini_db_long_L.csv', 
+            'database/reference_spectra/gemini_db_long_U.csv'
+        ]
         self.program_files = {
             'src/structural_analysis/main.py': 'Structural Analysis Hub',
             'src/structural_analysis/gemini_launcher.py': 'Structural Analyzers Launcher',
@@ -377,8 +382,8 @@ class FixedGeminiAnalysisSystem:
                 unknown_path = f'data/unknown/unkgem{light}.csv'
                 unknown_df = pd.read_csv(unknown_path, header=None, names=['wavelength', 'intensity'])
                 
-                # Load database
-                db_path = f'gemini_db_long_{light}.csv'
+                # Load database - UPDATED PATH
+                db_path = f'database/reference_spectra/gemini_db_long_{light}.csv'
                 if os.path.exists(db_path):
                     db_df = pd.read_csv(db_path)
                     
@@ -446,7 +451,12 @@ class FixedGeminiAnalysisSystem:
         
         print(f"   ✅ Found {len(available_lights)} light sources: {'+'.join(available_lights)}")
         
-        db_files = {'B': 'gemini_db_long_B.csv', 'L': 'gemini_db_long_L.csv', 'U': 'gemini_db_long_U.csv'}
+        # UPDATED DATABASE PATHS
+        db_files = {
+            'B': 'database/reference_spectra/gemini_db_long_B.csv', 
+            'L': 'database/reference_spectra/gemini_db_long_L.csv', 
+            'U': 'database/reference_spectra/gemini_db_long_U.csv'
+        }
         
         # Check database files for available lights
         for light in available_lights:
@@ -612,10 +622,10 @@ class FixedGeminiAnalysisSystem:
                     if light in file_base.upper():
                         return file_base[:file_base.upper().find(light)]
         
-        # Fallback: check if unknown file matches known patterns in database
+        # Fallback: check if unknown file matches known patterns in database - UPDATED PATH
         try:
             unknown_b = pd.read_csv(unknown_files['B'], header=None, names=['wavelength', 'intensity'])
-            db_b = pd.read_csv('gemini_db_long_B.csv')
+            db_b = pd.read_csv('database/reference_spectra/gemini_db_long_B.csv')
             
             # Find exact matches in database
             for gem_name in db_b['full_name'].unique():
@@ -676,8 +686,8 @@ class FixedGeminiAnalysisSystem:
                     unknown_file = f'data/unknown/unkgem{light}.csv'
                     unknown = pd.read_csv(unknown_file, header=None, names=['wavelength', 'intensity'])
                 
-                # Load database
-                db = pd.read_csv(f'gemini_db_long_{light}.csv')
+                # Load database - UPDATED PATH
+                db = pd.read_csv(f'database/reference_spectra/gemini_db_long_{light}.csv')
                 
                 # ROW 1: Normalized Spectra (Prominent) - NO INDIVIDUAL LEGEND
                 ax1 = fig.add_subplot(gs[0, light_idx])
@@ -794,20 +804,6 @@ class FixedGeminiAnalysisSystem:
         
         # Distribution-specific legend (positioned on the right of distribution plot)
         ax_dist.legend(handles=dist_legend_elements, bbox_to_anchor=(1.02, 1), loc='upper left', fontsize=9)
-        
-        # Add summary text box
-        #perfect_matches = sum(1 for s in all_scores if s < 1e-10)
-        #excellent_matches = sum(1 for s in all_scores if s < 1e-6)
-        #good_matches = sum(1 for s in all_scores if s < 1e-3)
-        
-        #summary_text = f'Analysis Summary:\n'
-        #summary_text += f'Total gems: {len(all_scores)}\n'
-        #summary_text += f'Perfect matches (<1e-10): {perfect_matches}\n'
-        #summary_text += f'Excellent matches (<1e-6): {excellent_matches}\n'
-        #summary_text += f'Good matches (<1e-3): {good_matches}'
-        
-        #ax_dist.text(0.02, 0.98, summary_text, transform=ax_dist.transAxes, fontsize=10,
-                    #verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
         
         # CREATE SINGLE CONSOLIDATED LEGEND FOR SPECTRAL PLOTS
         # Position it prominently in the upper right area of the entire figure
