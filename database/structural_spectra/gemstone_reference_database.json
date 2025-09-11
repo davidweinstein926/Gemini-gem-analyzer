@@ -1,0 +1,75 @@
+{
+  "58BC1": {
+    "stone_type": "Natural",
+    "variety": "Orange Sapphire",
+    "features": [
+      {
+        "feature_type": "Peak",
+        "max_wavelength": 694.09
+      },
+      {
+        "feature_type": "Mound",
+        "start_wavelength": 558.21,
+        "crest_wavelength": 670.59,
+        "end_wavelength": 874.22
+      },
+      {
+        "feature_type": "Plateau",
+        "start_wavelength": 459.44,
+        "midpoint_wavelength": 515.28,
+        "end_wavelength": 557.74
+      }
+    ],
+    "notes": "Natural orange sapphire with plateau before main mound"
+  },
+  "60BP3": {
+    "stone_type": "Synthetic",
+    "variety": "Orange Sapphire",
+    "features": [
+      {
+        "feature_type": "Peak",
+        "max_wavelength": 694.1
+      },
+      {
+        "feature_type": "Mound",
+        "start_wavelength": 500.87,
+        "crest_wavelength": 680.11,
+        "end_wavelength": 872.68
+      }
+    ],
+    "notes": "Synthetic orange sapphire with clean spectrum, no pre-mound structures"
+  },
+  "79BP2": {
+    "stone_type": "Natural",
+    "variety": "Orange Sapphire",
+    "features": [
+      {
+        "feature_type": "Mound",
+        "max_wavelength": null,
+        "start_wavelength": 430.45,
+        "midpoint_wavelength": null,
+        "end_wavelength": 941.23,
+        "crest_wavelength": 677.6
+      },
+      {
+        "feature_type": "Plateau",
+        "max_wavelength": null,
+        "start_wavelength": 482.24,
+        "midpoint_wavelength": 530.49,
+        "end_wavelength": 562.27,
+        "crest_wavelength": null
+      },
+      {
+        "feature_type": "Peak",
+        "max_wavelength": 694.14,
+        "start_wavelength": null,
+        "midpoint_wavelength": null,
+        "end_wavelength": null,
+        "crest_wavelength": null
+      }
+    ],
+    "notes": "",
+    "added_date": "2025-07-31",
+    "last_updated": "2025-07-31 06:50:29"
+  }
+}
