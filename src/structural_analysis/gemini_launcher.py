@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Enhanced gemini_launcher.py - Added Analytical Workflow Option
-Now includes the complete workflow for file selection and numerical analysis
+Gemini Structural Analysis Launcher - Simplified
+Focused on structural analysis tools only (manual and automated)
 """
 
 import tkinter as tk
@@ -24,14 +24,14 @@ except ImportError:
     print("⚠️  Data path configuration not available - using manual path resolution")
 
 class GeminiLauncher:
-    """Enhanced Gemini launcher with analytical workflow for file selection"""
+    """Simplified Gemini launcher for structural analysis tools only"""
     
     def __init__(self):
         self.root = tk.Tk()
-        self.root.title("Gemini Analyzer - ENHANCED WITH ANALYTICAL WORKFLOW")
-        self.root.geometry("600x800")  # Increased height for new option
+        self.root.title("Gemini Structural Analyzer Launcher")
+        self.root.geometry("600x700")
         self.root.resizable(True, True)
-        self.root.minsize(600, 800)
+        self.root.minsize(600, 700)
         
         # Get paths and setup data configuration
         self.script_dir = Path(__file__).parent.absolute()
@@ -42,116 +42,83 @@ class GeminiLauncher:
             setup_project_paths()
             print(f"✅ Project paths configured - Raw data: {gemini_paths.raw_data}")
         
-        # ENHANCED: Updated primary analysis choices to include analytical workflow
-        self.primary_analysis = {
-            "analytical": ("Analytical Workflow", "Complete workflow: file selection → conversion → numerical analysis"),
-            "numerical": ("Direct Numerical Analysis", "Run gemini1.py with existing unkgem files"),
-            "structural": ("Structural Analysis", "Feature detection and marking (manual or automated)")
-        }
-        
-        # Structural analysis methods (unchanged)
+        # Structural analysis methods
         self.structural_methods = {
             "manual": ("Manual Marking", "Interactive point-and-click feature marking"),
             "auto": ("Automated Detection", "Computational feature detection algorithms")
         }
         
-        # Light sources (unchanged)
+        # Light sources
         self.light_sources = {
             "bh": ("B/H (Halogen)", "Broad mounds, plateaus, mineral identification"),
             "l": ("L (Laser)", "Sharp features, natural/synthetic detection"),
             "u": ("U (UV)", "Electronic transitions, color centers")
         }
         
-        # ENHANCED: Updated file mappings to include analytical workflow
+        # File mappings for structural analysis only
         self.file_mappings = {
-            "analytical": {
-                # NEW: Analytical workflow option
-                "paths": [
-                    "analytical_workflow.py",
-                    "../analytical_workflow.py",
-                    "../../analytical_workflow.py",
-                    "../src/numerical_analysis/analytical_workflow.py",
-                    "../../src/numerical_analysis/analytical_workflow.py"
-                ],
-                "name": "Analytical Workflow System"
-            },
-            "numerical": {
-                # Direct numerical analysis (existing)
-                "paths": [
-                    "../numerical_analysis/gemini1.py",
-                    "../../numerical_analysis/gemini1.py", 
-                    "numerical_analysis/gemini1.py",
-                    "../src/numerical_analysis/gemini1.py",
-                    "../../src/numerical_analysis/gemini1.py",
-                    "gemini1.py"
-                ],
-                "name": "Direct Gemini Identification"
-            },
-            "structural": {
-                # Structural analysis (unchanged)
-                "manual": {
-                    "bh": {
-                        "paths": [
-                            "manual_analyzers/gemini_halogen_analyzer.py",
-                            "../manual_analyzers/gemini_halogen_analyzer.py",
-                            "../../manual_analyzers/gemini_halogen_analyzer.py",
-                            "../structural_analysis/manual_analyzers/gemini_halogen_analyzer.py",
-                            "gemini_halogen_analyzer.py"
-                        ],
-                        "name": "Manual Halogen Analyzer"
-                    },
-                    "l": {
-                        "paths": [
-                            "manual_analyzers/gemini_laser_analyzer.py",
-                            "../manual_analyzers/gemini_laser_analyzer.py",
-                            "../../manual_analyzers/gemini_laser_analyzer.py",
-                            "../structural_analysis/manual_analyzers/gemini_laser_analyzer.py",
-                            "gemini_laser_analyzer.py"
-                        ],
-                        "name": "Manual Laser Analyzer"
-                    },
-                    "u": {
-                        "paths": [
-                            "manual_analyzers/gemini_uv_analyzer.py",
-                            "../manual_analyzers/gemini_uv_analyzer.py",
-                            "../../manual_analyzers/gemini_uv_analyzer.py", 
-                            "../structural_analysis/manual_analyzers/gemini_uv_analyzer.py",
-                            "gemini_uv_analyzer.py"
-                        ],
-                        "name": "Manual UV Analyzer"
-                    }
+            "manual": {
+                "bh": {
+                    "paths": [
+                        "manual_analyzers/gemini_halogen_analyzer.py",
+                        "../manual_analyzers/gemini_halogen_analyzer.py",
+                        "../../manual_analyzers/gemini_halogen_analyzer.py",
+                        "../structural_analysis/manual_analyzers/gemini_halogen_analyzer.py",
+                        "gemini_halogen_analyzer.py"
+                    ],
+                    "name": "Manual Halogen Analyzer"
                 },
-                "auto": {
-                    "bh": {
-                        "paths": [
-                            "auto_analysis/b_spectra_auto_detector.py",
-                            "../auto_analysis/b_spectra_auto_detector.py",
-                            "../../auto_analysis/b_spectra_auto_detector.py",
-                            "../structural_analysis/auto_analysis/b_spectra_auto_detector.py",
-                            "b_spectra_auto_detector.py"
-                        ],
-                        "name": "B Spectra Auto Detector"
-                    },
-                    "l": {
-                        "paths": [
-                            "auto_analysis/l_spectra_auto_detector.py",
-                            "../auto_analysis/l_spectra_auto_detector.py", 
-                            "../../auto_analysis/l_spectra_auto_detector.py",
-                            "../structural_analysis/auto_analysis/l_spectra_auto_detector.py",
-                            "l_spectra_auto_detector.py"
-                        ],
-                        "name": "L Spectra Auto Detector"
-                    },
-                    "u": {
-                        "paths": [
-                            "auto_analysis/gemini_peak_detector.py",
-                            "../auto_analysis/gemini_peak_detector.py",
-                            "../../auto_analysis/gemini_peak_detector.py", 
-                            "../structural_analysis/auto_analysis/gemini_peak_detector.py",
-                            "gemini_peak_detector.py"
-                        ],
-                        "name": "UV Peak Detector"
-                    }
+                "l": {
+                    "paths": [
+                        "manual_analyzers/gemini_laser_analyzer.py",
+                        "../manual_analyzers/gemini_laser_analyzer.py",
+                        "../../manual_analyzers/gemini_laser_analyzer.py",
+                        "../structural_analysis/manual_analyzers/gemini_laser_analyzer.py",
+                        "gemini_laser_analyzer.py"
+                    ],
+                    "name": "Manual Laser Analyzer"
+                },
+                "u": {
+                    "paths": [
+                        "manual_analyzers/gemini_uv_analyzer.py",
+                        "../manual_analyzers/gemini_uv_analyzer.py",
+                        "../../manual_analyzers/gemini_uv_analyzer.py", 
+                        "../structural_analysis/manual_analyzers/gemini_uv_analyzer.py",
+                        "gemini_uv_analyzer.py"
+                    ],
+                    "name": "Manual UV Analyzer"
+                }
+            },
+            "auto": {
+                "bh": {
+                    "paths": [
+                        "auto_analysis/b_spectra_auto_detector.py",
+                        "../auto_analysis/b_spectra_auto_detector.py",
+                        "../../auto_analysis/b_spectra_auto_detector.py",
+                        "../structural_analysis/auto_analysis/b_spectra_auto_detector.py",
+                        "b_spectra_auto_detector.py"
+                    ],
+                    "name": "B Spectra Auto Detector"
+                },
+                "l": {
+                    "paths": [
+                        "auto_analysis/l_spectra_auto_detector.py",
+                        "../auto_analysis/l_spectra_auto_detector.py", 
+                        "../../auto_analysis/l_spectra_auto_detector.py",
+                        "../structural_analysis/auto_analysis/l_spectra_auto_detector.py",
+                        "l_spectra_auto_detector.py"
+                    ],
+                    "name": "L Spectra Auto Detector"
+                },
+                "u": {
+                    "paths": [
+                        "auto_analysis/gemini_peak_detector.py",
+                        "../auto_analysis/gemini_peak_detector.py",
+                        "../../auto_analysis/gemini_peak_detector.py", 
+                        "../structural_analysis/auto_analysis/gemini_peak_detector.py",
+                        "gemini_peak_detector.py"
+                    ],
+                    "name": "UV Peak Detector"
                 }
             }
         }
@@ -166,20 +133,20 @@ class GeminiLauncher:
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
         x = (screen_width // 2) - (600 // 2)
-        y = (screen_height // 2) - (800 // 2)
-        self.root.geometry(f"600x800+{x}+{y}")
-        print(f"Window sized for full visibility: 600x800")
+        y = (screen_height // 2) - (700 // 2)
+        self.root.geometry(f"600x700+{x}+{y}")
+        print(f"Window sized for visibility: 600x700")
         
     def create_interface(self):
-        """Create enhanced interface with analytical workflow"""
-        # Title - ENHANCED
-        title_frame = tk.Frame(self.root, bg='darkblue')
+        """Create interface for structural analysis"""
+        # Title
+        title_frame = tk.Frame(self.root, bg='darkred')
         title_frame.pack(fill='x', pady=(0, 10))
         
-        tk.Label(title_frame, text="GEMINI GEMOLOGICAL ANALYZER", 
-                font=('Arial', 16, 'bold'), fg='white', bg='darkblue').pack(pady=8)
-        tk.Label(title_frame, text="ENHANCED: Analytical Workflow → File Selection → Numerical Analysis", 
-                font=('Arial', 9), fg='lightblue', bg='darkblue').pack()
+        tk.Label(title_frame, text="GEMINI STRUCTURAL ANALYZER", 
+                font=('Arial', 16, 'bold'), fg='white', bg='darkred').pack(pady=8)
+        tk.Label(title_frame, text="Manual & Automated Structural Feature Detection", 
+                font=('Arial', 9), fg='lightcoral', bg='darkred').pack()
         
         # Data path status if available
         if HAS_PATH_CONFIG:
@@ -187,9 +154,9 @@ class GeminiLauncher:
         else:
             status_text = "⚠️  Manual path resolution mode"
         tk.Label(title_frame, text=status_text, 
-                font=('Arial', 8), fg='lightyellow', bg='darkblue').pack()
+                font=('Arial', 8), fg='lightyellow', bg='darkred').pack()
         
-        # Button frame at bottom first
+        # Button frame at bottom
         self.button_frame = tk.Frame(self.root, bg='lightgray', relief='raised', bd=2)
         self.button_frame.pack(fill='x', side='bottom', pady=10)
         self.create_buttons()
@@ -198,19 +165,18 @@ class GeminiLauncher:
         main_frame = tk.Frame(self.root)
         main_frame.pack(fill='both', expand=True, padx=20)
         
-        # STEP 1: Enhanced Primary Analysis Type
-        self.create_primary_selection(main_frame)
-        
-        # STEP 2: Structural Method Selection (initially hidden)
-        self.structural_frame = tk.LabelFrame(main_frame, text="Step 2: Structural Analysis Method", 
+        # Step 1: Structural Method Selection
+        self.structural_frame = tk.LabelFrame(main_frame, text="Step 1: Analysis Method", 
                                             font=('Arial', 11, 'bold'), padx=8, pady=8)
+        self.structural_frame.pack(fill='x', pady=(0, 8))
         
         self.structural_method_var = tk.StringVar(value="auto")
         self.create_structural_method_options()
         
-        # STEP 3: Light Source Selection (initially hidden)  
-        self.light_frame = tk.LabelFrame(main_frame, text="Step 3: Light Source Selection", 
+        # Step 2: Light Source Selection
+        self.light_frame = tk.LabelFrame(main_frame, text="Step 2: Light Source", 
                                        font=('Arial', 11, 'bold'), padx=8, pady=8)
+        self.light_frame.pack(fill='x', pady=(0, 8))
         
         self.light_source_var = tk.StringVar(value="bh")
         self.create_light_source_options()
@@ -218,47 +184,8 @@ class GeminiLauncher:
         # Info section
         self.create_info_section(main_frame)
         
-    def create_primary_selection(self, parent):
-        """Create Enhanced Step 1: Primary analysis type selection"""
-        frame = tk.LabelFrame(parent, text="Step 1: Select Analysis Type", 
-                             font=('Arial', 11, 'bold'), padx=8, pady=8)
-        frame.pack(fill='x', pady=(0, 8))
-        
-        self.primary_var = tk.StringVar(value="analytical")  # Default to analytical workflow
-        
-        # Enhanced options with analytical workflow
-        option_configs = {
-            "analytical": {"icon": "🔬", "color": "darkgreen", "bg": "lightgreen"},
-            "numerical": {"icon": "🔢", "color": "darkblue", "bg": "lightblue"}, 
-            "structural": {"icon": "🎯", "color": "darkred", "bg": "lightcoral"}
-        }
-        
-        for key, (name, description) in self.primary_analysis.items():
-            option_frame = tk.Frame(frame)
-            option_frame.pack(fill='x', pady=3)
-            
-            config = option_configs[key]
-            
-            # Highlight analytical workflow option
-            if key == "analytical":
-                highlight_frame = tk.Frame(option_frame, bg=config["bg"], relief='raised', bd=2)
-                highlight_frame.pack(fill='x', padx=2, pady=2)
-                container = highlight_frame
-                
-                tk.Label(highlight_frame, text="⭐ RECOMMENDED ⭐", 
-                        font=('Arial', 8, 'bold'), fg='darkgreen', bg=config["bg"]).pack()
-            else:
-                container = option_frame
-            
-            tk.Radiobutton(container, text=f"{config['icon']} {name}", 
-                          variable=self.primary_var, value=key,
-                          font=('Arial', 10, 'bold'), fg=config["color"],
-                          command=self.update_workflow).pack(anchor='w')
-            tk.Label(container, text=f"   {description}", 
-                    font=('Arial', 8), fg='gray').pack(anchor='w')
-    
     def create_structural_method_options(self):
-        """Create Step 2: Structural method options (unchanged)"""
+        """Create structural method options"""
         for key, (name, description) in self.structural_methods.items():
             option_frame = tk.Frame(self.structural_frame)
             option_frame.pack(fill='x', pady=3)
@@ -269,12 +196,12 @@ class GeminiLauncher:
             tk.Radiobutton(option_frame, text=f"{icon} {name}", 
                           variable=self.structural_method_var, value=key,
                           font=('Arial', 10, 'bold'), fg=color,
-                          command=self.update_workflow).pack(anchor='w')
+                          command=self.update_info_display).pack(anchor='w')
             tk.Label(option_frame, text=f"   {description}", 
                     font=('Arial', 8), fg='gray').pack(anchor='w')
     
     def create_light_source_options(self):
-        """Create Step 3: Light source options (unchanged)"""
+        """Create light source options"""
         for key, (name, description) in self.light_sources.items():
             option_frame = tk.Frame(self.light_frame)
             option_frame.pack(fill='x', pady=3)
@@ -285,12 +212,12 @@ class GeminiLauncher:
             tk.Radiobutton(option_frame, text=f"{icons[key]} {name}", 
                           variable=self.light_source_var, value=key,
                           font=('Arial', 10, 'bold'), fg=colors[key],
-                          command=self.update_workflow).pack(anchor='w')
+                          command=self.update_info_display).pack(anchor='w')
             tk.Label(option_frame, text=f"   {description}", 
                     font=('Arial', 8), fg='gray').pack(anchor='w')
     
     def create_info_section(self, parent):
-        """Create enhanced info section"""
+        """Create info section"""
         self.info_frame = tk.LabelFrame(parent, text="Configuration Summary", 
                                        font=('Arial', 11, 'bold'), padx=10, pady=10)
         self.info_frame.pack(fill='both', expand=True, pady=(10, 10))
@@ -307,13 +234,13 @@ class GeminiLauncher:
         self.info_text.pack(side='left', fill='both', expand=True)
         scrollbar.pack(side='right', fill='y')
         
-        self.update_workflow()
+        self.update_info_display()
     
     def create_buttons(self):
         """Create button controls"""
-        # Dynamic status indicator
-        self.status_label = tk.Label(self.button_frame, text="▼ ENHANCED WITH ANALYTICAL WORKFLOW ▼", 
-                                    font=('Arial', 8, 'bold'), fg='darkgreen', bg='lightgray')
+        # Status indicator
+        self.status_label = tk.Label(self.button_frame, text="▼ STRUCTURAL ANALYSIS TOOLS ▼", 
+                                    font=('Arial', 8, 'bold'), fg='darkred', bg='lightgray')
         self.status_label.pack(pady=(2,0))
         
         button_container = tk.Frame(self.button_frame, bg='lightgray')
@@ -322,7 +249,7 @@ class GeminiLauncher:
         # Main launch button
         self.launch_btn = tk.Button(button_container, text="🚀 LAUNCH ANALYZER", 
                                    font=('Arial', 14, 'bold'), 
-                                   bg="green", fg="white", 
+                                   bg="darkred", fg="white", 
                                    command=self.launch_analyzer, 
                                    padx=40, pady=12)
         self.launch_btn.pack(side='left', padx=10)
@@ -344,166 +271,68 @@ class GeminiLauncher:
                  font=('Arial', 10), bg="lightcoral", fg="black", 
                  command=self.root.quit, padx=15, pady=8).pack(side='right', padx=5)
     
-    def update_workflow(self):
-        """Enhanced workflow update with analytical option"""
-        primary_choice = self.primary_var.get()
-        
-        # Show/hide workflow steps based on primary choice
-        if primary_choice in ["analytical", "numerical"]:
-            # Hide structural options for analytical and numerical analysis
-            self.structural_frame.pack_forget()
-            self.light_frame.pack_forget()
-            print(f"Workflow: {primary_choice} mode - Steps 2&3 hidden")
-            
-            # Update status label
-            if hasattr(self, 'status_label'):
-                if primary_choice == "analytical":
-                    self.status_label.config(text="▼ ANALYTICAL WORKFLOW: Complete File Selection Process ▼")
-                else:
-                    self.status_label.config(text="▼ DIRECT NUMERICAL: Uses Existing unkgem Files ▼")
-            
-        else:  # structural
-            # Show structural method selection
-            self.structural_frame.pack(fill='x', pady=(0, 8))
-            self.light_frame.pack(fill='x', pady=(0, 8))
-            print("Workflow: Structural mode - Steps 2&3 visible")
-            
-            # Update status label
-            if hasattr(self, 'status_label'):
-                self.status_label.config(text="▼ STRUCTURAL ANALYSIS: All Steps Visible ▼")
-        
-        # Update info display
-        self.update_info_display()
-    
     def update_info_display(self):
-        """Enhanced info display with analytical workflow details"""
+        """Update info display"""
         self.info_text.config(state='normal')
         self.info_text.delete(1.0, tk.END)
         
-        primary_choice = self.primary_var.get()
+        structural_method = self.structural_method_var.get()
+        light_source = self.light_source_var.get()
         
         info_lines = []
-        info_lines.append("ENHANCED WORKFLOW SUMMARY:")
-        info_lines.append("=" * 45)
+        info_lines.append("STRUCTURAL ANALYSIS CONFIGURATION:")
+        info_lines.append("=" * 40)
         
-        if primary_choice == "analytical":
-            info_lines.append("⭐ ANALYTICAL WORKFLOW (RECOMMENDED)")
-            
-            # Get file info
-            paths = self.file_mappings["analytical"]["paths"]
-            name = self.file_mappings["analytical"]["name"]
-            found_file = self.find_file_from_paths(paths)
-            
-            info_lines.append("→ Will launch: Complete Analytical Workflow")
-            if found_file:
-                info_lines.append("→ File Status: ✅ FOUND")
-                info_lines.append(f"→ Location: {found_file}")
-            else:
-                info_lines.append("→ File Status: ❌ MISSING")
-            
-            info_lines.append("")
-            info_lines.append("COMPLETE WORKFLOW PROCESS:")
-            info_lines.append("1. 📂 Scan data/raw directory for available spectra")
-            info_lines.append("2. 🎯 Select specific B, L, U files for analysis")
-            info_lines.append("3. 📋 Copy selected files to raw_txt directory")
-            info_lines.append("4. 🔄 Convert .txt files to unkgem*.csv format")
-            info_lines.append("5. 🧮 Run numerical analysis with proper normalization")
-            info_lines.append("6. 📊 Display ranked gem matches with confidence scores")
-            info_lines.append("")
-            info_lines.append("ADVANTAGES:")
-            info_lines.append("• Ensures you analyze the correct gem files")
-            info_lines.append("• Proper normalization applied (B: 650nm, L: 450nm, U: 811nm)")
-            info_lines.append("• No risk of analyzing old/wrong data")
-            info_lines.append("• Complete traceability of analysis workflow")
-            
-        elif primary_choice == "numerical":
-            info_lines.append("🔢 DIRECT NUMERICAL ANALYSIS")
-            
-            # Get file info
-            paths = self.file_mappings["numerical"]["paths"]
-            name = self.file_mappings["numerical"]["name"]
-            found_file = self.find_file_from_paths(paths)
-            
-            info_lines.append("→ Will launch: gemini1.py directly")
-            if found_file:
-                info_lines.append("→ File Status: ✅ FOUND")
-                info_lines.append(f"→ Location: {found_file}")
-            else:
-                info_lines.append("→ File Status: ❌ MISSING")
-            
-            info_lines.append("")
-            info_lines.append("DIRECT ANALYSIS PROCESS:")
-            info_lines.append("• Uses existing unkgemB.csv, unkgemL.csv, unkgemU.csv")
-            info_lines.append("• No file selection or conversion")
-            info_lines.append("• Assumes files are already properly normalized")
-            info_lines.append("")
-            info_lines.append("⚠️ CAUTION:")
-            info_lines.append("• May analyze old/incorrect data if unkgem files exist")
-            info_lines.append("• No verification of which gem is being analyzed")
-            info_lines.append("• Recommend using Analytical Workflow instead")
-            
-        else:  # structural
-            structural_method = self.structural_method_var.get()
-            light_source = self.light_source_var.get()
-            
-            info_lines.append("🎯 STRUCTURAL ANALYSIS")
-            info_lines.append(f"✅ Method: {self.structural_methods[structural_method][0]}")
-            info_lines.append(f"✅ Light Source: {self.light_sources[light_source][0]}")
-            
-            # Get file info
-            file_config = self.file_mappings["structural"][structural_method][light_source]
-            paths = file_config["paths"]
-            analyzer_name = file_config["name"]
-            
-            found_file = self.find_file_from_paths(paths)
-            file_status = "✅ FOUND" if found_file else "❌ MISSING"
-            
-            info_lines.append(f"→ Will launch: {analyzer_name}")
-            info_lines.append(f"→ File Status: {file_status}")
-            if found_file:
-                info_lines.append(f"→ Location: {found_file}")
-            
-            info_lines.append("")
-            info_lines.append("STRUCTURAL ANALYSIS FEATURES:")
-            
-            if structural_method == "manual":
-                info_lines.append("• Interactive point-and-click marking")
-                info_lines.append("• Manual control over all features")
-                info_lines.append("• Zoom, undo, persistent mode tools")
-            else:
-                info_lines.append("• Computational feature detection")
-                info_lines.append("• Advanced algorithmic analysis")  
-                info_lines.append("• Automated baseline, peaks, mounds")
-            
-            light_descriptions = {
-                "bh": "• Broad absorption features and mounds\n• General mineral identification\n• Wide wavelength range analysis",
-                "l": "• High-resolution sharp features\n• Natural vs synthetic detection\n• Precision wavelength analysis",
-                "u": "• Electronic transitions and color centers\n• UV range spectral analysis\n• Sharp peak identification"
-            }
-            info_lines.append("")
-            info_lines.append("LIGHT SOURCE SPECIALTY:")
-            info_lines.append(light_descriptions[light_source])
+        info_lines.append("🎯 STRUCTURAL ANALYSIS")
+        info_lines.append(f"✅ Method: {self.structural_methods[structural_method][0]}")
+        info_lines.append(f"✅ Light Source: {self.light_sources[light_source][0]}")
         
-        # Add data status if available
-        if HAS_PATH_CONFIG:
-            raw_files = gemini_paths.get_raw_data_files()
-            info_lines.append("")
-            info_lines.append("DATA STATUS:")
-            info_lines.append(f"• Raw data directory: {len(raw_files)} files found")
-            info_lines.append(f"• Location: {gemini_paths.raw_data}")
+        # Get file info
+        file_config = self.file_mappings[structural_method][light_source]
+        paths = file_config["paths"]
+        analyzer_name = file_config["name"]
+        
+        found_file = self.find_file_from_paths(paths)
+        file_status = "✅ FOUND" if found_file else "❌ MISSING"
+        
+        info_lines.append(f"→ Will launch: {analyzer_name}")
+        info_lines.append(f"→ File Status: {file_status}")
+        if found_file:
+            info_lines.append(f"→ Location: {found_file}")
+        
+        info_lines.append("")
+        info_lines.append("ANALYSIS FEATURES:")
+        
+        if structural_method == "manual":
+            info_lines.append("• Interactive point-and-click marking")
+            info_lines.append("• Manual control over all features")
+            info_lines.append("• Zoom, undo, persistent mode tools")
+        else:
+            info_lines.append("• Computational feature detection")
+            info_lines.append("• Advanced algorithmic analysis")  
+            info_lines.append("• Automated baseline, peaks, mounds")
+        
+        light_descriptions = {
+            "bh": "• Broad absorption features and mounds\n• General mineral identification\n• Wide wavelength range analysis",
+            "l": "• High-resolution sharp features\n• Natural vs synthetic detection\n• Precision wavelength analysis",
+            "u": "• Electronic transitions and color centers\n• UV range spectral analysis\n• Sharp peak identification"
+        }
+        info_lines.append("")
+        info_lines.append("LIGHT SOURCE SPECIALTY:")
+        info_lines.append(light_descriptions[light_source])
+        
+        info_lines.append("")
+        info_lines.append("📝 NOTE:")
+        info_lines.append("For numerical gem identification, use main.py Option 4:")
+        info_lines.append("'💎 Select Gem for Analysis (ENHANCED)'")
         
         self.info_text.insert(1.0, "\n".join(info_lines))
         self.info_text.config(state='disabled')
         
         # Update launch button text
-        if primary_choice == "analytical":
-            self.launch_btn.config(text="🚀 LAUNCH ANALYTICAL WORKFLOW")
-        elif primary_choice == "numerical":
-            self.launch_btn.config(text="🚀 LAUNCH GEMINI1.PY DIRECT")
-        else:
-            method_name = self.structural_methods[self.structural_method_var.get()][0]
-            light_name = self.light_sources[self.light_source_var.get()][0].split()[0]
-            self.launch_btn.config(text=f"🚀 LAUNCH {method_name.upper()} {light_name}")
+        method_name = self.structural_methods[structural_method][0]
+        light_name = self.light_sources[light_source][0].split()[0]
+        self.launch_btn.config(text=f"🚀 LAUNCH {method_name.upper()} {light_name}")
     
     def find_file_from_paths(self, paths):
         """Find file from list of possible paths"""
@@ -514,14 +343,14 @@ class GeminiLauncher:
         
         for path_str in paths:
             candidates = [
-                Path(path_str),  # Absolute path
-                self.script_dir / path_str,  # Relative to script dir
-                self.script_dir.parent / path_str,  # Relative to parent
-                Path.cwd() / path_str,  # Relative to current working directory
+                Path(path_str),
+                self.script_dir / path_str,
+                self.script_dir.parent / path_str,
+                Path.cwd() / path_str,
             ]
             all_paths_to_try.extend(candidates)
         
-        # Remove duplicates while preserving order
+        # Remove duplicates
         seen = set()
         unique_paths = []
         for path in all_paths_to_try:
@@ -542,51 +371,24 @@ class GeminiLauncher:
         return None
     
     def launch_analyzer(self):
-        """Enhanced launcher with analytical workflow support"""
-        primary_choice = self.primary_var.get()
+        """Launch structural analyzer"""
+        structural_method = self.structural_method_var.get()
+        light_source = self.light_source_var.get()
         
-        if primary_choice == "analytical":
-            # Launch analytical workflow
-            paths = self.file_mappings["analytical"]["paths"]
-            name = self.file_mappings["analytical"]["name"]
-            found_file = self.find_file_from_paths(paths)
-            
-            if not found_file:
-                self.show_file_not_found_dialog(name, paths)
-                return
-            
-            self.run_analyzer(str(found_file), name)
-            
-        elif primary_choice == "numerical":
-            # Launch gemini1.py directly
-            paths = self.file_mappings["numerical"]["paths"]
-            name = self.file_mappings["numerical"]["name"]
-            found_file = self.find_file_from_paths(paths)
-            
-            if not found_file:
-                self.show_file_not_found_dialog(name, paths)
-                return
-            
-            self.run_analyzer(str(found_file), name)
-            
-        else:  # structural
-            structural_method = self.structural_method_var.get()
-            light_source = self.light_source_var.get()
-            
-            file_config = self.file_mappings["structural"][structural_method][light_source]
-            paths = file_config["paths"]
-            analyzer_name = file_config["name"]
-            
-            found_file = self.find_file_from_paths(paths)
-            
-            if not found_file:
-                self.show_file_not_found_dialog(analyzer_name, paths)
-                return
-            
-            self.run_analyzer(str(found_file), analyzer_name)
+        file_config = self.file_mappings[structural_method][light_source]
+        paths = file_config["paths"]
+        analyzer_name = file_config["name"]
+        
+        found_file = self.find_file_from_paths(paths)
+        
+        if not found_file:
+            self.show_file_not_found_dialog(analyzer_name, paths)
+            return
+        
+        self.run_analyzer(str(found_file), analyzer_name)
     
     def show_file_not_found_dialog(self, analyzer_name, searched_paths):
-        """Show detailed file not found dialog"""
+        """Show file not found dialog"""
         error_msg = f"Could not find {analyzer_name}\n\n"
         error_msg += "Searched the following locations:\n"
         
@@ -603,7 +405,7 @@ class GeminiLauncher:
         messagebox.showerror("File Not Found", error_msg)
     
     def run_analyzer(self, analyzer_file, analyzer_name):
-        """Run the selected analyzer"""
+        """Run the selected structural analyzer"""
         try:
             analyzer_path = Path(analyzer_file)
             print(f"\n🚀 LAUNCHING ANALYZER:")
@@ -615,8 +417,13 @@ class GeminiLauncher:
             if not analyzer_path.exists():
                 raise FileNotFoundError(f"File does not exist: {analyzer_path}")
             
+            # Use analyzer's directory as working directory (analyzers will handle their own navigation)
             working_dir = str(analyzer_path.parent)
             print(f"Working directory: {working_dir}")
+            
+            structural_method = self.structural_method_var.get()
+            if structural_method == "manual":
+                print("Manual analyzer will automatically navigate to data/raw for gem selection")
             
             cmd = [sys.executable, str(analyzer_path.absolute())]
             print(f"Command: {' '.join(cmd)}")
@@ -632,11 +439,15 @@ class GeminiLauncher:
             
             print(f"✅ {analyzer_name} started (PID: {process.pid})")
             
-            # Enhanced success message
             success_msg = f"✅ {analyzer_name} started successfully!\n\n"
             success_msg += f"PID: {process.pid}\n"
             success_msg += f"Location: {analyzer_path}\n"
             success_msg += f"Working Dir: {working_dir}\n"
+            
+            if structural_method == "manual":
+                success_msg += f"\n📂 Gem Selection:\n"
+                success_msg += f"Started in data/raw directory for gem selection\n"
+                success_msg += f"Select your gem files for analysis"
             
             if HAS_PATH_CONFIG:
                 raw_files = gemini_paths.get_raw_data_files()
@@ -666,9 +477,9 @@ class GeminiLauncher:
         try:
             if sys.platform == 'win32':
                 os.startfile(str(self.script_dir))
-            elif sys.platform == 'darwin':  # macOS
+            elif sys.platform == 'darwin':
                 subprocess.run(['open', str(self.script_dir)])
-            else:  # Linux
+            else:
                 subprocess.run(['xdg-open', str(self.script_dir)])
                 
             print(f"📂 Opened file browser to: {self.script_dir}")
@@ -676,87 +487,77 @@ class GeminiLauncher:
             print(f"Error opening file browser: {e}")
     
     def reset_selections(self):
-        """Reset all selections to defaults"""
-        self.primary_var.set("analytical")  # Default to analytical workflow
+        """Reset selections to defaults"""
         self.structural_method_var.set("auto")  
         self.light_source_var.set("bh")
-        self.update_workflow()
-        print("🔄 Reset to analytical workflow (recommended)")
+        self.update_info_display()
+        print("🔄 Reset to automated B/H analysis")
     
     def show_help(self):
-        """Show enhanced help with analytical workflow"""
-        help_text = """ENHANCED GEMINI ANALYZER HELP - WITH ANALYTICAL WORKFLOW
+        """Show help for structural analysis tools"""
+        help_text = """GEMINI STRUCTURAL ANALYZER HELP
 
-🆕 NEW FEATURE: ANALYTICAL WORKFLOW
-⭐ RECOMMENDED for most gem identification tasks
+🎯 STRUCTURAL ANALYSIS TOOLS
+Focused launcher for structural feature detection and marking
 
-🔬 ANALYTICAL WORKFLOW (NEW):
-• Complete end-to-end gem identification process
-• Interactive file selection from data/raw directory
-• Automatic file preparation and normalization
-• Direct integration with numerical analysis
-• Eliminates risk of analyzing wrong/old data
+ANALYSIS METHODS:
 
-WORKFLOW STEPS:
-1. 📂 Scans data/raw for available spectral files
-2. 🎯 Shows files grouped by gem number
-3. 📋 Lets you select specific B, L, U files 
-4. 🔄 Copies files to raw_txt and converts to CSV
-5. 🧮 Runs numerical analysis with proper normalization
-6. 📊 Displays ranked gem matches with confidence
+🎯 MANUAL MARKING:
+• Interactive point-and-click feature marking
+• Manual control over all features  
+• Zoom, undo, persistent mode tools
+• Precise user-controlled analysis
 
-ADVANTAGES:
-• Ensures correct file selection
-• Proper normalization (B: 650nm, L: 450nm, U: 811nm)
-• Complete traceability of analysis
-• No risk of using old/incorrect data
+🤖 AUTOMATED DETECTION:
+• Computational feature detection algorithms
+• Advanced algorithmic analysis
+• Automated baseline, peaks, mounds detection
+• High-speed batch processing
 
-🔢 DIRECT NUMERICAL ANALYSIS:
-• Runs gemini1.py with existing unkgem*.csv files
-• No file selection or conversion
-• Use only if you know unkgem files are current
+LIGHT SOURCES:
 
-⚠️ CAUTION: May analyze old data if unkgem files exist
+🔥 B/H (HALOGEN):
+• Broad absorption features and mounds
+• General mineral identification
+• Wide wavelength range analysis
+• Plateau and broad feature detection
 
-🎯 STRUCTURAL ANALYSIS:
-• Feature detection and marking (unchanged)
-• Manual or automated methods
-• Light source specific analyzers
+⚡ L (LASER):
+• High-resolution sharp features
+• Natural vs synthetic detection
+• Precision wavelength analysis
+• Sharp peak identification
+
+🟣 U (UV):
+• Electronic transitions and color centers
+• UV range spectral analysis
+• Sharp peak identification
+• Color center analysis
 
 💡 RECOMMENDATIONS:
 
+FOR FEATURE DETECTION:
+→ Use Manual methods for precise control
+→ Use Automated methods for batch processing
+→ Choose light source based on gem type
+
 FOR GEM IDENTIFICATION:
-→ Use "Analytical Workflow" (new, recommended)
-→ Provides complete file selection and analysis
-
-FOR STRUCTURAL ANALYSIS:
-→ Use existing structural options
-→ Manual for precise control
-→ Automated for computational analysis
-
-🔧 TROUBLESHOOTING:
-
-File Not Found:
-• Check project structure
-• Use Browse Files to explore
-• Verify analytical_workflow.py exists
-
-Path Issues:
-• Launcher searches multiple locations
-• Check Configuration Summary for status
-• Use absolute paths if needed
+→ Use main.py Option 4: "💎 Select Gem for Analysis (ENHANCED)"
+→ Provides complete numerical analysis with reports
+→ Includes file selection and proper normalization
 
 🚀 QUICK START:
-1. Select "Analytical Workflow" (default)
-2. Click "Launch Analytical Workflow" 
-3. Select your gem files when prompted
-4. View identification results
+1. Select Analysis Method (Manual or Automated)
+2. Select Light Source (B/H, L, or U)
+3. Click "Launch" button
+4. Analyzer will open in new window
 
-This enhanced launcher provides the complete workflow you need for accurate gem identification!"""
+This launcher focuses on structural analysis tools only.
+For numerical gem identification, use main.py Option 4."""
         
         help_window = tk.Toplevel(self.root)
-        help_window.title("Enhanced Workflow Help")
-        help_window.geometry("900x800")
+        help_window.title("Structural Analysis Help")
+        help_window.geometry("800x600")
         help_window.resizable(True, True)
         
         text_frame = tk.Frame(help_window)
@@ -775,8 +576,8 @@ This enhanced launcher provides the complete workflow you need for accurate gem 
         tk.Button(help_window, text="Close", command=help_window.destroy).pack(pady=10)
     
     def run(self):
-        """Start the enhanced launcher"""
-        print("🚀 Starting Enhanced Gemini Launcher with Analytical Workflow...")
+        """Start the structural analysis launcher"""
+        print("🚀 Starting Gemini Structural Analysis Launcher...")
         print(f"Python executable: {sys.executable}")
         print(f"Platform: {sys.platform}")
         if HAS_PATH_CONFIG:
