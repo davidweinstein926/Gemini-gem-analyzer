@@ -1,4 +1,5 @@
-# gemini_uv_analyzer.py - FIXED NORMALIZATION FOR 0-100 COMPATIBILITY
+# gemini_uv_analyzer.py - UPDATED FOR NEW DIRECTORY STRUCTURE
+# Enhanced path detection for data/raw input and data/output results
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -6,14 +7,86 @@ from matplotlib.widgets import Button
 import tkinter as tk
 from tkinter import filedialog, messagebox
 import os
+import sys
 from datetime import datetime
+from pathlib import Path
+
+# Add project root to Python path for imports
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
 
 class GeminiUVAnalyzer:
     def __init__(self):
-        self.OUTPUT_DIRECTORY = r"c:\users\david\onedrive\desktop\gemini_gemological_analysis\data\structural_data\uv"
+        # FIXED: Corrected path detection for new directory structure
+        self.script_dir = Path(__file__).parent.absolute()
+        self.project_root = self.script_dir.parent.parent.parent  # FIXED: Go up to gemini_gemological_analysis/
+        
+        print(f"🔍 UV Analyzer Paths:")
+        print(f"   Script directory: {self.script_dir}")
+        print(f"   Project root: {self.project_root}")
+        
+        # UPDATED: Dynamic output directory detection
+        self.setup_directories()
         self.reset_session()
         
+    def setup_directories(self):
+        """UPDATED: Setup directories for new project structure"""
+        # Possible locations for input data
+        input_search_paths = [
+            self.project_root / "data" / "raw",  # New structure - primary
+            self.project_root / "src" / "structural_analysis" / "data" / "raw",  # Local to structural analysis
+            self.project_root / "raw_txt",  # Legacy location
+            Path.home() / "OneDrive" / "Desktop" / "gemini matcher" / "gemini sp10 raw" / "raw text",  # Legacy user path
+        ]
+        
+        # Possible locations for output data
+        output_search_paths = [
+            self.project_root / "data" / "structural_data" / "uv",  # CORRECTED: Structural data directory
+            self.project_root / "src" / "structural_analysis" / "results" / "uv",  # Results in structural analysis
+            self.project_root / "output" / "uv",  # Alternative root location
+            self.project_root / "data" / "structural_data" / "uv",  # Alternative data location
+            Path.home() / "OneDrive" / "Desktop" / "gemini_gemological_analysis" / "data" / "structural_data" / "uv",  # Legacy path
+        ]
+        
+        # Find input directory
+        self.input_directory = None
+        for search_path in input_search_paths:
+            if search_path.exists() and search_path.is_dir():
+                self.input_directory = search_path
+                print(f"✅ Found input directory: {self.input_directory}")
+                break
+        
+        if not self.input_directory:
+            # Use the primary new structure path (will be created if needed)
+            self.input_directory = input_search_paths[0]
+            print(f"⚠️ Input directory not found, will use: {self.input_directory}")
+        
+        # Find/create output directory
+        self.output_directory = None
+        for search_path in output_search_paths:
+            if search_path.exists():
+                self.output_directory = search_path
+                print(f"✅ Found output directory: {self.output_directory}")
+                break
+        
+        if not self.output_directory:
+            # Use the primary new structure path and create it
+            self.output_directory = output_search_paths[0]
+            try:
+                self.output_directory.mkdir(parents=True, exist_ok=True)
+                print(f"✅ Created output directory: {self.output_directory}")
+            except Exception as e:
+                print(f"⚠️ Could not create output directory: {e}")
+                # Fallback to a guaranteed writable location
+                self.output_directory = Path.cwd() / "uv_results"
+                self.output_directory.mkdir(exist_ok=True)
+                print(f"🔍 Using fallback output directory: {self.output_directory}")
+        
+        # Store as string for compatibility with existing code
+        self.OUTPUT_DIRECTORY = str(self.output_directory)
+        
     def reset_session(self):
+        """Reset all session variables"""
         self.features = []
         self.current_type = None
         self.persistent_mode = True
@@ -185,7 +258,7 @@ class GeminiUVAnalyzer:
             self.lines_drawn = []
 
     def update_plot(self, title_suffix):
-        """FIXED: Update plot with 0-100 scale awareness"""
+        """FIXED: Update plot with 0-100 scale awareness and directory info"""
         wl = self.spectrum_df.iloc[:, 0]
         intens = self.spectrum_df.iloc[:, 1]
         
@@ -263,19 +336,38 @@ class GeminiUVAnalyzer:
         if self.fig: self.fig.canvas.draw()
     
     def file_selection_dialog(self):
-        """No more loop - single dialog attempt"""
-        default_dir = r"C:\Users\David\OneDrive\Desktop\gemini matcher\gemini sp10 raw\raw text"
+        """FIXED: File selection dialog with new directory structure support"""
         try:
             root = tk.Tk()
             root.withdraw()
             root.lift()
             root.attributes('-topmost', True)
+            
+            # Check if input directory exists and has files
+            if self.input_directory.exists():
+                txt_files = list(self.input_directory.glob("*.txt"))
+                if txt_files:
+                    initial_dir = str(self.input_directory)
+                    print(f"📂 Found {len(txt_files)} txt files in: {self.input_directory}")
+                else:
+                    initial_dir = str(self.input_directory)
+                    print(f"🔍 Using input directory (no txt files found): {self.input_directory}")
+            else:
+                initial_dir = str(self.project_root)
+                print(f"🔍 Input directory not found, using project root: {self.project_root}")
+            
             file_path = filedialog.askopenfilename(
-                parent=root, initialdir=default_dir,
-                title="Select Gem Spectrum for FIXED UV Analysis",
-                filetypes=[("Text files", "*.txt")])
+                parent=root, 
+                initialdir=initial_dir,
+                title=f"Select Gem Spectrum for FIXED UV Analysis\nLooking in: {Path(initial_dir).name}",
+                filetypes=[("Text files", "*.txt"), ("All files", "*.*")])
+            
             root.quit()
             root.destroy()
+            
+            if file_path:
+                print(f"✅ Selected file: {Path(file_path).name}")
+                print(f"   Full path: {file_path}")
             
             return file_path if file_path else None
             
@@ -284,7 +376,7 @@ class GeminiUVAnalyzer:
             return None
     
     def save_features(self):
-        """FIXED: Save with normalization metadata for database compatibility"""
+        """FIXED: Save with normalization metadata for new directory structure"""
         if hasattr(self, 'feature_ready') and self.feature_ready and self.clicks:
             print(f"Completing {self.current_type} before saving...")
             self.complete_feature()
@@ -293,52 +385,58 @@ class GeminiUVAnalyzer:
             return "continue"
             
         try:
-            # FIXED: Create DataFrame with normalization metadata
+            # FIXED: Create DataFrame with enhanced metadata
             df = pd.DataFrame(self.features)
             
             # FIXED: Add normalization metadata columns for database compatibility
-            if self.normalization_info:
-                df['Normalization_Scheme'] = self.normalization_info['normalization_scheme']
-                df['Reference_Wavelength'] = self.normalization_info['reference_wavelength']
-                df['Light_Source'] = 'UV'
-                df['Intensity_Range_Min'] = self.normalization_info['final_range_min']
-                df['Intensity_Range_Max'] = self.normalization_info['final_range_max']
-            else:
-                df['Normalization_Scheme'] = 'Raw_Data'
-                df['Reference_Wavelength'] = None
-                df['Light_Source'] = 'UV'
-                df['Intensity_Range_Min'] = None
-                df['Intensity_Range_Max'] = None
+            metadata_cols = {
+                'Normalization_Scheme': self.normalization_info['normalization_scheme'] if self.normalization_info else 'Raw_Data',
+                'Reference_Wavelength': self.normalization_info['reference_wavelength'] if self.normalization_info else None,
+                'Light_Source': 'UV',
+                'Intensity_Range_Min': self.normalization_info['final_range_min'] if self.normalization_info else None,
+                'Intensity_Range_Max': self.normalization_info['final_range_max'] if self.normalization_info else None,
+                'Directory_Structure': 'Updated_New_Structure',
+                'Output_Location': str(self.output_directory)
+            }
+            
+            for col, value in metadata_cols.items():
+                df[col] = value
             
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             base_name = self.filename.replace('.txt', '')
             outname = f"{base_name}_uv_structural_{timestamp}.csv"
-            os.makedirs(self.OUTPUT_DIRECTORY, exist_ok=True)
-            full_path = os.path.join(self.OUTPUT_DIRECTORY, outname)
+            
+            # Ensure output directory exists
+            self.output_directory.mkdir(parents=True, exist_ok=True)
+            full_path = self.output_directory / outname
+            
             df.to_csv(full_path, index=False)
             
-            print(f"FIXED: Saved {len(self.features)} features with normalization metadata")
-            print(f"File: {outname}")
+            print(f"✅ FIXED: Saved {len(self.features)} features with enhanced metadata")
+            print(f"🔍 Output directory: {self.output_directory}")
+            print(f"📄 File: {outname}")
             
             # FIXED: Display normalization info in save message
             if self.normalization_info:
                 scheme = self.normalization_info['normalization_scheme']
                 ref_wl = self.normalization_info['reference_wavelength']
-                print(f"Normalization: {scheme} (ref: {ref_wl:.1f}nm)")
+                print(f"🔧 Normalization: {scheme} (ref: {ref_wl:.1f}nm)")
             
             return self.ask_next_action()
             
         except Exception as e:
-            print(f"Save error: {e}")
+            print(f"❌ Save error: {e}")
+            print(f"   Attempted to save to: {self.output_directory}")
             return "continue"
     
     def ask_next_action(self):
-        """Return action instead of recursive call"""
+        """Ask user for next action with updated messaging"""
         try:
             result = messagebox.askyesnocancel(
                 "FIXED Analysis Complete",
-                f"FIXED UV analysis saved for: {self.filename}\n"
-                f"Includes normalization metadata for database compatibility\n\n"
+                f"✅ FIXED UV analysis saved for: {self.filename}\n"
+                f"🔍 Location: {self.output_directory.name}/\n"
+                f"🔧 Includes enhanced metadata for new directory structure\n\n"
                 f"YES = Analyze another gem with UV\n"
                 f"NO = Close this analyzer (return to launcher)\n"
                 f"CANCEL = Exit completely")
@@ -559,7 +657,8 @@ class GeminiUVAnalyzer:
                                'Light_Source': 'UV', 'Wavelength': round(wl, 2),
                                'Intensity': round(intens, 2), 'Point_Type': pt_type,
                                'Feature_Group': 'Baseline', 'Processing': 'Baseline_Then_UV_Normalized',
-                               'SNR': baseline_stats['snr'], 'Feature_Key': feature_key}
+                               'SNR': baseline_stats['snr'], 'Feature_Key': feature_key,
+                               'Directory_Structure': 'Updated_New_Structure'}
                         
                         # FIXED: Add normalization metadata to baseline features
                         if self.normalization_info:
@@ -585,7 +684,8 @@ class GeminiUVAnalyzer:
             entry = {'Feature': f'{self.current_type}_{label}', 'File': self.filename,
                    'Light_Source': 'UV', 'Wavelength': round(wl, 2),
                    'Intensity': round(intens, 2), 'Point_Type': label,
-                   'Feature_Group': self.current_type, 'Feature_Key': feature_key}
+                   'Feature_Group': self.current_type, 'Feature_Key': feature_key,
+                   'Directory_Structure': 'Updated_New_Structure'}
             
             # FIXED: Enhanced metadata for normalized features
             if self.baseline_data and self.normalization_applied:
@@ -608,7 +708,7 @@ class GeminiUVAnalyzer:
                       'Intensity': round(c_int, 2), 'Point_Type': 'Summary',
                       'Feature_Group': 'Mound', 'Symmetry_Ratio': ratio,
                       'Skew_Description': desc, 'Width_nm': round(e_wl - s_wl, 2),
-                      'Feature_Key': feature_key}
+                      'Feature_Key': feature_key, 'Directory_Structure': 'Updated_New_Structure'}
             
             # FIXED: Add normalization info to mound summary
             if self.normalization_applied and self.normalization_info:
@@ -639,15 +739,20 @@ class GeminiUVAnalyzer:
             self.undo_last(event)
     
     def run_analysis(self):
-        """FIXED: Main loop for UV analysis with proper normalization"""
+        """FIXED: Main loop for UV analysis with enhanced directory support"""
         print("="*70)
-        print("GEMINI UV ANALYZER - FIXED NORMALIZATION")
+        print("GEMINI UV ANALYZER - FIXED FOR NEW DIRECTORY STRUCTURE")
         print("="*70)
+        print(f"🔍 Project root: {self.project_root}")
+        print(f"📂 Input directory: {self.input_directory}")
+        print(f"🔍 Output directory: {self.output_directory}")
+        print("="*70)
+        print("FIXED: Corrected path detection to reach true project root")
         print("FIXED: 811nm → 15,000, then scale 0-100")
         print("Workflow: Mark baseline → Auto-process → Mark features")
         print("Use TOOLBAR MAGNIFYING GLASS for zoom")
         print("FIXED: Proper Y-axis scaling for 0-100 range")
-        print("FIXED: Exports normalization metadata for database")
+        print("FIXED: Exports enhanced metadata for database")
         
         # Main analysis loop
         while True:
@@ -683,6 +788,7 @@ class GeminiUVAnalyzer:
             plt.subplots_adjust(right=0.82)
             print("READY! Mark baseline first (B key), then features (1-7)")
             print("FIXED normalization will be applied automatically after baseline")
+            print(f"Results will be saved to: {self.output_directory}")
             
             plt.show()
             print("Analysis window closed")
