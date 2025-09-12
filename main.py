@@ -12,6 +12,7 @@ Major Enhancements:
 - Relative height measurements across light sources
 - Comprehensive database statistics and management
 - Automated workflow from analysis → database → comparison
+- NEW: Option 11 - Structural matching analysis with self-validation
 """
 
 import os
@@ -115,6 +116,13 @@ class EnhancedGeminiAnalysisSystem:
                     intensity_range_min REAL,
                     intensity_range_max REAL,
                     normalization_compatible BOOLEAN DEFAULT 1,
+                    
+                    -- Additional wavelength fields for structural matching
+                    start_wavelength REAL,
+                    end_wavelength REAL,
+                    midpoint_wavelength REAL,
+                    crest_wavelength REAL,
+                    max_wavelength REAL,
                     
                     -- Timestamps
                     timestamp TEXT DEFAULT (datetime('now')),
@@ -473,7 +481,7 @@ class EnhancedGeminiAnalysisSystem:
                 LIMIT 10
             """, conn)
             
-            print(f"\n🏷️ TOP FEATURE TYPES:")
+            print(f"\n🏷️  TOP FEATURE TYPES:")
             for _, row in feature_stats.iterrows():
                 print(f"   {row['feature_group']}: {row['count']:,}")
             
@@ -837,6 +845,611 @@ class EnhancedGeminiAnalysisSystem:
         self.relative_height_cache[cache_key] = measurements
         
         self.play_bleep(feature_type="completion")
+    
+    def structural_matching_analysis(self):
+        """Option 11: Structural matching analysis with self-validation testing"""
+        print("\n🔍 STRUCTURAL MATCHING ANALYSIS")
+        print("=" * 50)
+        
+        if not os.path.exists(self.db_path):
+            print(f"❌ Structural database not found: {self.db_path}")
+            return
+        
+        try:
+            conn = sqlite3.connect(self.db_path)
+            
+            # Get all gems with structural data
+            query = """
+                SELECT 
+                    CASE 
+                        WHEN file LIKE '%B%' THEN SUBSTR(file, 1, INSTR(file, 'B') - 1)
+                        WHEN file LIKE '%L%' THEN SUBSTR(file, 1, INSTR(file, 'L') - 1)
+                        WHEN file LIKE '%U%' THEN SUBSTR(file, 1, INSTR(file, 'U') - 1)
+                        ELSE SUBSTR(file, 1, INSTR(file || '_', '_') - 1)
+                    END as gem_id,
+                    GROUP_CONCAT(DISTINCT light_source) as light_sources,
+                    COUNT(DISTINCT light_source) as light_count,
+                    COUNT(*) as total_features
+                FROM structural_features 
+                WHERE file NOT LIKE '%unknown%'
+                GROUP BY gem_id
+                HAVING light_count >= 2
+                ORDER BY light_count DESC, gem_id
+            """
+            
+            gems_df = pd.read_sql_query(query, conn)
+            
+            if gems_df.empty:
+                print("❌ No gems with multi-light structural data found")
+                print("💡 Need gems with at least 2 light sources (B, L, U) for testing")
+                conn.close()
+                return
+            
+            print(f"📊 Found {len(gems_df)} gems suitable for structural matching:")
+            print("=" * 70)
+            print(f"{'#':<3} {'Gem ID':<15} {'Light Sources':<20} {'Features':<10} {'Status'}")
+            print("-" * 70)
+            
+            for i, row in gems_df.iterrows():
+                gem_id = row['gem_id']
+                light_sources = row['light_sources']
+                feature_count = row['total_features']
+                light_count = row['light_count']
+                
+                # Status indicator
+                if light_count == 3:
+                    status = "✅ COMPLETE (B+L+U)"
+                elif light_count == 2:
+                    status = "🟡 PARTIAL (2/3)"
+                else:
+                    status = "🔴 INSUFFICIENT"
+                
+                print(f"{i+1:<3} {gem_id:<15} {light_sources:<20} {feature_count:<10} {status}")
+            
+            # Selection menu
+            print(f"\n📋 SELECT GEM FOR STRUCTURAL MATCHING TEST:")
+            choice = input(f"Enter gem number (1-{len(gems_df)}) or 'q' to quit: ").strip()
+            
+            if choice.lower() == 'q':
+                conn.close()
+                return
+            
+            try:
+                gem_idx = int(choice) - 1
+                if gem_idx < 0 or gem_idx >= len(gems_df):
+                    print("❌ Invalid selection")
+                    conn.close()
+                    return
+                
+                selected_gem = gems_df.iloc[gem_idx]
+                gem_id = selected_gem['gem_id']
+                available_lights = selected_gem['light_sources'].split(',')
+                
+                print(f"\n🎯 SELECTED: {gem_id}")
+                print(f"   Available light sources: {', '.join(available_lights)}")
+                
+                # Show detailed breakdown
+                self.show_gem_structural_details(conn, gem_id, available_lights)
+                
+                # Confirm testing
+                confirm = input(f"\n🧪 Test structural matching for {gem_id}? (y/n): ").strip().lower()
+                if confirm != 'y':
+                    conn.close()
+                    return
+                
+                # Extract gem data and run matching test
+                self.run_structural_matching_test(conn, gem_id, available_lights)
+                
+            except ValueError:
+                print("❌ Please enter a valid number")
+            
+            conn.close()
+            
+        except Exception as e:
+            print(f"❌ Database error: {e}")
+    
+    def show_gem_structural_details(self, conn, gem_id, available_lights):
+        """Show detailed structural data for selected gem"""
+        print(f"\n📋 STRUCTURAL DATA DETAILS: {gem_id}")
+        print("=" * 60)
+        
+        for light_source in available_lights:
+            # Get features for this light source
+            query = """
+                SELECT file, feature_group, wavelength, intensity, COUNT(*) as count
+                FROM structural_features 
+                WHERE file LIKE ? AND light_source = ?
+                GROUP BY file, feature_group
+                ORDER BY feature_group, wavelength
+            """
+            
+            features_df = pd.read_sql_query(query, conn, params=[f"{gem_id}%", light_source])
+            
+            if not features_df.empty:
+                total_features = features_df['count'].sum()
+                feature_types = features_df['feature_group'].unique()
+                
+                print(f"💡 {light_source} Light Source:")
+                print(f"   📄 Files: {', '.join(features_df['file'].unique())}")
+                print(f"   🔢 Total features: {total_features}")
+                print(f"   🏷️  Feature types: {', '.join(feature_types)}")
+                
+                # Show feature breakdown
+                for feature_type in feature_types:
+                    type_data = features_df[features_df['feature_group'] == feature_type]
+                    count = type_data['count'].sum()
+                    wavelengths = pd.read_sql_query("""
+                        SELECT wavelength FROM structural_features 
+                        WHERE file LIKE ? AND light_source = ? AND feature_group = ?
+                        ORDER BY wavelength
+                    """, conn, params=[f"{gem_id}%", light_source, feature_type])
+                    
+                    if not wavelengths.empty:
+                        wl_range = f"{wavelengths['wavelength'].min():.1f}-{wavelengths['wavelength'].max():.1f}nm"
+                        print(f"      • {feature_type}: {count} features ({wl_range})")
+                print()
+    
+    def run_structural_matching_test(self, conn, gem_id, available_lights):
+        """Run structural matching test with self-validation"""
+        print(f"\n🧪 STRUCTURAL MATCHING TEST: {gem_id}")
+        print("=" * 50)
+        
+        # For each light source, extract data and test matching
+        test_results = {}
+        
+        for light_source in available_lights:
+            print(f"\n🔍 Testing {light_source} Light Source...")
+            
+            # Extract structural features for this light source
+            query = """
+                SELECT file, feature_group, wavelength, intensity, 
+                       start_wavelength, end_wavelength, midpoint_wavelength,
+                       crest_wavelength, max_wavelength
+                FROM structural_features 
+                WHERE file LIKE ? AND light_source = ?
+                ORDER BY wavelength
+            """
+            
+            test_data_df = pd.read_sql_query(query, conn, params=[f"{gem_id}%", light_source])
+            
+            if test_data_df.empty:
+                print(f"   ❌ No data found for {light_source}")
+                continue
+            
+            # Convert to format expected by matching algorithms
+            test_features = []
+            for _, row in test_data_df.iterrows():
+                feature = {
+                    'feature_type': row['feature_group'],
+                    'wavelength': row['wavelength'],
+                    'intensity': row['intensity']
+                }
+                
+                # Add optional wavelength fields
+                for field in ['start_wavelength', 'end_wavelength', 'midpoint_wavelength', 
+                             'crest_wavelength', 'max_wavelength']:
+                    if pd.notna(row[field]):
+                        feature[field] = row[field]
+                
+                test_features.append(feature)
+            
+            print(f"   ✅ Extracted {len(test_features)} features")
+            
+            # Find all potential matches in database for this light source
+            match_query = """
+                SELECT 
+                    CASE 
+                        WHEN file LIKE '%B%' THEN SUBSTR(file, 1, INSTR(file, 'B') - 1)
+                        WHEN file LIKE '%L%' THEN SUBSTR(file, 1, INSTR(file, 'L') - 1)
+                        WHEN file LIKE '%U%' THEN SUBSTR(file, 1, INSTR(file, 'U') - 1)
+                        ELSE SUBSTR(file, 1, INSTR(file || '_', '_') - 1)
+                    END as candidate_gem_id,
+                    file, COUNT(*) as feature_count
+                FROM structural_features 
+                WHERE light_source = ? AND file NOT LIKE ?
+                GROUP BY candidate_gem_id, file
+                HAVING feature_count >= 3
+                ORDER BY feature_count DESC
+            """
+            
+            candidates_df = pd.read_sql_query(match_query, conn, params=[light_source, f"{gem_id}%"])
+            
+            if candidates_df.empty:
+                print(f"   ❌ No candidates found for comparison")
+                continue
+            
+            print(f"   🎯 Found {len(candidates_df)} candidates for comparison")
+            
+            # Run matching against each candidate
+            match_scores = []
+            
+            for _, candidate_row in candidates_df.iterrows()[:10]:  # Test top 10 candidates
+                candidate_gem_id = candidate_row['candidate_gem_id']
+                candidate_file = candidate_row['file']
+                
+                # Get candidate features
+                candidate_query = """
+                    SELECT file, feature_group, wavelength, intensity,
+                           start_wavelength, end_wavelength, midpoint_wavelength,
+                           crest_wavelength, max_wavelength
+                    FROM structural_features 
+                    WHERE file = ?
+                    ORDER BY wavelength
+                """
+                
+                candidate_df = pd.read_sql_query(candidate_query, conn, params=[candidate_file])
+                
+                candidate_features = []
+                for _, row in candidate_df.iterrows():
+                    feature = {
+                        'feature_type': row['feature_group'],
+                        'wavelength': row['wavelength'],
+                        'intensity': row['intensity']
+                    }
+                    
+                    # Add optional wavelength fields
+                    for field in ['start_wavelength', 'end_wavelength', 'midpoint_wavelength',
+                                 'crest_wavelength', 'max_wavelength']:
+                        if pd.notna(row[field]):
+                            feature[field] = row[field]
+                    
+                    candidate_features.append(feature)
+                
+                # Calculate match score using simple wavelength comparison
+                match_score = self.calculate_simple_structural_match(test_features, candidate_features)
+                
+                match_scores.append({
+                    'candidate_gem_id': candidate_gem_id,
+                    'candidate_file': candidate_file,
+                    'score': match_score,
+                    'feature_count': len(candidate_features)
+                })
+            
+            # Sort by score
+            match_scores.sort(key=lambda x: x['score'], reverse=True)
+            test_results[light_source] = match_scores
+            
+            # Show results
+            print(f"   📊 TOP MATCHES:")
+            for i, match in enumerate(match_scores[:5], 1):
+                score_indicator = "🟢" if match['score'] > 90 else "🟡" if match['score'] > 70 else "🔴"
+                self_match = "⭐ SELF-MATCH!" if match['candidate_gem_id'] == gem_id else ""
+                print(f"      {i}. {match['candidate_gem_id']}: {match['score']:.1f}% {score_indicator} {self_match}")
+        
+        # Summary results
+        print(f"\n📋 STRUCTURAL MATCHING TEST SUMMARY: {gem_id}")
+        print("=" * 60)
+        
+        self_match_found = False
+        for light_source, matches in test_results.items():
+            if matches:
+                top_match = matches[0]
+                is_self = top_match['candidate_gem_id'] == gem_id
+                if is_self:
+                    self_match_found = True
+                
+                status = "✅ SELF-MATCH!" if is_self else f"❌ Matched: {top_match['candidate_gem_id']}"
+                print(f"   {light_source}: {top_match['score']:.1f}% - {status}")
+        
+        print(f"\n🎯 OVERALL TEST RESULT:")
+        if self_match_found:
+            print("   ✅ SUCCESS: Structural matching can identify gems correctly!")
+            print("   💡 Ready to test with unknown gems")
+        else:
+            print("   ❌ WARNING: Self-matching failed - need to tune algorithms")
+            print("   🔧 Consider adjusting wavelength tolerances")
+        
+        # Show algorithm suggestions
+        print(f"\n🔬 ALGORITHM STATUS:")
+        print("   📌 Current: Simple wavelength comparison")
+        print("   🚀 Available: Enhanced UV ratio analysis, multi-light integration")
+        print("   💡 Recommendation: Integrate enhanced_gem_analyzer.py for production use")
+    
+    def calculate_simple_structural_match(self, test_features, candidate_features):
+        """Simple structural matching for testing"""
+        if not test_features or not candidate_features:
+            return 0.0
+        
+        # Group features by type
+        test_by_type = {}
+        candidate_by_type = {}
+        
+        for feature in test_features:
+            feature_type = feature['feature_type']
+            if feature_type not in test_by_type:
+                test_by_type[feature_type] = []
+            test_by_type[feature_type].append(feature)
+        
+        for feature in candidate_features:
+            feature_type = feature['feature_type']
+            if feature_type not in candidate_by_type:
+                candidate_by_type[feature_type] = []
+            candidate_by_type[feature_type].append(feature)
+        
+        # Find common feature types
+        common_types = set(test_by_type.keys()) & set(candidate_by_type.keys())
+        
+        if not common_types:
+            return 0.0
+        
+        # Calculate matching score for common types
+        type_scores = []
+        
+        for feature_type in common_types:
+            test_features_type = test_by_type[feature_type]
+            candidate_features_type = candidate_by_type[feature_type]
+            
+            # For each test feature, find best match in candidates
+            total_score = 0.0
+            for test_feature in test_features_type:
+                test_wl = test_feature.get('wavelength', 0)
+                
+                best_score = 0.0
+                for candidate_feature in candidate_features_type:
+                    candidate_wl = candidate_feature.get('wavelength', 0)
+                    diff = abs(test_wl - candidate_wl)
+                    
+                    # Simple scoring based on wavelength difference
+                    if diff <= 0.5:
+                        score = 100.0
+                    elif diff <= 1.0:
+                        score = 95.0
+                    elif diff <= 2.0:
+                        score = 85.0
+                    elif diff <= 5.0:
+                        score = 70.0
+                    elif diff <= 10.0:
+                        score = 50.0
+                    else:
+                        score = max(0.0, 50.0 - diff * 2)
+                    
+                    best_score = max(best_score, score)
+                
+                total_score += best_score
+            
+            type_score = total_score / len(test_features_type) if test_features_type else 0.0
+            type_scores.append(type_score)
+        
+        # Average across all feature types
+        final_score = sum(type_scores) / len(type_scores) if type_scores else 0.0
+        return final_score
+    
+    def debug_structural_database(self):
+        """Debug function to examine structural database content"""
+        print("\n🔧 STRUCTURAL DATABASE DEBUG")
+        print("=" * 50)
+        
+        if not os.path.exists(self.db_path):
+            print(f"❌ Database not found: {self.db_path}")
+            return
+        
+        try:
+            conn = sqlite3.connect(self.db_path)
+            
+            # Check table structure
+            cursor = conn.cursor()
+            cursor.execute("PRAGMA table_info(structural_features)")
+            columns = cursor.fetchall()
+            
+            print("📋 TABLE STRUCTURE:")
+            for col in columns:
+                print(f"   {col[1]} ({col[2]}) - {'NOT NULL' if col[3] else 'NULLABLE'}")
+            
+            # Basic counts
+            cursor.execute("SELECT COUNT(*) FROM structural_features")
+            total_records = cursor.fetchone()[0]
+            print(f"\n📊 Total records: {total_records:,}")
+            
+            if total_records == 0:
+                print("❌ No structural features found in database")
+                print("\n🔍 EXPLORING ACTUAL DATABASE STRUCTURE...")
+                
+                # Get all table names
+                cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+                tables = cursor.fetchall()
+                
+                print(f"📊 Database size: {os.path.getsize(self.db_path) / 1024:.1f} KB")
+                print(f"📋 Found {len(tables)} tables:")
+                
+                for table_name, in tables:
+                    print(f"\n   📄 Table: '{table_name}'")
+                    
+                    # Get table info
+                    cursor.execute(f"PRAGMA table_info({table_name})")
+                    table_columns = cursor.fetchall()
+                    print(f"      Columns: {len(table_columns)}")
+                    for col in table_columns[:5]:  # Show first 5 columns
+                        print(f"         • {col[1]} ({col[2]})")
+                    if len(table_columns) > 5:
+                        print(f"         ... and {len(table_columns) - 5} more columns")
+                    
+                    # Get record count
+                    cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
+                    count = cursor.fetchone()[0]
+                    print(f"      Records: {count:,}")
+                    
+                    # Show sample data if records exist
+                    if count > 0:
+                        cursor.execute(f"SELECT * FROM {table_name} LIMIT 3")
+                        samples = cursor.fetchall()
+                        print(f"      Sample data:")
+                        for i, row in enumerate(samples, 1):
+                            # Show first few fields
+                            sample_str = str(row)[:80] + "..." if len(str(row)) > 80 else str(row)
+                            print(f"         {i}. {sample_str}")
+                
+                conn.close()
+                return
+            
+            # Check light sources
+            cursor.execute("SELECT light_source, COUNT(*) FROM structural_features GROUP BY light_source")
+            light_sources = cursor.fetchall()
+            print(f"\n💡 Light Sources:")
+            for light, count in light_sources:
+                print(f"   {light}: {count:,} records")
+            
+            # Check file distribution
+            cursor.execute("SELECT file, light_source, COUNT(*) FROM structural_features GROUP BY file, light_source ORDER BY file")
+            files = cursor.fetchall()
+            print(f"\n📄 Files in database ({len(files)} total):")
+            
+            current_gem = None
+            gem_lights = {}
+            
+            for file, light, count in files:
+                # Extract gem ID (everything before the light source letter)
+                if 'B' in file:
+                    gem_id = file.split('B')[0]
+                elif 'L' in file:
+                    gem_id = file.split('L')[0]  
+                elif 'U' in file:
+                    gem_id = file.split('U')[0]
+                else:
+                    gem_id = file.split('_')[0]
+                
+                if gem_id != current_gem:
+                    if current_gem:
+                        # Print previous gem summary
+                        lights = ', '.join(gem_lights.keys())
+                        total_features = sum(gem_lights.values())
+                        print(f"      └─ Total: {lights} ({total_features} features)")
+                    
+                    current_gem = gem_id
+                    gem_lights = {}
+                    print(f"   📁 {gem_id}:")
+                
+                gem_lights[light] = gem_lights.get(light, 0) + count
+                print(f"      {file}: {light} ({count} features)")
+            
+            # Print last gem
+            if current_gem and gem_lights:
+                lights = ', '.join(gem_lights.keys())
+                total_features = sum(gem_lights.values())
+                print(f"      └─ Total: {lights} ({total_features} features)")
+            
+            # Check feature types
+            cursor.execute("SELECT feature_group, COUNT(*) FROM structural_features GROUP BY feature_group ORDER BY COUNT(*) DESC")
+            feature_types = cursor.fetchall()
+            print(f"\n🏷️  Feature Types:")
+            for feature_type, count in feature_types:
+                print(f"   {feature_type}: {count:,}")
+            
+            # Find complete gems (with multiple light sources)
+            cursor.execute("""
+                SELECT 
+                    CASE 
+                        WHEN file LIKE '%B%' THEN SUBSTR(file, 1, INSTR(file, 'B') - 1)
+                        WHEN file LIKE '%L%' THEN SUBSTR(file, 1, INSTR(file, 'L') - 1)
+                        WHEN file LIKE '%U%' THEN SUBSTR(file, 1, INSTR(file, 'U') - 1)
+                        ELSE SUBSTR(file, 1, INSTR(file || '_', '_') - 1)
+                    END as gem_id,
+                    GROUP_CONCAT(DISTINCT light_source) as lights,
+                    COUNT(DISTINCT light_source) as light_count,
+                    COUNT(*) as total_features
+                FROM structural_features 
+                GROUP BY gem_id
+                HAVING light_count >= 2
+                ORDER BY light_count DESC, total_features DESC
+            """)
+            
+            complete_gems = cursor.fetchall()
+            
+            print(f"\n🎯 GEMS SUITABLE FOR TESTING ({len(complete_gems)} found):")
+            print(f"{'Gem ID':<15} {'Lights':<15} {'Count':<8} {'Features':<10} {'Status'}")
+            print("-" * 60)
+            
+            for gem_id, lights, light_count, features in complete_gems:
+                if light_count == 3:
+                    status = "✅ PERFECT"
+                elif light_count == 2:
+                    status = "🟡 GOOD"
+                else:
+                    status = "🔴 MINIMAL"
+                
+                print(f"{gem_id:<15} {lights:<15} {light_count:<8} {features:<10} {status}")
+            
+            if complete_gems:
+                print(f"\n💡 RECOMMENDATION:")
+                best_gem = complete_gems[0]
+                print(f"   Test with: {best_gem[0]} ({best_gem[1]} - {best_gem[3]} features)")
+                print(f"   Expected result: 100% self-match")
+            else:
+                print(f"\n❌ NO SUITABLE GEMS FOR TESTING")
+                print(f"   Need gems with at least 2 light sources")
+                print(f"   Add more structural data to database")
+            
+            # Sample some actual data
+            cursor.execute("SELECT * FROM structural_features LIMIT 5")
+            sample_data = cursor.fetchall()
+            
+            print(f"\n📋 SAMPLE DATA (First 5 records):")
+            for row in sample_data:
+                print(f"   File: {row[1]}, Light: {row[2]}, Wavelength: {row[3]:.1f}nm, Feature: {row[5]}")
+            
+            conn.close()
+            
+        except Exception as e:
+            print(f"❌ Database error: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    def check_both_database_files(self):
+        """Check both database files to see which has data"""
+        print("\n🔍 CHECKING BOTH DATABASE FILES")
+        print("=" * 50)
+        
+        database_files = [
+            "database/structural_spectra/multi_structural_gem_data.db",
+            "database/structural_spectra/fixed_structural_gem_data.db"
+        ]
+        
+        for db_path in database_files:
+            print(f"\n📄 Checking: {db_path}")
+            
+            if not os.path.exists(db_path):
+                print(f"   ❌ File not found")
+                continue
+                
+            try:
+                # Get file size
+                size_kb = os.path.getsize(db_path) / 1024
+                print(f"   📊 Size: {size_kb:.1f} KB")
+                
+                # Connect and explore
+                conn = sqlite3.connect(db_path)
+                cursor = conn.cursor()
+                
+                # Get table names
+                cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+                tables = cursor.fetchall()
+                print(f"   📋 Tables: {[t[0] for t in tables]}")
+                
+                # Check each table for records
+                for table_name, in tables:
+                    if table_name.startswith('sqlite_'):
+                        continue  # Skip system tables
+                        
+                    try:
+                        cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
+                        count = cursor.fetchone()[0]
+                        print(f"      📊 {table_name}: {count:,} records")
+                        
+                        if count > 0:
+                            # Show sample data
+                            cursor.execute(f"SELECT * FROM {table_name} LIMIT 3")
+                            samples = cursor.fetchall()
+                            print(f"      🔬 Sample data:")
+                            for i, row in enumerate(samples, 1):
+                                sample_str = str(row)[:100] + "..." if len(str(row)) > 100 else str(row)
+                                print(f"         {i}. {sample_str}")
+                                
+                    except Exception as e:
+                        print(f"      ❌ Error reading {table_name}: {e}")
+                
+                conn.close()
+                
+            except Exception as e:
+                print(f"   ❌ Database error: {e}")
     
     def check_system_status(self):
         """Check overall system status with enhanced database info"""
@@ -2041,6 +2654,7 @@ class EnhancedGeminiAnalysisSystem:
             ("🔊 Audio Bleep Test", lambda: self.test_audio_system()),
             ("💾 Export Analysis Cache", self.export_analysis_cache),
             ("🔄 Clear Analysis Cache", self.clear_analysis_cache),
+            ("🔧 Debug Structural Database", self.debug_structural_database),
             ("⬅️ Back to Main Menu", None)
         ]
         
@@ -2188,6 +2802,7 @@ class EnhancedGeminiAnalysisSystem:
             ("🧮 Run Enhanced Numerical Analysis", self.run_numerical_analysis_fixed),
             ("📈 Show Database Statistics", self.show_database_stats),
             ("🔧 Emergency Fix", self.emergency_fix_files),
+            ("🔍 Match Gem (Structural)", self.structural_matching_analysis),
             ("❌ Exit", lambda: None)
         ]
         
@@ -2263,6 +2878,8 @@ def main():
         print("   🔄 Automatic CSV import")
         print("   📏 Relative height measurements")
         print("   📊 Enhanced comparison tools")
+        print("   🔍 NEW: Structural matching analysis (Option 11)")
+        print("   📂 Database location: database/structural_spectra/")
         
         system = EnhancedGeminiAnalysisSystem()
         
