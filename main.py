@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env  python3
 """
 ENHANCED GEMINI GEMOLOGICAL ANALYSIS SYSTEM - COMPLETE DATABASE INTEGRATION
 Enhanced version with full database management, auto-import, enhanced comparison tools,
