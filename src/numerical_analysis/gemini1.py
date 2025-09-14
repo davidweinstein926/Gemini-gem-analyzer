@@ -107,7 +107,7 @@ def main():
     unknown_files = {}
     for light in ['B', 'L', 'U']:
         found = False
-        for base_path in ['data/unknown', '.']:
+        for base_path in ['data/unknown/numerical/', '.']:
             test_path = os.path.join(base_path, f'unkgem{light}.csv')
             if os.path.exists(test_path):
                 unknown_files[light] = test_path
