@@ -92,7 +92,7 @@ gemini_gemological_analysis
 			__init__.py		
 			gemini_structural_db		
 			gemstone_reference_database.json		
-			multi_structural_gem_data.csv		
+			multi_structural_gem_data.db		
 			spectrum_data.json		
 			fixed_strutural_gem_data.db		
 			direct_import.py		
@@ -106,7 +106,11 @@ gemini_gemological_analysis
 			*BC1.txt		
 			*LC1.txt		
 			*UC1.txt		
-		raw_txt			
+	    structural
+            *BC1_TS.csv
+            *LC1_TS.csv
+            *UC1_TS.csv 
+     raw_txt			
 			*B.txt		
 			*L.txt		
 			*U.txt		
@@ -118,12 +122,17 @@ gemini_gemological_analysis
 			uv		
 				u.csv	
 		unknown			
-			unkgemB.csv		
-			unkgemB_source.csv		
-			unkgemL.csv		
-			unkgemL_source.csv		
-			unkgemU.csv		
-			unkgemU_source.csv		
+			numerical
+                unkgemB.csv		
+			    unkgemL.csv  
+                unkgemU.csv
+            structural
+                unkgemB_st.csv 
+                unkgemL_st.csv
+                unkgemU_st.csv
+        unkgemB_source.csv		
+		unkgemL_source.csv		
+		unkgemU_source.csv		
 	data_acquisition				
 		__init__.py			
 		calibration_diagnostic.py			
