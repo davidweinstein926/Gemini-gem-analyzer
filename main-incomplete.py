@@ -2,18 +2,21 @@
 """
 ENHANCED GEMINI GEMOLOGICAL ANALYSIS SYSTEM - COMPLETE DATABASE INTEGRATION
 Enhanced version with full database management, auto-import, enhanced comparison tools,
-bleep features, relative height measurements, and streamlined workflow automation.
+bleep features, relative height measurements, streamlined workflow automation, and
+ULTRA_OPTIMIZED CSV import support.
 
 Major Enhancements:
 - Full database import/export system integrated
 - Automatic CSV-to-SQLite import after manual analysis
+- ULTRA_OPTIMIZED format support (41+ columns)
 - Enhanced comparison tools using database queries
 - Audio bleep feedback for significant features
 - Relative height measurements across light sources
 - Comprehensive database statistics and management
 - Automated workflow from analysis → database → comparison
-- NEW: Option 11 - Structural matching analysis with self-validation
-- FIXED: Correct database paths and queries for your system
+- Option 11 - Structural matching analysis with self-validation
+- Option 17 - Enhanced CSV import with intelligent column mapping
+- Fixed Unicode encoding issues and folder organization
 """
 
 import os
@@ -42,8 +45,7 @@ except ImportError:
 
 class EnhancedGeminiAnalysisSystem:
     def __init__(self):
-        # CORRECTED DATABASE PATH - Full absolute path to your 448KB database
-        self.db_path = r"C:\Users\David\OneDrive\Desktop\gemini_gemological_analysis\database\structural_spectra\multi_structural_gem_data.db"
+        self.db_path = "multi_structural_gem_data.db"
         
         # Database import system path
         self.structural_data_dir = r"c:\users\david\gemini sp10 structural data"
@@ -73,15 +75,9 @@ class EnhancedGeminiAnalysisSystem:
         """Initialize the integrated database management system"""
         print("Initializing integrated database system...")
         
-        # Ensure database directory exists - use absolute path
-        db_dir = r"C:\Users\David\OneDrive\Desktop\gemini_gemological_analysis\database\structural_spectra"
-        os.makedirs(db_dir, exist_ok=True)
-        
         # Check if database exists, if not create basic structure
         if not os.path.exists(self.db_path):
             self.create_database_schema()
-        else:
-            print(f"Database found: {os.path.getsize(self.db_path) / 1024:.1f} KB")
         
         # Ensure structural data directory exists
         os.makedirs(self.structural_data_dir, exist_ok=True)
@@ -132,6 +128,30 @@ class EnhancedGeminiAnalysisSystem:
                     crest_wavelength REAL,
                     max_wavelength REAL,
                     
+                    -- ULTRA_OPTIMIZED additional fields
+                    feature_key TEXT,
+                    baseline_quality TEXT,
+                    baseline_width_nm REAL,
+                    baseline_cv_percent REAL,
+                    baseline_std_dev REAL,
+                    target_ref_intensity REAL,
+                    click_order REAL,
+                    total_width_nm REAL,
+                    left_width_nm REAL,
+                    right_width_nm REAL,
+                    skew_severity TEXT,
+                    width_class TEXT,
+                    target_reference_intensity REAL,
+                    scaling_factor REAL,
+                    total_spectrum_points INTEGER,
+                    wavelength_range_min REAL,
+                    wavelength_range_max REAL,
+                    wavelength_span_nm REAL,
+                    baseline_snr REAL,
+                    analysis_date TEXT,
+                    analysis_time TEXT,
+                    analyzer_version TEXT,
+                    
                     -- Timestamps
                     timestamp TEXT DEFAULT (datetime('now')),
                     file_source TEXT,
@@ -155,10 +175,378 @@ class EnhancedGeminiAnalysisSystem:
             
             conn.commit()
             conn.close()
-            print("Database schema created successfully")
+            print("Database schema created successfully with ULTRA_OPTIMIZED support")
             
         except Exception as e:
             print(f"Error creating database schema: {e}")
+
+    def auto_import_csv_to_database_enhanced(self, csv_file_path):
+        """Enhanced CSV import that handles BOTH regular (23) and ULTRA_OPTIMIZED (41) column formats"""
+        if not self.auto_import_enabled:
+            return False
+        
+        try:
+            print(f"Analyzing CSV format: {os.path.basename(csv_file_path)}")
+            
+            # Determine light source from file path or filename
+            light_source = self.detect_light_source_from_path(csv_file_path)
+            
+            # Read CSV file and analyze its structure
+            df = pd.read_csv(csv_file_path)
+            
+            if df.empty:
+                print(f"   Empty CSV file")
+                return False
+            
+            # Analyze CSV format
+            column_count = len(df.columns)
+            csv_format = "ULTRA_OPTIMIZED" if column_count >= 35 else "STANDARD"
+            
+            print(f"   Detected format: {csv_format} ({column_count} columns)")
+            
+            # Check if database schema can handle all columns
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            # Get current database schema
+            cursor.execute("PRAGMA table_info(structural_features)")
+            db_columns = {col[1]: col[2] for col in cursor.fetchall()}  # name: type
+            
+            print(f"   Database has {len(db_columns)} columns")
+            
+            # Map CSV columns to database columns
+            column_mapping = self.create_column_mapping(df.columns, db_columns, csv_format)
+            
+            imported_count = 0
+            skipped_columns = []
+            base_filename = os.path.splitext(os.path.basename(csv_file_path))[0]
+            
+            # Build dynamic INSERT statement based on available columns
+            available_db_columns = [db_col for csv_col, db_col in column_mapping.items() 
+                                   if db_col in db_columns and db_col != 'SKIP']
+            
+            # Add required columns that might not be in CSV
+            if 'file' not in available_db_columns:
+                available_db_columns.append('file')
+            if 'light_source' not in available_db_columns:
+                available_db_columns.append('light_source')
+            if 'file_source' not in available_db_columns:
+                available_db_columns.append('file_source')
+            if 'data_type' not in available_db_columns:
+                available_db_columns.append('data_type')
+            
+            # Remove duplicates
+            available_db_columns = list(set(available_db_columns))
+            
+            # Build INSERT statement
+            columns_str = ', '.join(available_db_columns)
+            placeholders = ', '.join(['?' for _ in available_db_columns])
+            
+            insert_query = f"""
+                INSERT OR IGNORE INTO structural_features 
+                ({columns_str})
+                VALUES ({placeholders})
+            """
+            
+            print(f"   Will import {len(available_db_columns)} columns to database")
+            
+            # Import each row from the CSV
+            for _, row in df.iterrows():
+                try:
+                    # Build values list for this row
+                    values = []
+                    
+                    for db_column in available_db_columns:
+                        if db_column == 'file':
+                            values.append(base_filename)
+                        elif db_column == 'light_source':
+                            values.append(light_source)
+                        elif db_column == 'file_source':
+                            values.append(csv_file_path)
+                        elif db_column == 'data_type':
+                            values.append(f'manual_{csv_format.lower()}')
+                        else:
+                            # Find corresponding CSV column
+                            csv_column = next((csv_col for csv_col, mapped_db_col in column_mapping.items() 
+                                             if mapped_db_col == db_column), None)
+                            
+                            if csv_column and csv_column in row:
+                                value = row[csv_column]
+                                
+                                # Convert to appropriate type
+                                if pd.isna(value) or value == '':
+                                    values.append(None)
+                                elif db_columns[db_column] in ['REAL', 'FLOAT']:
+                                    values.append(self.safe_float(value))
+                                elif db_columns[db_column] in ['INTEGER', 'INT']:
+                                    values.append(self.safe_int(value))
+                                else:
+                                    values.append(str(value))
+                            else:
+                                values.append(None)
+                    
+                    # Execute insert
+                    cursor.execute(insert_query, values)
+                    
+                    if cursor.rowcount > 0:
+                        imported_count += 1
+                        
+                except Exception as e:
+                    print(f"   Error importing row: {e}")
+                    continue
+            
+            conn.commit()
+            conn.close()
+            
+            # Report results
+            if imported_count > 0:
+                print(f"   Successfully imported {imported_count} features")
+                print(f"   Format: {csv_format} → Database mapping successful")
+                
+                if csv_format == "ULTRA_OPTIMIZED":
+                    print(f"   Enhanced data preserved: width details, baseline quality, skew analysis")
+                
+                self.play_bleep(feature_type="completion")
+                return True
+            else:
+                print(f"   No features imported")
+                return False
+                
+        except Exception as e:
+            print(f"   Enhanced import error: {e}")
+            return False
+
+    def create_column_mapping(self, csv_columns, db_columns, csv_format):
+        """Create intelligent mapping between CSV and database columns"""
+        
+        # Base mapping that works for both formats
+        base_mapping = {
+            # Core columns (present in both formats)
+            'Feature': 'feature',
+            'File': 'SKIP',  # We'll use filename instead
+            'Light_Source': 'SKIP',  # We'll detect from path
+            'Wavelength': 'wavelength', 
+            'Intensity': 'intensity',
+            'Point_Type': 'point_type',
+            'Feature_Group': 'feature_group',
+            'Processing': 'processing',
+            'SNR': 'snr',
+            'Baseline_Used': 'baseline_used',
+            'Norm_Factor': 'norm_factor',
+            'Normalization_Method': 'normalization_scheme',
+            'Reference_Wavelength_Used': 'reference_wavelength',
+            'Symmetry_Ratio': 'symmetry_ratio',
+            'Skew_Description': 'skew_description',
+            'Width_nm': 'width_nm',
+            'Normalization_Scheme': 'normalization_scheme',
+            'Reference_Wavelength': 'reference_wavelength',
+            'Intensity_Range_Min': 'intensity_range_min',
+            'Intensity_Range_Max': 'intensity_range_max',
+        }
+        
+        if csv_format == "ULTRA_OPTIMIZED":
+            # Additional mappings for ULTRA_OPTIMIZED format
+            ultra_mapping = {
+                'Feature_Key': 'feature_key',
+                'Baseline_Quality': 'baseline_quality', 
+                'Baseline_Width_nm': 'baseline_width_nm',
+                'Baseline_CV_Percent': 'baseline_cv_percent',
+                'Baseline_Std_Dev': 'baseline_std_dev',
+                'Target_Ref_Intensity': 'target_ref_intensity',
+                'Click_Order': 'click_order',
+                'total_width_nm': 'total_width_nm',
+                'left_width_nm': 'left_width_nm', 
+                'right_width_nm': 'right_width_nm',
+                'symmetry_ratio': 'symmetry_ratio',
+                'skew_description': 'skew_description',
+                'skew_severity': 'skew_severity',
+                'width_class': 'width_class',
+                'Target_Reference_Intensity': 'target_reference_intensity',
+                'Scaling_Factor': 'scaling_factor',
+                'Total_Spectrum_Points': 'total_spectrum_points',
+                'Wavelength_Range_Min': 'wavelength_range_min',
+                'Wavelength_Range_Max': 'wavelength_range_max',
+                'Wavelength_Span_nm': 'wavelength_span_nm',
+                'Baseline_SNR': 'baseline_snr',
+                'Analysis_Date': 'analysis_date',
+                'Analysis_Time': 'analysis_time',
+                'Analyzer_Version': 'analyzer_version'
+            }
+            base_mapping.update(ultra_mapping)
+        
+        # Filter mapping to only include columns that exist in CSV and database
+        final_mapping = {}
+        
+        for csv_col in csv_columns:
+            if csv_col in base_mapping:
+                db_col = base_mapping[csv_col]
+                if db_col == 'SKIP':
+                    final_mapping[csv_col] = 'SKIP'
+                elif db_col in db_columns:
+                    final_mapping[csv_col] = db_col
+                else:
+                    final_mapping[csv_col] = 'SKIP'  # Database doesn't have this column
+            else:
+                # Try fuzzy matching for unmapped columns
+                fuzzy_match = self.find_fuzzy_column_match(csv_col, db_columns.keys())
+                final_mapping[csv_col] = fuzzy_match if fuzzy_match else 'SKIP'
+        
+        return final_mapping
+
+    def find_fuzzy_column_match(self, csv_column, db_columns):
+        """Find best fuzzy match for unmapped columns"""
+        csv_lower = csv_column.lower().replace('_', '').replace(' ', '')
+        
+        for db_col in db_columns:
+            db_lower = db_col.lower().replace('_', '').replace(' ', '')
+            
+            # Exact match (ignore case/underscores)
+            if csv_lower == db_lower:
+                return db_col
+            
+            # Partial match
+            if csv_lower in db_lower or db_lower in csv_lower:
+                return db_col
+        
+        return None
+
+    def safe_int(self, value):
+        """Safely convert value to int or return None"""
+        if pd.isna(value) or value == '' or value is None:
+            return None
+        try:
+            return int(float(value))  # Convert through float first to handle decimals
+        except:
+            return None
+
+    def update_database_schema_for_ultra_optimized(self):
+        """Add missing columns to database schema to support ULTRA_OPTIMIZED format"""
+        print("\nUPDATING DATABASE SCHEMA FOR ULTRA_OPTIMIZED FORMAT")
+        print("=" * 60)
+        
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            # Get current columns
+            cursor.execute("PRAGMA table_info(structural_features)")
+            existing_columns = {col[1] for col in cursor.fetchall()}
+            
+            # Define additional columns needed for ULTRA_OPTIMIZED
+            ultra_columns = {
+                'feature_key': 'TEXT',
+                'baseline_quality': 'TEXT',
+                'baseline_width_nm': 'REAL',
+                'baseline_cv_percent': 'REAL',
+                'baseline_std_dev': 'REAL', 
+                'target_ref_intensity': 'REAL',
+                'click_order': 'REAL',
+                'total_width_nm': 'REAL',
+                'left_width_nm': 'REAL',
+                'right_width_nm': 'REAL',
+                'skew_severity': 'TEXT',
+                'width_class': 'TEXT',
+                'target_reference_intensity': 'REAL',
+                'scaling_factor': 'REAL',
+                'total_spectrum_points': 'INTEGER',
+                'wavelength_range_min': 'REAL',
+                'wavelength_range_max': 'REAL',
+                'wavelength_span_nm': 'REAL',
+                'baseline_snr': 'REAL',
+                'analysis_date': 'TEXT',
+                'analysis_time': 'TEXT',
+                'analyzer_version': 'TEXT'
+            }
+            
+            # Add missing columns
+            added_columns = 0
+            for col_name, col_type in ultra_columns.items():
+                if col_name not in existing_columns:
+                    try:
+                        cursor.execute(f"ALTER TABLE structural_features ADD COLUMN {col_name} {col_type}")
+                        print(f"   Added column: {col_name} ({col_type})")
+                        added_columns += 1
+                    except Exception as e:
+                        print(f"   Could not add {col_name}: {e}")
+            
+            if added_columns > 0:
+                conn.commit()
+                print(f"\nSuccessfully added {added_columns} columns for ULTRA_OPTIMIZED support!")
+            else:
+                print(f"\nDatabase already supports ULTRA_OPTIMIZED format")
+            
+            conn.close()
+            return added_columns > 0
+            
+        except Exception as e:
+            print(f"Schema update error: {e}")
+            return False
+
+    def test_enhanced_import_system(self):
+        """Test the enhanced import system with both CSV formats"""
+        print("\nTESTING ENHANCED IMPORT SYSTEM")
+        print("=" * 50)
+        
+        # First, update schema to support ULTRA_OPTIMIZED
+        self.update_database_schema_for_ultra_optimized()
+        
+        # Test directory
+        test_dir = "data/structural_data"
+        
+        if not os.path.exists(test_dir):
+            print(f"Test directory not found: {test_dir}")
+            return
+        
+        # Find test files
+        test_files = []
+        for root, dirs, files in os.walk(test_dir):
+            for file in files:
+                if file.endswith('.csv'):
+                    full_path = os.path.join(root, file)
+                    test_files.append(full_path)
+        
+        if not test_files:
+            print(f"No CSV files found in {test_dir}")
+            return
+        
+        print(f"Found {len(test_files)} CSV files to test")
+        
+        # Test each file
+        results = {'success': 0, 'failed': 0, 'ultra_optimized': 0, 'standard': 0}
+        
+        for test_file in test_files[:5]:  # Test first 5 files
+            print(f"\nTesting: {os.path.basename(test_file)}")
+            
+            success = self.auto_import_csv_to_database_enhanced(test_file)
+            
+            if success:
+                results['success'] += 1
+                # Check if it was ultra optimized
+                df = pd.read_csv(test_file)
+                if len(df.columns) >= 35:
+                    results['ultra_optimized'] += 1
+                else:
+                    results['standard'] += 1
+            else:
+                results['failed'] += 1
+        
+        # Show results
+        print(f"\nENHANCED IMPORT TEST RESULTS:")
+        print("=" * 40)
+        print(f"Successful imports: {results['success']}")
+        print(f"Failed imports: {results['failed']}")
+        print(f"ULTRA_OPTIMIZED files: {results['ultra_optimized']}")
+        print(f"Standard files: {results['standard']}")
+        
+        if results['success'] > 0:
+            print(f"\nEnhanced import system working!")
+            print(f"Both 23-column and 41-column formats supported")
+            if self.bleep_enabled:
+                self.play_bleep(feature_type="completion")
+        else:
+            print(f"\nImport system needs debugging")
+        
+        return results
     
     def correct_normalize_spectrum(self, wavelengths, intensities, light_source):
         """DATABASE-MATCHING NORMALIZATION - matches corrected database exactly"""
@@ -283,78 +671,8 @@ class EnhancedGeminiAnalysisSystem:
             return None
     
     def auto_import_csv_to_database(self, csv_file_path):
-        """Automatically import CSV file to database after manual analysis"""
-        if not self.auto_import_enabled:
-            return False
-        
-        try:
-            # Determine light source from file path or filename
-            light_source = self.detect_light_source_from_path(csv_file_path)
-            
-            # Read CSV file
-            df = pd.read_csv(csv_file_path)
-            
-            if df.empty:
-                return False
-            
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            imported_count = 0
-            base_filename = os.path.splitext(os.path.basename(csv_file_path))[0]
-            
-            # Import each row from the CSV
-            for _, row in df.iterrows():
-                try:
-                    cursor.execute("""
-                        INSERT OR IGNORE INTO structural_features 
-                        (feature, file, light_source, wavelength, intensity, point_type, 
-                         feature_group, processing, baseline_used, norm_factor, snr,
-                         symmetry_ratio, skew_description, width_nm, height, 
-                         local_slope, slope_r_squared, file_source, data_type)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """, (
-                        row.get('Feature', ''),
-                        base_filename,
-                        light_source,
-                        float(row.get('Wavelength', 0)),
-                        float(row.get('Intensity', 0)),
-                        row.get('Point_Type', 'Manual'),
-                        row.get('Feature_Group', 'Unknown'),
-                        'Manual_Analysis',
-                        self.safe_float(row.get('Baseline_Used')),
-                        self.safe_float(row.get('Norm_Factor')),
-                        self.safe_float(row.get('SNR')),
-                        self.safe_float(row.get('Symmetry_Ratio')),
-                        row.get('Skew_Description', ''),
-                        self.safe_float(row.get('Width_nm')),
-                        self.safe_float(row.get('Height')),
-                        self.safe_float(row.get('Local_Slope')),
-                        self.safe_float(row.get('Slope_R_Squared')),
-                        csv_file_path,
-                        'manual_structural'
-                    ))
-                    
-                    if cursor.rowcount > 0:
-                        imported_count += 1
-                        
-                except Exception as e:
-                    print(f"Error importing row: {e}")
-                    continue
-            
-            conn.commit()
-            conn.close()
-            
-            if imported_count > 0:
-                print(f"Auto-imported {imported_count} features from {os.path.basename(csv_file_path)}")
-                self.play_bleep(feature_type="completion")
-                return True
-            
-            return False
-            
-        except Exception as e:
-            print(f"Auto-import error: {e}")
-            return False
+        """Legacy method - redirects to enhanced version"""
+        return self.auto_import_csv_to_database_enhanced(csv_file_path)
     
     def detect_light_source_from_path(self, file_path):
         """Detect light source from file path or filename"""
@@ -380,8 +698,11 @@ class EnhancedGeminiAnalysisSystem:
     
     def batch_import_structural_data(self):
         """Enhanced batch import with auto-detection and validation"""
-        print("\n🚀 ENHANCED BATCH IMPORT SYSTEM")
+        print("\nENHANCED BATCH IMPORT SYSTEM")
         print("=" * 50)
+        
+        # Update schema first to support ULTRA_OPTIMIZED
+        self.update_database_schema_for_ultra_optimized()
         
         # Scan for structural CSV files
         all_csv_files = []
@@ -397,40 +718,56 @@ class EnhancedGeminiAnalysisSystem:
                     full_path = os.path.join(source_dir, csv_file)
                     all_csv_files.append((full_path, light_source))
         
-        print(f"📁 Found structural data files:")
+        print(f"Found structural data files:")
         for light_source, count in light_source_counts.items():
             print(f"   {light_source.capitalize()}: {count} files")
         
         if not all_csv_files:
-            print("❌ No structural CSV files found!")
+            print("No structural CSV files found!")
             return
         
-        print(f"\n📊 Total files to import: {len(all_csv_files)}")
+        print(f"\nTotal files to import: {len(all_csv_files)}")
         
         # Confirm import
-        confirm = input("\n🔄 Proceed with batch import? (y/n): ").strip().lower()
+        confirm = input("\nProceed with enhanced batch import? (y/n): ").strip().lower()
         if confirm != 'y':
-            print("❌ Import cancelled")
+            print("Import cancelled")
             return
         
-        # Import files
+        # Import files using enhanced system
         successful_imports = 0
         failed_imports = 0
+        ultra_optimized_count = 0
+        standard_count = 0
         
-        print(f"\n🔄 Starting batch import...")
+        print(f"\nStarting enhanced batch import...")
         
         for file_path, light_source in all_csv_files:
-            print(f"   📥 Processing: {os.path.basename(file_path)}")
+            print(f"   Processing: {os.path.basename(file_path)}")
             
-            success = self.auto_import_csv_to_database(file_path)
-            if success:
-                successful_imports += 1
-            else:
+            # Check format before importing
+            try:
+                df = pd.read_csv(file_path)
+                csv_format = "ULTRA_OPTIMIZED" if len(df.columns) >= 35 else "STANDARD"
+                
+                success = self.auto_import_csv_to_database_enhanced(file_path)
+                if success:
+                    successful_imports += 1
+                    if csv_format == "ULTRA_OPTIMIZED":
+                        ultra_optimized_count += 1
+                    else:
+                        standard_count += 1
+                else:
+                    failed_imports += 1
+            except Exception as e:
+                print(f"      Error processing file: {e}")
                 failed_imports += 1
         
-        print(f"\n📊 BATCH IMPORT COMPLETED:")
-        print(f"   ✅ Successful: {successful_imports}")
-        print(f"   ❌ Failed: {failed_imports}")
+        print(f"\nENHANCED BATCH IMPORT COMPLETED:")
+        print(f"   Successful: {successful_imports}")
+        print(f"   Failed: {failed_imports}")
+        print(f"   ULTRA_OPTIMIZED: {ultra_optimized_count}")
+        print(f"   Standard: {standard_count}")
         
         if successful_imports > 0:
             self.play_bleep(feature_type="completion")
@@ -440,7 +777,7 @@ class EnhancedGeminiAnalysisSystem:
     
     def show_enhanced_database_stats(self):
         """Show enhanced database statistics with detailed breakdowns"""
-        print("\n📊 ENHANCED DATABASE STATISTICS")
+        print("\nENHANCED DATABASE STATISTICS")
         print("=" * 50)
         
         try:
@@ -456,7 +793,7 @@ class EnhancedGeminiAnalysisSystem:
             """, conn)
             
             if basic_stats.iloc[0]['total_records'] == 0:
-                print("📭 Database is empty - no structural features found")
+                print("Database is empty - no structural features found")
                 conn.close()
                 return
             
@@ -464,9 +801,9 @@ class EnhancedGeminiAnalysisSystem:
             unique_files = basic_stats.iloc[0]['unique_files']
             light_sources = basic_stats.iloc[0]['light_sources']
             
-            print(f"📁 Total records: {total_records:,}")
-            print(f"📄 Unique files: {unique_files:,}")
-            print(f"💡 Light sources: {light_sources}")
+            print(f"Total records: {total_records:,}")
+            print(f"Unique files: {unique_files:,}")
+            print(f"Light sources: {light_sources}")
             
             # By light source
             light_stats = pd.read_sql_query("""
@@ -476,9 +813,19 @@ class EnhancedGeminiAnalysisSystem:
                 ORDER BY count DESC
             """, conn)
             
-            print(f"\n💡 BY LIGHT SOURCE:")
+            print(f"\nBY LIGHT SOURCE:")
             for _, row in light_stats.iterrows():
                 print(f"   {row['light_source']}: {row['count']:,} records ({row['files']} files)")
+            
+            # Check for ULTRA_OPTIMIZED data
+            ultra_stats = pd.read_sql_query("""
+                SELECT COUNT(*) as ultra_count
+                FROM structural_features 
+                WHERE data_type LIKE '%ultra_optimized%'
+            """, conn)
+            
+            ultra_count = ultra_stats.iloc[0]['ultra_count']
+            print(f"\nULTRA_OPTIMIZED records: {ultra_count:,}")
             
             # By feature type
             feature_stats = pd.read_sql_query("""
@@ -489,7 +836,7 @@ class EnhancedGeminiAnalysisSystem:
                 LIMIT 10
             """, conn)
             
-            print(f"\n🏷️  TOP FEATURE TYPES:")
+            print(f"\nTOP FEATURE TYPES:")
             for _, row in feature_stats.iterrows():
                 print(f"   {row['feature_group']}: {row['count']:,}")
             
@@ -501,7 +848,7 @@ class EnhancedGeminiAnalysisSystem:
             """, conn)
             
             recent_count = recent_stats.iloc[0]['recent_count']
-            print(f"\n📅 Recent activity (7 days): {recent_count:,} records")
+            print(f"\nRecent activity (7 days): {recent_count:,} records")
             
             # Normalization status
             norm_stats = pd.read_sql_query("""
@@ -514,22 +861,22 @@ class EnhancedGeminiAnalysisSystem:
             with_norm = norm_stats.iloc[0]['with_normalization']
             compatible = norm_stats.iloc[0]['compatible']
             
-            print(f"\n🔧 NORMALIZATION STATUS:")
+            print(f"\nNORMALIZATION STATUS:")
             print(f"   With metadata: {with_norm:,} / {total_records:,}")
             print(f"   Compatible: {compatible:,} / {total_records:,}")
             
             conn.close()
             
         except Exception as e:
-            print(f"❌ Error reading database: {e}")
+            print(f"Error reading database: {e}")
     
     def enhanced_database_search(self):
         """Enhanced database search with multiple criteria"""
-        print("\n🔍 ENHANCED DATABASE SEARCH")
+        print("\nENHANCED DATABASE SEARCH")
         print("=" * 40)
         
         if not os.path.exists(self.db_path):
-            print("❌ Database not found")
+            print("Database not found")
             return
         
         # Search options
@@ -539,8 +886,9 @@ class EnhancedGeminiAnalysisSystem:
         print("3. By feature type")
         print("4. By light source")
         print("5. Recent features (last 7 days)")
+        print("6. ULTRA_OPTIMIZED data only")
         
-        choice = input("\nSelect search type (1-5): ").strip()
+        choice = input("\nSelect search type (1-6): ").strip()
         
         try:
             conn = sqlite3.connect(self.db_path)
@@ -570,23 +918,30 @@ class EnhancedGeminiAnalysisSystem:
                 query = "SELECT * FROM structural_features WHERE timestamp > datetime('now', '-7 days') ORDER BY timestamp DESC"
                 df = pd.read_sql_query(query, conn)
                 
+            elif choice == '6':
+                query = "SELECT * FROM structural_features WHERE data_type LIKE '%ultra_optimized%' ORDER BY wavelength"
+                df = pd.read_sql_query(query, conn)
+                
             else:
-                print("❌ Invalid choice")
+                print("Invalid choice")
                 conn.close()
                 return
             
             conn.close()
             
             if df.empty:
-                print("❌ No results found")
+                print("No results found")
                 return
             
-            print(f"\n📊 Found {len(df)} results:")
+            print(f"\nFound {len(df)} results:")
             print("=" * 80)
             
             # Display results with enhanced formatting
             for i, (_, row) in enumerate(df.iterrows(), 1):
-                print(f"{i:3}. {row['file']} | {row['light_source']} | {row['wavelength']:.1f}nm | {row['feature_group']} | {row['intensity']:.2f}")
+                data_type = row.get('data_type', 'standard')
+                format_indicator = "ULTRA" if 'ultra_optimized' in str(data_type) else "STD"
+                
+                print(f"{i:3}. {format_indicator} {row['file']} | {row['light_source']} | {row['wavelength']:.1f}nm | {row['feature_group']} | {row['intensity']:.2f}")
                 
                 if i >= 20:  # Limit display
                     remaining = len(df) - 20
@@ -595,23 +950,23 @@ class EnhancedGeminiAnalysisSystem:
                     break
             
             # Offer to save results
-            save = input(f"\n💾 Save results to CSV? (y/n): ").strip().lower()
+            save = input(f"\nSave results to CSV? (y/n): ").strip().lower()
             if save == 'y':
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 filename = f"database_search_results_{timestamp}.csv"
                 df.to_csv(filename, index=False)
-                print(f"✅ Results saved to {filename}")
+                print(f"Results saved to {filename}")
                 
         except Exception as e:
-            print(f"❌ Search error: {e}")
+            print(f"Search error: {e}")
     
     def enhanced_comparison_analysis(self):
         """Enhanced comparison analysis using database"""
-        print("\n📊 ENHANCED COMPARISON ANALYSIS")
+        print("\nENHANCED COMPARISON ANALYSIS")
         print("=" * 45)
         
         if not os.path.exists(self.db_path):
-            print("❌ Database not found")
+            print("Database not found")
             return
         
         # Get available gems for comparison
@@ -627,7 +982,7 @@ class EnhancedGeminiAnalysisSystem:
             """, conn)
             
             if gems_df.empty:
-                print("❌ No gems with sufficient features found")
+                print("No gems with sufficient features found")
                 conn.close()
                 return
             
@@ -646,7 +1001,7 @@ class EnhancedGeminiAnalysisSystem:
                 gem_groups[base_name].append(row['light_source'])
             
             # Show available gems
-            print("📁 Available gems for comparison:")
+            print("Available gems for comparison:")
             gem_list = []
             for i, (gem_name, light_sources) in enumerate(gem_groups.items(), 1):
                 print(f"   {i}. {gem_name} ({'+'.join(light_sources)})")
@@ -654,7 +1009,7 @@ class EnhancedGeminiAnalysisSystem:
             
             # Select gems for comparison
             if len(gem_list) < 2:
-                print("❌ Need at least 2 gems for comparison")
+                print("Need at least 2 gems for comparison")
                 conn.close()
                 return
             
@@ -662,7 +1017,7 @@ class EnhancedGeminiAnalysisSystem:
             choice2 = int(input(f"Select second gem (1-{len(gem_list)}): ")) - 1
             
             if choice1 < 0 or choice1 >= len(gem_list) or choice2 < 0 or choice2 >= len(gem_list):
-                print("❌ Invalid selection")
+                print("Invalid selection")
                 conn.close()
                 return
             
@@ -674,17 +1029,17 @@ class EnhancedGeminiAnalysisSystem:
             conn.close()
             
         except Exception as e:
-            print(f"❌ Comparison error: {e}")
+            print(f"Comparison error: {e}")
     
     def perform_gem_comparison(self, conn, gem1, gem2):
         """Perform detailed comparison between two gems"""
-        print(f"\n🔬 COMPARING: {gem1} vs {gem2}")
+        print(f"\nCOMPARING: {gem1} vs {gem2}")
         print("=" * 60)
         
         # Get features for both gems
         for gem_name in [gem1, gem2]:
             query = """
-                SELECT light_source, wavelength, intensity, feature_group
+                SELECT light_source, wavelength, intensity, feature_group, data_type
                 FROM structural_features 
                 WHERE file LIKE ?
                 ORDER BY light_source, wavelength
@@ -693,21 +1048,26 @@ class EnhancedGeminiAnalysisSystem:
             gem_data = pd.read_sql_query(query, conn, params=[f"%{gem_name}%"])
             
             if gem_data.empty:
-                print(f"❌ No data found for {gem_name}")
+                print(f"No data found for {gem_name}")
                 continue
             
-            print(f"\n📊 {gem_name.upper()}:")
+            # Check if has ULTRA_OPTIMIZED data
+            ultra_count = len(gem_data[gem_data['data_type'].str.contains('ultra_optimized', na=False)])
+            format_indicator = f" ({ultra_count} ULTRA_OPTIMIZED)" if ultra_count > 0 else ""
+            
+            print(f"\n{gem_name.upper()}{format_indicator}:")
             
             # Group by light source
             for light_source in ['B', 'L', 'U', 'Halogen', 'Laser', 'UV']:
                 light_data = gem_data[gem_data['light_source'] == light_source]
                 if not light_data.empty:
-                    print(f"   💡 {light_source} Light ({len(light_data)} features):")
+                    print(f"   {light_source} Light ({len(light_data)} features):")
                     
                     # Show top features by intensity
                     top_features = light_data.nlargest(3, 'intensity')
                     for _, feature in top_features.iterrows():
-                        print(f"      {feature['wavelength']:.1f}nm: {feature['feature_group']} (I:{feature['intensity']:.2f})")
+                        ultra_indicator = "ULTRA" if 'ultra_optimized' in str(feature.get('data_type', '')) else "STD"
+                        print(f"      {ultra_indicator} {feature['wavelength']:.1f}nm: {feature['feature_group']} (I:{feature['intensity']:.2f})")
                     
                     # Calculate relative heights
                     if len(light_data) >= 2:
@@ -716,15 +1076,15 @@ class EnhancedGeminiAnalysisSystem:
                         print(f"      Range: {wavelength_range:.1f}nm, Intensity span: {intensity_range:.2f}")
         
         # Find common wavelengths for direct comparison
-        print(f"\n🎯 DIRECT COMPARISON:")
+        print(f"\nDIRECT COMPARISON:")
         
         gem1_data = pd.read_sql_query("""
-            SELECT wavelength, intensity, light_source, feature_group
+            SELECT wavelength, intensity, light_source, feature_group, data_type
             FROM structural_features WHERE file LIKE ?
         """, conn, params=[f"%{gem1}%"])
         
         gem2_data = pd.read_sql_query("""
-            SELECT wavelength, intensity, light_source, feature_group
+            SELECT wavelength, intensity, light_source, feature_group, data_type
             FROM structural_features WHERE file LIKE ?
         """, conn, params=[f"%{gem2}%"])
         
@@ -751,7 +1111,9 @@ class EnhancedGeminiAnalysisSystem:
                     'intensity2': closest['intensity'],
                     'ratio': ratio,
                     'feature1': feature1['feature_group'],
-                    'feature2': closest['feature_group']
+                    'feature2': closest['feature_group'],
+                    'data_type1': feature1.get('data_type', ''),
+                    'data_type2': closest.get('data_type', '')
                 })
         
         if common_features:
@@ -761,13 +1123,16 @@ class EnhancedGeminiAnalysisSystem:
                 wl_diff = abs(cf['wavelength1'] - cf['wavelength2'])
                 ratio_str = f"{cf['ratio']:.2f}" if cf['ratio'] != float('inf') else "∞"
                 
+                ultra1 = "ULTRA" if 'ultra_optimized' in str(cf['data_type1']) else "STD"
+                ultra2 = "ULTRA" if 'ultra_optimized' in str(cf['data_type2']) else "STD"
+                
                 print(f"   {cf['light_source']} | {cf['wavelength1']:.1f}nm vs {cf['wavelength2']:.1f}nm")
-                print(f"      {gem1}: {cf['feature1']} (I:{cf['intensity1']:.2f})")
-                print(f"      {gem2}: {cf['feature2']} (I:{cf['intensity2']:.2f})")
+                print(f"      {ultra1} {gem1}: {cf['feature1']} (I:{cf['intensity1']:.2f})")
+                print(f"      {ultra2} {gem2}: {cf['feature2']} (I:{cf['intensity2']:.2f})")
                 print(f"      Ratio: {ratio_str}, Δλ: {wl_diff:.1f}nm")
                 print()
         else:
-            print("   ❌ No comparable features found within tolerance")
+            print("   No comparable features found within tolerance")
         
         # Play completion bleep
         self.play_bleep(feature_type="completion")
@@ -778,43 +1143,54 @@ class EnhancedGeminiAnalysisSystem:
         status = "ENABLED" if self.bleep_enabled else "DISABLED"
         
         if HAS_AUDIO:
-            print(f"🔊 Audio bleep system: {status}")
+            print(f"Audio bleep system: {status}")
             if self.bleep_enabled:
                 self.play_bleep(feature_type="completion")
                 print("   Features will play audio feedback")
             else:
                 print("   No audio feedback will be played")
         else:
-            print(f"🔇 Audio system not available (no winsound/pygame)")
+            print(f"Audio system not available (no winsound/pygame)")
             self.bleep_enabled = False
     
     def toggle_auto_import(self):
         """Toggle automatic CSV import system"""
         self.auto_import_enabled = not self.auto_import_enabled
         status = "ENABLED" if self.auto_import_enabled else "DISABLED"
-        print(f"🔄 Auto-import system: {status}")
+        print(f"Auto-import system: {status}")
         
         if self.auto_import_enabled:
             print("   CSV files will be automatically imported to database")
+            print("   Supports both STANDARD (23) and ULTRA_OPTIMIZED (41+) formats")
         else:
             print("   Manual import required for CSV files")
     
     def relative_height_analysis(self):
         """Perform relative height analysis across light sources"""
-        print("\n📏 RELATIVE HEIGHT ANALYSIS")
+        print("\nRELATIVE HEIGHT ANALYSIS")
         print("=" * 40)
         
         gem_id = input("Enter gem ID for analysis: ").strip()
-        wavelength = float(input("Enter target wavelength (nm): "))
+        
+        try:
+            wavelength_input = input("Enter target wavelength (nm): ").strip()
+            if not wavelength_input:
+                print("No wavelength provided")
+                return
+            wavelength = float(wavelength_input)
+        except ValueError:
+            print("Invalid wavelength - please enter a number")
+            return
+        
         tolerance = float(input("Enter tolerance (nm) [default: 5.0]: ") or "5.0")
         
         measurements = self.calculate_relative_height(gem_id, wavelength, tolerance)
         
         if not measurements:
-            print(f"❌ No measurements found for {gem_id} near {wavelength}nm")
+            print(f"No measurements found for {gem_id} near {wavelength}nm")
             return
         
-        print(f"\n📊 RELATIVE HEIGHT ANALYSIS: {gem_id}")
+        print(f"\nRELATIVE HEIGHT ANALYSIS: {gem_id}")
         print(f"Target wavelength: {wavelength}nm (±{tolerance}nm)")
         print("=" * 50)
         
@@ -827,7 +1203,7 @@ class EnhancedGeminiAnalysisSystem:
             feature = data['feature_group']
             wl_diff = data['wavelength_diff']
             
-            print(f"💡 {light_source} Light:")
+            print(f"{light_source} Light:")
             print(f"   Wavelength: {actual_wl:.1f}nm (Δ{wl_diff:.1f}nm)")
             print(f"   Intensity: {intensity:.2f}")
             print(f"   Relative height: {relative:.3f} ({percentage:.1f}%)")
@@ -839,10 +1215,10 @@ class EnhancedGeminiAnalysisSystem:
             intensities = [(ls, data['intensity']) for ls, data in measurements.items()]
             dominant = max(intensities, key=lambda x: x[1])
             
-            print(f"🏆 DOMINANT: {dominant[0]} light (intensity: {dominant[1]:.2f})")
+            print(f"DOMINANT: {dominant[0]} light (intensity: {dominant[1]:.2f})")
             
             # Calculate ratios
-            print(f"\n📊 INTENSITY RATIOS:")
+            print(f"\nINTENSITY RATIOS:")
             for light_source, data in measurements.items():
                 if light_source != dominant[0]:
                     ratio = data['intensity'] / dominant[1]
@@ -855,74 +1231,48 @@ class EnhancedGeminiAnalysisSystem:
         self.play_bleep(feature_type="completion")
     
     def structural_matching_analysis(self):
-        """FIXED: Option 11 - Structural matching analysis with correct queries for your database"""
-        print("\n🔍 STRUCTURAL MATCHING ANALYSIS")
+        """Option 11: Structural matching analysis with self-validation testing"""
+        print("\nSTRUCTURAL MATCHING ANALYSIS")
         print("=" * 50)
         
         if not os.path.exists(self.db_path):
-            print(f"❌ Structural database not found: {self.db_path}")
+            print(f"Structural database not found: {self.db_path}")
             return
         
         try:
             conn = sqlite3.connect(self.db_path)
             
-            # CORRECTED QUERY: Works with your actual data format
-            # Your files are like: 51BC1, 51UP1, 58BP1, etc.
-            # Extract base gem number from these patterns
+            # Get all gems with structural data
             query = """
                 SELECT 
                     CASE 
-                        WHEN file LIKE '%BC%' THEN SUBSTR(file, 1, INSTR(file, 'BC') - 1)
-                        WHEN file LIKE '%BP%' THEN SUBSTR(file, 1, INSTR(file, 'BP') - 1)
-                        WHEN file LIKE '%LC%' THEN SUBSTR(file, 1, INSTR(file, 'LC') - 1)
-                        WHEN file LIKE '%LP%' THEN SUBSTR(file, 1, INSTR(file, 'LP') - 1)
-                        WHEN file LIKE '%UC%' THEN SUBSTR(file, 1, INSTR(file, 'UC') - 1)
-                        WHEN file LIKE '%UP%' THEN SUBSTR(file, 1, INSTR(file, 'UP') - 1)
-                        ELSE SUBSTR(file, 1, LENGTH(file) - 3)
+                        WHEN file LIKE '%B%' THEN SUBSTR(file, 1, INSTR(file, 'B') - 1)
+                        WHEN file LIKE '%L%' THEN SUBSTR(file, 1, INSTR(file, 'L') - 1)
+                        WHEN file LIKE '%U%' THEN SUBSTR(file, 1, INSTR(file, 'U') - 1)
+                        ELSE SUBSTR(file, 1, INSTR(file || '_', '_') - 1)
                     END as gem_id,
                     GROUP_CONCAT(DISTINCT light_source) as light_sources,
                     COUNT(DISTINCT light_source) as light_count,
-                    COUNT(*) as total_features
+                    COUNT(*) as total_features,
+                    COUNT(CASE WHEN data_type LIKE '%ultra_optimized%' THEN 1 END) as ultra_features
                 FROM structural_features 
                 WHERE file NOT LIKE '%unknown%'
                 GROUP BY gem_id
-                HAVING light_count >= 2 AND gem_id != ''
-                ORDER BY light_count DESC, total_features DESC, gem_id
+                HAVING light_count >= 2
+                ORDER BY light_count DESC, gem_id
             """
             
             gems_df = pd.read_sql_query(query, conn)
             
             if gems_df.empty:
-                print("❌ No gems with multi-light structural data found")
-                print("💡 Need gems with at least 2 light sources (Halogen, Laser, UV) for testing")
-                
-                # Show what we DO have
-                print(f"\n🔍 Available data summary:")
-                summary_query = """
-                    SELECT file, light_source, COUNT(*) as features
-                    FROM structural_features 
-                    GROUP BY file, light_source 
-                    ORDER BY file, light_source
-                """
-                summary_df = pd.read_sql_query(summary_query, conn)
-                
-                if not summary_df.empty:
-                    print(f"📊 Found data for {len(summary_df)} file/light combinations")
-                    current_file = None
-                    for _, row in summary_df.iterrows():
-                        if row['file'] != current_file:
-                            if current_file:
-                                print()
-                            current_file = row['file']
-                            print(f"   📁 {row['file']}:")
-                        print(f"      {row['light_source']}: {row['features']} features")
-                
+                print("No gems with multi-light structural data found")
+                print("Need gems with at least 2 light sources (B, L, U) for testing")
                 conn.close()
                 return
             
-            print(f"📊 Found {len(gems_df)} gems suitable for structural matching:")
+            print(f"Found {len(gems_df)} gems suitable for structural matching:")
             print("=" * 70)
-            print(f"{'#':<3} {'Gem ID':<15} {'Light Sources':<25} {'Features':<10} {'Status'}")
+            print(f"{'#':<3} {'Gem ID':<15} {'Light Sources':<20} {'Features':<10} {'ULTRA':<8} {'Status'}")
             print("-" * 70)
             
             for i, row in gems_df.iterrows():
@@ -930,19 +1280,22 @@ class EnhancedGeminiAnalysisSystem:
                 light_sources = row['light_sources']
                 feature_count = row['total_features']
                 light_count = row['light_count']
+                ultra_count = row['ultra_features']
                 
                 # Status indicator
                 if light_count == 3:
-                    status = "✅ COMPLETE (H+L+U)"
+                    status = "COMPLETE (B+L+U)"
                 elif light_count == 2:
-                    status = "🟡 PARTIAL (2/3)"
+                    status = "PARTIAL (2/3)"
                 else:
-                    status = "🔴 INSUFFICIENT"
+                    status = "INSUFFICIENT"
                 
-                print(f"{i+1:<3} {gem_id:<15} {light_sources:<25} {feature_count:<10} {status}")
+                ultra_indicator = f"ULTRA {ultra_count}" if ultra_count > 0 else f"STD 0"
+                
+                print(f"{i+1:<3} {gem_id:<15} {light_sources:<20} {feature_count:<10} {ultra_indicator:<8} {status}")
             
             # Selection menu
-            print(f"\n📋 SELECT GEM FOR STRUCTURAL MATCHING TEST:")
+            print(f"\nSELECT GEM FOR STRUCTURAL MATCHING TEST:")
             choice = input(f"Enter gem number (1-{len(gems_df)}) or 'q' to quit: ").strip()
             
             if choice.lower() == 'q':
@@ -952,22 +1305,24 @@ class EnhancedGeminiAnalysisSystem:
             try:
                 gem_idx = int(choice) - 1
                 if gem_idx < 0 or gem_idx >= len(gems_df):
-                    print("❌ Invalid selection")
+                    print("Invalid selection")
                     conn.close()
                     return
                 
                 selected_gem = gems_df.iloc[gem_idx]
                 gem_id = selected_gem['gem_id']
                 available_lights = selected_gem['light_sources'].split(',')
+                ultra_count = selected_gem['ultra_features']
                 
-                print(f"\n🎯 SELECTED: Gem {gem_id}")
+                print(f"\nSELECTED: {gem_id}")
                 print(f"   Available light sources: {', '.join(available_lights)}")
+                print(f"   ULTRA_OPTIMIZED features: {ultra_count}")
                 
                 # Show detailed breakdown
                 self.show_gem_structural_details(conn, gem_id, available_lights)
                 
                 # Confirm testing
-                confirm = input(f"\n🧪 Test structural matching for Gem {gem_id}? (y/n): ").strip().lower()
+                confirm = input(f"\nTest structural matching for {gem_id}? (y/n): ").strip().lower()
                 if confirm != 'y':
                     conn.close()
                     return
@@ -976,163 +1331,135 @@ class EnhancedGeminiAnalysisSystem:
                 self.run_structural_matching_test(conn, gem_id, available_lights)
                 
             except ValueError:
-                print("❌ Please enter a valid number")
+                print("Please enter a valid number")
             
             conn.close()
             
         except Exception as e:
-            print(f"❌ Database error: {e}")
-            import traceback
-            traceback.print_exc()
+            print(f"Database error: {e}")
     
     def show_gem_structural_details(self, conn, gem_id, available_lights):
         """Show detailed structural data for selected gem"""
-        print(f"\n📋 STRUCTURAL DATA DETAILS: Gem {gem_id}")
+        print(f"\nSTRUCTURAL DATA DETAILS: {gem_id}")
         print("=" * 60)
         
         for light_source in available_lights:
-            # Get features for this light source - match files containing gem_id
+            # Get features for this light source
             query = """
-                SELECT file, feature_group, wavelength, intensity, COUNT(*) as count
+                SELECT file, feature_group, wavelength, intensity, data_type, COUNT(*) as count
                 FROM structural_features 
                 WHERE file LIKE ? AND light_source = ?
                 GROUP BY file, feature_group
-                ORDER BY file, feature_group, wavelength
+                ORDER BY feature_group, wavelength
             """
             
-            # Create patterns to match your file naming convention
-            patterns = [
-                f"{gem_id}BC%", f"{gem_id}BP%",  # Halogen patterns
-                f"{gem_id}LC%", f"{gem_id}LP%",  # Laser patterns  
-                f"{gem_id}UC%", f"{gem_id}UP%"   # UV patterns
-            ]
+            features_df = pd.read_sql_query(query, conn, params=[f"{gem_id}%", light_source])
             
-            all_features = []
-            for pattern in patterns:
-                features_df = pd.read_sql_query(query, conn, params=[pattern, light_source])
-                if not features_df.empty:
-                    all_features.append(features_df)
-            
-            if all_features:
-                combined_features = pd.concat(all_features, ignore_index=True)
+            if not features_df.empty:
+                total_features = features_df['count'].sum()
+                feature_types = features_df['feature_group'].unique()
+                ultra_count = len(features_df[features_df['data_type'].str.contains('ultra_optimized', na=False)])
                 
-                total_features = combined_features['count'].sum()
-                feature_types = combined_features['feature_group'].unique()
-                unique_files = combined_features['file'].unique()
+                ultra_indicator = f" ({ultra_count} ULTRA_OPTIMIZED)" if ultra_count > 0 else ""
                 
-                print(f"💡 {light_source} Light Source:")
-                print(f"   📄 Files: {', '.join(unique_files)}")
-                print(f"   🔢 Total features: {total_features}")
-                print(f"   🏷️  Feature types: {', '.join(feature_types)}")
+                print(f"{light_source} Light Source{ultra_indicator}:")
+                print(f"   Files: {', '.join(features_df['file'].unique())}")
+                print(f"   Total features: {total_features}")
+                print(f"   Feature types: {', '.join(feature_types)}")
                 
                 # Show feature breakdown
                 for feature_type in feature_types:
-                    type_data = combined_features[combined_features['feature_group'] == feature_type]
+                    type_data = features_df[features_df['feature_group'] == feature_type]
                     count = type_data['count'].sum()
-                    
-                    # Get wavelength range for this feature type
-                    wavelength_query = """
-                        SELECT MIN(wavelength) as min_wl, MAX(wavelength) as max_wl
-                        FROM structural_features 
+                    wavelengths = pd.read_sql_query("""
+                        SELECT wavelength, data_type FROM structural_features 
                         WHERE file LIKE ? AND light_source = ? AND feature_group = ?
-                    """
+                        ORDER BY wavelength
+                    """, conn, params=[f"{gem_id}%", light_source, feature_type])
                     
-                    for pattern in patterns:
-                        wl_result = pd.read_sql_query(wavelength_query, conn, 
-                                                    params=[pattern, light_source, feature_type])
-                        if not wl_result.empty and pd.notna(wl_result.iloc[0]['min_wl']):
-                            min_wl = wl_result.iloc[0]['min_wl']
-                            max_wl = wl_result.iloc[0]['max_wl']
-                            wl_range = f"{min_wl:.1f}-{max_wl:.1f}nm"
-                            print(f"      • {feature_type}: {count} features ({wl_range})")
-                            break
+                    if not wavelengths.empty:
+                        wl_range = f"{wavelengths['wavelength'].min():.1f}-{wavelengths['wavelength'].max():.1f}nm"
+                        ultra_in_type = len(wavelengths[wavelengths['data_type'].str.contains('ultra_optimized', na=False)])
+                        ultra_type_indicator = f" (ULTRA {ultra_in_type})" if ultra_in_type > 0 else ""
+                        print(f"      • {feature_type}: {count} features ({wl_range}){ultra_type_indicator}")
                 print()
     
     def run_structural_matching_test(self, conn, gem_id, available_lights):
-        """Run structural matching test with self-validation - FIXED for your data"""
-        print(f"\n🧪 STRUCTURAL MATCHING TEST: Gem {gem_id}")
+        """Run structural matching test with self-validation"""
+        print(f"\nSTRUCTURAL MATCHING TEST: {gem_id}")
         print("=" * 50)
         
         # For each light source, extract data and test matching
         test_results = {}
         
         for light_source in available_lights:
-            print(f"\n🔍 Testing {light_source} Light Source...")
+            print(f"\nTesting {light_source} Light Source...")
             
-            # Extract structural features for this light source using correct patterns
-            patterns = [
-                f"{gem_id}BC%", f"{gem_id}BP%",  # Halogen patterns
-                f"{gem_id}LC%", f"{gem_id}LP%",  # Laser patterns  
-                f"{gem_id}UC%", f"{gem_id}UP%"   # UV patterns
-            ]
+            # Extract structural features for this light source
+            query = """
+                SELECT file, feature_group, wavelength, intensity, data_type,
+                       start_wavelength, end_wavelength, midpoint_wavelength,
+                       crest_wavelength, max_wavelength
+                FROM structural_features 
+                WHERE file LIKE ? AND light_source = ?
+                ORDER BY wavelength
+            """
             
-            test_features = []
-            files_found = []
+            test_data_df = pd.read_sql_query(query, conn, params=[f"{gem_id}%", light_source])
             
-            for pattern in patterns:
-                query = """
-                    SELECT file, feature_group, wavelength, intensity, 
-                           start_wavelength, end_wavelength, midpoint_wavelength,
-                           crest_wavelength, max_wavelength
-                    FROM structural_features 
-                    WHERE file LIKE ? AND light_source = ?
-                    ORDER BY wavelength
-                """
-                
-                test_data_df = pd.read_sql_query(query, conn, params=[pattern, light_source])
-                
-                if not test_data_df.empty:
-                    files_found.extend(test_data_df['file'].unique())
-                    
-                    # Convert to format expected by matching algorithms
-                    for _, row in test_data_df.iterrows():
-                        feature = {
-                            'feature_type': row['feature_group'],
-                            'wavelength': row['wavelength'],
-                            'intensity': row['intensity']
-                        }
-                        
-                        # Add optional wavelength fields
-                        for field in ['start_wavelength', 'end_wavelength', 'midpoint_wavelength', 
-                                     'crest_wavelength', 'max_wavelength']:
-                            if pd.notna(row[field]):
-                                feature[field] = row[field]
-                        
-                        test_features.append(feature)
-            
-            if not test_features:
-                print(f"   ❌ No data found for {light_source}")
+            if test_data_df.empty:
+                print(f"   No data found for {light_source}")
                 continue
             
-            print(f"   ✅ Extracted {len(test_features)} features from files: {', '.join(set(files_found))}")
+            # Count ULTRA_OPTIMIZED features
+            ultra_count = len(test_data_df[test_data_df['data_type'].str.contains('ultra_optimized', na=False)])
+            ultra_indicator = f" ({ultra_count} ULTRA_OPTIMIZED)" if ultra_count > 0 else ""
+            
+            # Convert to format expected by matching algorithms
+            test_features = []
+            for _, row in test_data_df.iterrows():
+                feature = {
+                    'feature_type': row['feature_group'],
+                    'wavelength': row['wavelength'],
+                    'intensity': row['intensity'],
+                    'is_ultra_optimized': 'ultra_optimized' in str(row.get('data_type', ''))
+                }
+                
+                # Add optional wavelength fields
+                for field in ['start_wavelength', 'end_wavelength', 'midpoint_wavelength', 
+                             'crest_wavelength', 'max_wavelength']:
+                    if pd.notna(row[field]):
+                        feature[field] = row[field]
+                
+                test_features.append(feature)
+            
+            print(f"   Extracted {len(test_features)} features{ultra_indicator}")
             
             # Find all potential matches in database for this light source
             match_query = """
                 SELECT 
                     CASE 
-                        WHEN file LIKE '%BC%' THEN SUBSTR(file, 1, INSTR(file, 'BC') - 1)
-                        WHEN file LIKE '%BP%' THEN SUBSTR(file, 1, INSTR(file, 'BP') - 1)
-                        WHEN file LIKE '%LC%' THEN SUBSTR(file, 1, INSTR(file, 'LC') - 1)
-                        WHEN file LIKE '%LP%' THEN SUBSTR(file, 1, INSTR(file, 'LP') - 1)
-                        WHEN file LIKE '%UC%' THEN SUBSTR(file, 1, INSTR(file, 'UC') - 1)
-                        WHEN file LIKE '%UP%' THEN SUBSTR(file, 1, INSTR(file, 'UP') - 1)
-                        ELSE SUBSTR(file, 1, LENGTH(file) - 3)
+                        WHEN file LIKE '%B%' THEN SUBSTR(file, 1, INSTR(file, 'B') - 1)
+                        WHEN file LIKE '%L%' THEN SUBSTR(file, 1, INSTR(file, 'L') - 1)
+                        WHEN file LIKE '%U%' THEN SUBSTR(file, 1, INSTR(file, 'U') - 1)
+                        ELSE SUBSTR(file, 1, INSTR(file || '_', '_') - 1)
                     END as candidate_gem_id,
-                    file, COUNT(*) as feature_count
+                    file, COUNT(*) as feature_count,
+                    COUNT(CASE WHEN data_type LIKE '%ultra_optimized%' THEN 1 END) as ultra_count
                 FROM structural_features 
-                WHERE light_source = ? AND candidate_gem_id != ? AND candidate_gem_id != ''
+                WHERE light_source = ? AND file NOT LIKE ?
                 GROUP BY candidate_gem_id, file
                 HAVING feature_count >= 3
                 ORDER BY feature_count DESC
             """
             
-            candidates_df = pd.read_sql_query(match_query, conn, params=[light_source, gem_id])
+            candidates_df = pd.read_sql_query(match_query, conn, params=[light_source, f"{gem_id}%"])
             
             if candidates_df.empty:
-                print(f"   ❌ No candidates found for comparison")
+                print(f"   No candidates found for comparison")
                 continue
             
-            print(f"   🎯 Found {len(candidates_df)} candidates for comparison")
+            print(f"   Found {len(candidates_df)} candidates for comparison")
             
             # Run matching against each candidate
             match_scores = []
@@ -1140,10 +1467,11 @@ class EnhancedGeminiAnalysisSystem:
             for _, candidate_row in candidates_df.iterrows()[:10]:  # Test top 10 candidates
                 candidate_gem_id = candidate_row['candidate_gem_id']
                 candidate_file = candidate_row['file']
+                candidate_ultra_count = candidate_row['ultra_count']
                 
                 # Get candidate features
                 candidate_query = """
-                    SELECT file, feature_group, wavelength, intensity,
+                    SELECT file, feature_group, wavelength, intensity, data_type,
                            start_wavelength, end_wavelength, midpoint_wavelength,
                            crest_wavelength, max_wavelength
                     FROM structural_features 
@@ -1158,7 +1486,8 @@ class EnhancedGeminiAnalysisSystem:
                     feature = {
                         'feature_type': row['feature_group'],
                         'wavelength': row['wavelength'],
-                        'intensity': row['intensity']
+                        'intensity': row['intensity'],
+                        'is_ultra_optimized': 'ultra_optimized' in str(row.get('data_type', ''))
                     }
                     
                     # Add optional wavelength fields
@@ -1176,7 +1505,8 @@ class EnhancedGeminiAnalysisSystem:
                     'candidate_gem_id': candidate_gem_id,
                     'candidate_file': candidate_file,
                     'score': match_score,
-                    'feature_count': len(candidate_features)
+                    'feature_count': len(candidate_features),
+                    'ultra_count': candidate_ultra_count
                 })
             
             # Sort by score
@@ -1184,14 +1514,15 @@ class EnhancedGeminiAnalysisSystem:
             test_results[light_source] = match_scores
             
             # Show results
-            print(f"   📊 TOP MATCHES:")
+            print(f"   TOP MATCHES:")
             for i, match in enumerate(match_scores[:5], 1):
-                score_indicator = "🟢" if match['score'] > 90 else "🟡" if match['score'] > 70 else "🔴"
-                self_match = "⭐ SELF-MATCH!" if match['candidate_gem_id'] == gem_id else ""
-                print(f"      {i}. Gem {match['candidate_gem_id']}: {match['score']:.1f}% {score_indicator} {self_match}")
+                score_indicator = "GOOD" if match['score'] > 90 else "OK" if match['score'] > 70 else "POOR"
+                self_match = "SELF-MATCH!" if match['candidate_gem_id'] == gem_id else ""
+                ultra_indicator = f" (ULTRA {match['ultra_count']})" if match['ultra_count'] > 0 else ""
+                print(f"      {i}. {match['candidate_gem_id']}{ultra_indicator}: {match['score']:.1f}% {score_indicator} {self_match}")
         
         # Summary results
-        print(f"\n📋 STRUCTURAL MATCHING TEST SUMMARY: Gem {gem_id}")
+        print(f"\nSTRUCTURAL MATCHING TEST SUMMARY: {gem_id}")
         print("=" * 60)
         
         self_match_found = False
@@ -1202,24 +1533,24 @@ class EnhancedGeminiAnalysisSystem:
                 if is_self:
                     self_match_found = True
                 
-                status = "✅ SELF-MATCH!" if is_self else f"❌ Matched: Gem {top_match['candidate_gem_id']}"
-                print(f"   {light_source}: {top_match['score']:.1f}% - {status}")
+                status = "SELF-MATCH!" if is_self else f"Matched: {top_match['candidate_gem_id']}"
+                ultra_indicator = f" (ULTRA {top_match['ultra_count']})" if top_match['ultra_count'] > 0 else ""
+                print(f"   {light_source}: {top_match['score']:.1f}% - {status}{ultra_indicator}")
         
-        print(f"\n🎯 OVERALL TEST RESULT:")
+        print(f"\nOVERALL TEST RESULT:")
         if self_match_found:
-            print("   ✅ SUCCESS: Structural matching can identify gems correctly!")
-            print("   💡 Ready to test with unknown gems")
-            if self.bleep_enabled:
-                self.play_bleep(feature_type="completion")
+            print("   SUCCESS: Structural matching can identify gems correctly!")
+            print("   Ready to test with unknown gems")
         else:
-            print("   ⚠️ MIXED RESULTS: Some light sources found self-match, others didn't")
-            print("   🔧 This is normal for testing - algorithms may need tuning")
+            print("   WARNING: Self-matching failed - need to tune algorithms")
+            print("   Consider adjusting wavelength tolerances")
         
         # Show algorithm suggestions
-        print(f"\n🔬 ALGORITHM STATUS:")
-        print("   📌 Current: Simple wavelength comparison")
-        print("   🚀 Available: Enhanced UV ratio analysis, multi-light integration")
-        print("   💡 Next step: Test with unknown gems vs your reference database")
+        print(f"\nALGORITHM STATUS:")
+        print("   Current: Simple wavelength comparison")
+        print("   Available: Enhanced UV ratio analysis, multi-light integration")
+        print("   ULTRA_OPTIMIZED: Enhanced baseline analysis, width classification")
+        print("   Recommendation: Integrate enhanced_gem_analyzer.py for production use")
     
     def calculate_simple_structural_match(self, test_features, candidate_features):
         """Simple structural matching for testing"""
@@ -1259,10 +1590,12 @@ class EnhancedGeminiAnalysisSystem:
             total_score = 0.0
             for test_feature in test_features_type:
                 test_wl = test_feature.get('wavelength', 0)
+                test_ultra = test_feature.get('is_ultra_optimized', False)
                 
                 best_score = 0.0
                 for candidate_feature in candidate_features_type:
                     candidate_wl = candidate_feature.get('wavelength', 0)
+                    candidate_ultra = candidate_feature.get('is_ultra_optimized', False)
                     diff = abs(test_wl - candidate_wl)
                     
                     # Simple scoring based on wavelength difference
@@ -1279,6 +1612,10 @@ class EnhancedGeminiAnalysisSystem:
                     else:
                         score = max(0.0, 50.0 - diff * 2)
                     
+                    # Bonus for ULTRA_OPTIMIZED matches
+                    if test_ultra and candidate_ultra:
+                        score *= 1.05  # 5% bonus for both being ULTRA_OPTIMIZED
+                    
                     best_score = max(best_score, score)
                 
                 total_score += best_score
@@ -1292,20 +1629,11 @@ class EnhancedGeminiAnalysisSystem:
     
     def debug_structural_database(self):
         """Debug function to examine structural database content"""
-        print("\n🔧 STRUCTURAL DATABASE DEBUG")
+        print("\nSTRUCTURAL DATABASE DEBUG")
         print("=" * 50)
         
-        # DEBUG: Show exactly what path we're trying to access
-        print(f"🎯 Attempting to access database at:")
-        print(f"   {self.db_path}")
-        print(f"🔍 File exists: {os.path.exists(self.db_path)}")
-        if os.path.exists(self.db_path):
-            actual_size = os.path.getsize(self.db_path) / 1024
-            print(f"📊 Actual file size: {actual_size:.1f} KB")
-        print()
-        
         if not os.path.exists(self.db_path):
-            print(f"❌ Database not found: {self.db_path}")
+            print(f"Database not found: {self.db_path}")
             return
         
         try:
@@ -1316,125 +1644,135 @@ class EnhancedGeminiAnalysisSystem:
             cursor.execute("PRAGMA table_info(structural_features)")
             columns = cursor.fetchall()
             
-            print("📋 TABLE STRUCTURE:")
+            print("TABLE STRUCTURE:")
+            ultra_columns = 0
             for col in columns:
-                print(f"   {col[1]} ({col[2]}) - {'NOT NULL' if col[3] else 'NULLABLE'}")
+                is_ultra = col[1] in ['feature_key', 'baseline_quality', 'baseline_width_nm', 
+                                     'baseline_cv_percent', 'total_width_nm', 'skew_severity', 
+                                     'width_class', 'analysis_date', 'analyzer_version']
+                if is_ultra:
+                    ultra_columns += 1
+                    print(f"   ULTRA {col[1]} ({col[2]}) - {'NOT NULL' if col[3] else 'NULLABLE'} [ULTRA_OPTIMIZED]")
+                else:
+                    print(f"   STD {col[1]} ({col[2]}) - {'NOT NULL' if col[3] else 'NULLABLE'}")
+            
+            print(f"\nULTRA_OPTIMIZED columns available: {ultra_columns}")
             
             # Basic counts
             cursor.execute("SELECT COUNT(*) FROM structural_features")
             total_records = cursor.fetchone()[0]
-            print(f"\n📊 Total records: {total_records:,}")
+            print(f"\nTotal records: {total_records:,}")
             
             if total_records == 0:
-                print("❌ No structural features found in database")
-                
-                # Check if there are other tables
-                cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-                tables = cursor.fetchall()
-                print(f"\n📋 Found {len(tables)} tables:")
-                for table_name, in tables:
-                    cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
-                    count = cursor.fetchone()[0]
-                    print(f"   {table_name}: {count} records")
-                
+                print("No structural features found in database")
                 conn.close()
                 return
+            
+            # Check for ULTRA_OPTIMIZED data
+            cursor.execute("SELECT COUNT(*) FROM structural_features WHERE data_type LIKE '%ultra_optimized%'")
+            ultra_records = cursor.fetchone()[0]
+            print(f"ULTRA_OPTIMIZED records: {ultra_records:,} ({ultra_records/total_records*100:.1f}%)")
             
             # Check light sources
             cursor.execute("SELECT light_source, COUNT(*) FROM structural_features GROUP BY light_source")
             light_sources = cursor.fetchall()
-            print(f"\n💡 Light Sources:")
+            print(f"\nLight Sources:")
             for light, count in light_sources:
                 print(f"   {light}: {count:,} records")
             
-            # Check file distribution
-            cursor.execute("SELECT file, light_source, COUNT(*) FROM structural_features GROUP BY file, light_source ORDER BY file")
-            files = cursor.fetchall()
-            print(f"\n📄 Files in database ({len(files)} total):")
-            
-            # Show first 20 files
-            for i, (file, light, count) in enumerate(files[:20]):
-                print(f"   {i+1:2d}. {file}: {light} ({count} features)")
-            
-            if len(files) > 20:
-                print(f"   ... and {len(files) - 20} more files")
-            
-            # Check feature types
-            cursor.execute("SELECT feature_group, COUNT(*) FROM structural_features GROUP BY feature_group ORDER BY COUNT(*) DESC")
-            feature_types = cursor.fetchall()
-            print(f"\n🏷️  Feature Types:")
-            for feature_type, count in feature_types:
-                print(f"   {feature_type}: {count:,}")
-            
-            # Test the matching query
-            print(f"\n🔍 Testing structural matching query...")
-            matching_query = """
+            # Check format distribution
+            cursor.execute("""
                 SELECT 
                     CASE 
-                        WHEN file LIKE '%BC%' THEN SUBSTR(file, 1, INSTR(file, 'BC') - 1)
-                        WHEN file LIKE '%BP%' THEN SUBSTR(file, 1, INSTR(file, 'BP') - 1)
-                        WHEN file LIKE '%LC%' THEN SUBSTR(file, 1, INSTR(file, 'LC') - 1)
-                        WHEN file LIKE '%LP%' THEN SUBSTR(file, 1, INSTR(file, 'LP') - 1)
-                        WHEN file LIKE '%UC%' THEN SUBSTR(file, 1, INSTR(file, 'UC') - 1)
-                        WHEN file LIKE '%UP%' THEN SUBSTR(file, 1, INSTR(file, 'UP') - 1)
-                        ELSE SUBSTR(file, 1, LENGTH(file) - 3)
-                    END as gem_id,
-                    GROUP_CONCAT(DISTINCT light_source) as light_sources,
-                    COUNT(DISTINCT light_source) as light_count,
-                    COUNT(*) as total_features
+                        WHEN data_type LIKE '%ultra_optimized%' THEN 'ULTRA_OPTIMIZED'
+                        ELSE 'STANDARD'
+                    END as format_type,
+                    COUNT(*) as count
                 FROM structural_features 
-                WHERE file NOT LIKE '%unknown%'
+                GROUP BY format_type
+            """)
+            format_dist = cursor.fetchall()
+            print(f"\nFORMAT DISTRIBUTION:")
+            for format_type, count in format_dist:
+                indicator = "ULTRA" if format_type == "ULTRA_OPTIMIZED" else "STD"
+                print(f"   {indicator} {format_type}: {count:,} records")
+            
+            # Find complete gems (with multiple light sources)
+            cursor.execute("""
+                SELECT 
+                    CASE 
+                        WHEN file LIKE '%B%' THEN SUBSTR(file, 1, INSTR(file, 'B') - 1)
+                        WHEN file LIKE '%L%' THEN SUBSTR(file, 1, INSTR(file, 'L') - 1)
+                        WHEN file LIKE '%U%' THEN SUBSTR(file, 1, INSTR(file, 'U') - 1)
+                        ELSE SUBSTR(file, 1, INSTR(file || '_', '_') - 1)
+                    END as gem_id,
+                    GROUP_CONCAT(DISTINCT light_source) as lights,
+                    COUNT(DISTINCT light_source) as light_count,
+                    COUNT(*) as total_features,
+                    COUNT(CASE WHEN data_type LIKE '%ultra_optimized%' THEN 1 END) as ultra_features
+                FROM structural_features 
                 GROUP BY gem_id
-                HAVING light_count >= 2 AND gem_id != ''
+                HAVING light_count >= 2
                 ORDER BY light_count DESC, total_features DESC
-            """
+            """)
             
-            matching_results = pd.read_sql_query(matching_query, conn)
+            complete_gems = cursor.fetchall()
             
-            if not matching_results.empty:
-                print(f"🎯 Found {len(matching_results)} testable gems:")
-                for i, row in matching_results.iterrows():
-                    status = "✅ COMPLETE" if row['light_count'] == 3 else "🟡 PARTIAL"
-                    print(f"   {i+1}. Gem {row['gem_id']}: {row['light_sources']} ({row['light_count']} sources, {row['total_features']} features) {status}")
+            print(f"\nGEMS SUITABLE FOR TESTING ({len(complete_gems)} found):")
+            print(f"{'Gem ID':<15} {'Lights':<15} {'Count':<8} {'Features':<10} {'ULTRA':<8} {'Status'}")
+            print("-" * 75)
+            
+            for gem_id, lights, light_count, features, ultra_features in complete_gems:
+                if light_count == 3:
+                    status = "PERFECT"
+                elif light_count == 2:
+                    status = "GOOD"
+                else:
+                    status = "MINIMAL"
+                
+                ultra_indicator = f"ULTRA {ultra_features}" if ultra_features > 0 else f"STD 0"
+                
+                print(f"{gem_id:<15} {lights:<15} {light_count:<8} {features:<10} {ultra_indicator:<8} {status}")
+            
+            if complete_gems:
+                print(f"\nRECOMMENDATION:")
+                best_gem = complete_gems[0]
+                ultra_note = f" with ULTRA {best_gem[4]} ULTRA_OPTIMIZED features" if best_gem[4] > 0 else ""
+                print(f"   Test with: {best_gem[0]} ({best_gem[1]} - {best_gem[3]} features{ultra_note})")
+                print(f"   Expected result: 100% self-match")
             else:
-                print("❌ No testable gems found by matching query")
-            
-            # Sample some actual data
-            cursor.execute("SELECT * FROM structural_features LIMIT 5")
-            sample_data = cursor.fetchall()
-            
-            print(f"\n📋 SAMPLE DATA (First 5 records):")
-            for i, row in enumerate(sample_data, 1):
-                print(f"   {i}. File: {row[2]}, Light: {row[3]}, Wavelength: {row[4]:.1f}nm, Feature: {row[7]}")
+                print(f"\nNO SUITABLE GEMS FOR TESTING")
+                print(f"   Need gems with at least 2 light sources")
+                print(f"   Add more structural data to database")
             
             conn.close()
             
         except Exception as e:
-            print(f"❌ Database error: {e}")
+            print(f"Database error: {e}")
             import traceback
             traceback.print_exc()
     
     def check_both_database_files(self):
         """Check both database files to see which has data"""
-        print("\n🔍 CHECKING BOTH DATABASE FILES")
+        print("\nCHECKING BOTH DATABASE FILES")
         print("=" * 50)
         
         database_files = [
-            r"C:\Users\David\OneDrive\Desktop\gemini_gemological_analysis\database\structural_spectra\multi_structural_gem_data.db",
-            r"C:\Users\David\OneDrive\Desktop\gemini_gemological_analysis\database\structural_spectra\fixed_structural_gem_data.db"
+            "database/structural_spectra/multi_structural_gem_data.db",
+            "database/structural_spectra/fixed_structural_gem_data.db"
         ]
         
         for db_path in database_files:
-            print(f"\n📄 Checking: {db_path}")
+            print(f"\nChecking: {db_path}")
             
             if not os.path.exists(db_path):
-                print(f"   ❌ File not found")
+                print(f"   File not found")
                 continue
                 
             try:
                 # Get file size
                 size_kb = os.path.getsize(db_path) / 1024
-                print(f"   📊 Size: {size_kb:.1f} KB")
+                print(f"   Size: {size_kb:.1f} KB")
                 
                 # Connect and explore
                 conn = sqlite3.connect(db_path)
@@ -1443,7 +1781,7 @@ class EnhancedGeminiAnalysisSystem:
                 # Get table names
                 cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
                 tables = cursor.fetchall()
-                print(f"   📋 Tables: {[t[0] for t in tables]}")
+                print(f"   Tables: {[t[0] for t in tables]}")
                 
                 # Check each table for records
                 for table_name, in tables:
@@ -1453,599 +1791,344 @@ class EnhancedGeminiAnalysisSystem:
                     try:
                         cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
                         count = cursor.fetchone()[0]
-                        print(f"      📊 {table_name}: {count:,} records")
+                        print(f"      {table_name}: {count:,} records")
+                        
+                        # Check for ULTRA_OPTIMIZED data
+                        if table_name == 'structural_features' and count > 0:
+                            try:
+                                cursor.execute(f"SELECT COUNT(*) FROM {table_name} WHERE data_type LIKE '%ultra_optimized%'")
+                                ultra_count = cursor.fetchone()[0]
+                                if ultra_count > 0:
+                                    print(f"         ULTRA_OPTIMIZED: {ultra_count:,} records")
+                            except:
+                                pass
                         
                         if count > 0:
                             # Show sample data
                             cursor.execute(f"SELECT * FROM {table_name} LIMIT 3")
                             samples = cursor.fetchall()
-                            print(f"      🔬 Sample data:")
+                            print(f"      Sample data:")
                             for i, row in enumerate(samples, 1):
                                 sample_str = str(row)[:100] + "..." if len(str(row)) > 100 else str(row)
                                 print(f"         {i}. {sample_str}")
                                 
                     except Exception as e:
-                        print(f"      ❌ Error reading {table_name}: {e}")
+                        print(f"      Error reading {table_name}: {e}")
                 
                 conn.close()
                 
             except Exception as e:
-                print(f"   ❌ Database error: {e}")
-    
-    def check_system_status(self):
-        """Check overall system status with enhanced database info"""
-        print("ENHANCED GEMINI GEMOLOGICAL ANALYSIS SYSTEM STATUS")
-        print("=" * 55)
+                print(f"   Database error: {e}")
+
+    def export_structural_gems_and_test_matching(self):
+        """Export complete structural gems and test matching analysis"""
+        print("\nSTRUCTURAL GEMS EXPORT & MATCHING ANALYSIS")
+        print("=" * 60)
         
-        # Check database files
-        db_files_ok = 0
-        for db_file in self.spectral_files:
-            if os.path.exists(db_file):
-                size = os.path.getsize(db_file) // (1024*1024)  # MB
-                print(f"✅ {db_file} ({size} MB)")
-                db_files_ok += 1
-            else:
-                print(f"❌ {db_file} (missing)")
+        if not os.path.exists(self.db_path):
+            print(f"Structural database not found: {self.db_path}")
+            return
         
-        # Check program files
-        programs_ok = 0
-        for prog_file, description in self.program_files.items():
-            if os.path.exists(prog_file):
-                print(f"✅ {description}")
-                programs_ok += 1
-            else:
-                print(f"❌ {description} (missing)")
+        # Create data/structural directory
+        structural_export_dir = "data/structural"
+        os.makedirs(structural_export_dir, exist_ok=True)
+        print(f"Export directory: {structural_export_dir}")
         
-        # Check structural database - CORRECTED
-        if os.path.exists(self.db_path):
-            try:
-                conn = sqlite3.connect(self.db_path)
-                count = pd.read_sql_query("SELECT COUNT(*) as count FROM structural_features", conn).iloc[0]['count']
-                print(f"✅ Structural database ({count:,} features)")
+        try:
+            conn = sqlite3.connect(self.db_path)
+            
+            # Find all complete gems (with B, L, U data)
+            query = """
+                SELECT 
+                    CASE 
+                        WHEN file LIKE '%B%' THEN SUBSTR(file, 1, INSTR(file, 'B') - 1)
+                        WHEN file LIKE '%L%' THEN SUBSTR(file, 1, INSTR(file, 'L') - 1)
+                        WHEN file LIKE '%U%' THEN SUBSTR(file, 1, INSTR(file, 'U') - 1)
+                        ELSE SUBSTR(file, 1, INSTR(file || '_', '_') - 1)
+                    END as gem_id,
+                    GROUP_CONCAT(DISTINCT light_source) as light_sources,
+                    COUNT(DISTINCT light_source) as light_count,
+                    COUNT(*) as total_features,
+                    COUNT(CASE WHEN data_type LIKE '%ultra_optimized%' THEN 1 END) as ultra_features
+                FROM structural_features 
+                WHERE file NOT LIKE '%unknown%'
+                GROUP BY gem_id
+                HAVING light_count >= 3
+                ORDER BY CAST(SUBSTR(gem_id, 2) AS INTEGER)
+            """
+            
+            complete_gems_df = pd.read_sql_query(query, conn)
+            
+            if complete_gems_df.empty:
+                print("No complete gems found with B, L, U light sources")
                 conn.close()
-            except Exception as e:
-                print(f"❌ Structural database (error reading: {e})")
-        else:
-            print(f"❌ Structural database (missing: {self.db_path})")
-        
-        # Check data directories
-        data_dirs = ['data/raw', 'data/unknown']
-        for data_dir in data_dirs:
-            if os.path.exists(data_dir):
-                files = len([f for f in os.listdir(data_dir) if f.endswith('.txt') or f.endswith('.csv')])
-                print(f"✅ {data_dir} ({files} files)")
-            else:
-                print(f"❌ {data_dir} (missing)")
-        
-        # Enhanced features status
-        print(f"\n🔧 ENHANCED FEATURES:")
-        print(f"   🔊 Audio bleep: {'ON' if self.bleep_enabled else 'OFF'}")
-        print(f"   🔄 Auto-import: {'ON' if self.auto_import_enabled else 'OFF'}")
-        print(f"   📏 Relative height cache: {len(self.relative_height_cache)} entries")
-        print(f"   🎵 Audio system: {'Available' if HAS_AUDIO else 'Not available'}")
-        print(f"   🗄️ Database path: {self.db_path}")
-        
-        print(f"\nSystem Status: {db_files_ok}/3 databases, {programs_ok}/{len(self.program_files)} programs")
-        print("=" * 55)
-        
-        return db_files_ok >= 3 and programs_ok >= 2
-    
-    def scan_available_gems(self):
-        """Scan data/raw for available gems"""
-        raw_dir = 'data/raw'
-        if not os.path.exists(raw_dir):
-            print(f"❌ Directory {raw_dir} not found!")
-            return None
-        
-        files = [f for f in os.listdir(raw_dir) if f.endswith('.txt')]
-        if not files:
-            print(f"❌ No .txt files in {raw_dir}")
-            return None
-        
-        # Group by gem number
-        gems = defaultdict(lambda: {'B': [], 'L': [], 'U': []})
-        
-        for file in files:
-            base = os.path.splitext(file)[0]
-            
-            # Find light source
-            light = None
-            for ls in ['B', 'L', 'U']:
-                if ls in base.upper():
-                    light = ls
-                    break
-            
-            if light:
-                # Extract gem number
-                for i, char in enumerate(base.upper()):
-                    if char == light:
-                        gem_num = base[:i]
-                        break
-                gems[gem_num][light].append(file)
-        
-        return dict(gems)
-    
-    def show_available_gems(self, gems):
-        """Display available gems"""
-        print("\n📂 AVAILABLE GEMS FOR ANALYSIS")
-        print("=" * 50)
-        
-        complete_gems = []
-        partial_gems = []
-        
-        for gem_num in sorted(gems.keys()):
-            gem_files = gems[gem_num]
-            available = [ls for ls in ['B', 'L', 'U'] if gem_files[ls]]
-            
-            if len(available) == 3:
-                complete_gems.append(gem_num)
-                files_summary = []
-                for ls in ['B', 'L', 'U']:
-                    count = len(gems[gem_num][ls])
-                    files_summary.append(f"{ls}:{count}")
-                print(f"   ✅ Gem {gem_num} ({', '.join(files_summary)})")
-            else:
-                partial_gems.append((gem_num, available))
-                print(f"   🟡 Gem {gem_num} (only: {'+'.join(available)})")
-        
-        return complete_gems, partial_gems
-    
-    def select_and_analyze_gem(self):
-        """Complete gem selection and analysis workflow with enhanced features"""
-        print("\n🎯 ENHANCED GEM SELECTION AND ANALYSIS")
-        print("=" * 45)
-
-        # Clear any previous analysis results to prevent caching issues
-        for file in ['unkgemB.csv', 'unkgemL.csv', 'unkgemU.csv']:
-            if os.path.exists(file):
-                os.remove(file)
-            if os.path.exists(f'data/unknown/{file}'):
-                os.remove(f'data/unknown/{file}')
-
-        # Scan gems
-        gems = self.scan_available_gems()
-        if not gems:
-            return
-
-        # Show ALL available files with numbers
-        print("\n📂 AVAILABLE FILES FOR ANALYSIS")
-        print("=" * 50)
-
-        all_files = []
-        for gem_num in sorted(gems.keys()):
-            gem_files = gems[gem_num]
-            available = [ls for ls in ['B', 'L', 'U'] if gem_files[ls]]
-
-            if len(available) == 3:  # Only show complete gems
-                print(f"\n✅ Gem {gem_num}:")
-                for light in ['B', 'L', 'U']:
-                    for file in gem_files[light]:
-                        file_base = file.replace('.txt', '')
-                        all_files.append((file_base, file, gem_num, light))
-                        print(f"   {len(all_files)}. {file_base}")
-
-        if not all_files:
-            print("\n❌ No complete gem sets found!")
-            return
-
-        print(f"\n🔍 SELECTION METHOD:")
-        print("Enter 3 file numbers (B, L, U) separated by spaces")
-        print("Example: 1 5 9 (for files 1, 5, and 9)")
-        print("Or enter a gem base number like 'C0045' for auto-selection")
-
-        choice = input("\nYour selection: ").strip()
-
-        selected = {}
-
-        # Try parsing as numbers first
-        try:
-            numbers = [int(x) for x in choice.split()]
-            if len(numbers) == 3:
-                selected_files = []
-                for num in numbers:
-                    if 1 <= num <= len(all_files):
-                        selected_files.append(all_files[num-1])
-                    else:
-                        print(f"❌ Number {num} out of range (1-{len(all_files)})")
-                        return
-
-                # Check if we have B, L, U
-                lights_found = {f[3] for f in selected_files}
-                if lights_found != {'B', 'L', 'U'}:
-                    print(f"❌ Need one file from each light source (B, L, U)")
-                    print(f"You selected: {lights_found}")
-                    return
-
-                # Store selected files
-                for file_info in selected_files:
-                    file_base, file_full, gem_num, light = file_info
-                    selected[light] = file_full
-                    print(f"   Selected {light}: {file_base}")
-
-                gem_choice = selected_files[0][2]  # Use gem number from first file
-
-            else:
-                print("❌ Please enter exactly 3 numbers")
                 return
-
-        except ValueError:
-            # Try as gem base number (old method)
-            if choice in gems:
-                gem_choice = choice
-                gem_files = gems[gem_choice]
-
-                print(f"\n💎 AUTO-SELECTING FILES FOR GEM {gem_choice}:")
-                for light in ['B', 'L', 'U']:
-                    if gem_files[light]:
-                        selected[light] = gem_files[light][0]
-                        file_base = selected[light].replace('.txt', '')
-                        print(f"   {light}: {file_base}")
-            else:
-                print(f"❌ Invalid selection. Use numbers or gem base like 'C0045'")
-                return
-
-        if len(selected) != 3:
-            print("\n❌ Incomplete selection - need B, L, and U files")
-            return
-
-        # Convert files with CORRECTED normalization
-        print(f"\n🔄 PREPARING ENHANCED ANALYSIS...")
-        success = self.convert_gem_files_corrected(selected, gem_choice)
-
-        if success:
-            # Run validation check
-            print(f"\n🔍 VALIDATING NORMALIZATION...")
-            self.validate_normalization(gem_choice)
-
-            # Run analysis with enhanced features
-            print(f"\n✅ FILES READY FOR ENHANCED ANALYSIS")
-            analysis_choice = input(f"Run enhanced numerical analysis now? (y/n): ").strip().lower()
-
-            if analysis_choice == 'y':
-                self.run_numerical_analysis_fixed()
-
-                # Auto-import to database if enabled
-                if self.auto_import_enabled:
-                    print(f"\n🔄 Auto-importing analysis results to database...")
-                    # Import any generated CSV files
-                    for light in ['B', 'L', 'U']:
-                        csv_path = f'data/unknown/unkgem{light}.csv'
-                        if os.path.exists(csv_path):
-                            self.auto_import_csv_to_database(csv_path)
-
-                # Offer enhanced visualization
-                viz_choice = input(f"\nShow enhanced spectral comparison plots? (y/n): ").strip().lower()
-                if viz_choice == 'y':
-                    self.create_spectral_comparison_plots(gem_choice)
-                
-                # Offer relative height analysis
-                rel_choice = input(f"\nPerform relative height analysis? (y/n): ").strip().lower()
-                if rel_choice == 'y':
-                    target_wl = float(input("Enter target wavelength for comparison: "))
-                    measurements = self.calculate_relative_height(gem_choice, target_wl)
-                    if measurements:
-                        print(f"\nRelative height measurements calculated and cached")
-                        self.play_bleep(feature_type="completion")
-        else:
-            print(f"\n❌ Failed to prepare analysis")
-    
-    def convert_gem_files_corrected(self, selected_files, gem_number):
-        """Convert selected gem files with CORRECTED normalization"""
-        try:
-            # Try the normal method first
-            if os.path.exists('raw_txt'):
-                shutil.rmtree('raw_txt')
-            os.makedirs('raw_txt')
             
-            # Copy files to raw_txt
-            print("   📁 Copying files to raw_txt...")
-            for light, filename in selected_files.items():
-                src = os.path.join('data/raw', filename)
-                dst = os.path.join('raw_txt', filename)
-                shutil.copy2(src, dst)
-                print(f"     ✅ {light}: {filename}")
+            print(f"\nFound {len(complete_gems_df)} complete gems with B+L+U data:")
+            print("=" * 80)
+            print(f"{'Gem ID':<10} {'Lights':<15} {'Features':<10} {'ULTRA':<8} {'Export Status'}")
+            print("-" * 80)
             
-            # Create data/unknown directory
-            os.makedirs('data/unknown', exist_ok=True)
+            # Export each complete gem
+            exported_count = 0
+            gem_58_found = False
             
-            # Convert each file with CORRECTED normalization
-            print("   🔧 Converting and normalizing (ENHANCED)...")
-            
-            for light, filename in selected_files.items():
-                input_path = os.path.join('raw_txt', filename)
-                output_path = f'data/unknown/unkgem{light}.csv'
+            for _, row in complete_gems_df.iterrows():
+                gem_id = row['gem_id']
+                feature_count = row['total_features']
+                ultra_count = row['ultra_features']
                 
-                # Read file
-                df = pd.read_csv(input_path, sep=r'\s+', header=None, names=['wavelength', 'intensity'])
-                wavelengths = np.array(df['wavelength'])
-                intensities = np.array(df['intensity'])
+                # Check if this is gem 58
+                if '58' in str(gem_id):
+                    gem_58_found = True
                 
-                # Apply CORRECTED normalization
-                normalized = self.correct_normalize_spectrum(wavelengths, intensities, light)
+                # Export data for this gem
+                export_success = self.export_gem_structural_data(conn, gem_id, structural_export_dir)
                 
-                # Save normalized data
-                output_df = pd.DataFrame({'wavelength': wavelengths, 'intensity': normalized})
-                output_df.to_csv(output_path, header=False, index=False)
-                
-                print(f"     ✅ {light}: {len(output_df)} points, range {normalized.min():.3f}-{normalized.max():.3f}")
-                
-                # Play bleep for each successful conversion
-                if self.bleep_enabled:
-                    self.play_bleep(feature_type="peak")
-            
-            return True
-            
-        except (PermissionError, OSError) as e:
-            print(f"     ⚠️ Permission error with raw_txt: {e}")
-            print("     🔄 Switching to BYPASS MODE (direct conversion)...")
-            return self.convert_gem_files_bypass(selected_files, gem_number)
-        except Exception as e:
-            print(f"     ❌ Conversion error: {e}")
-            return False
-    
-    def convert_gem_files_bypass(self, selected_files, gem_number):
-        """Convert files directly without raw_txt copying"""
-        try:
-            # Create data/unknown directory only
-            os.makedirs('data/unknown', exist_ok=True)
-            
-            print("   🔧 Converting directly (BYPASS MODE)...")
-            
-            for light, filename in selected_files.items():
-                input_path = os.path.join('data/raw', filename)
-                output_path = f'data/unknown/unkgem{light}.csv'
-                
-                # Read and normalize directly from data/raw
-                df = pd.read_csv(input_path, sep=r'\s+', header=None, names=['wavelength', 'intensity'])
-                wavelengths = np.array(df['wavelength'])
-                intensities = np.array(df['intensity'])
-                
-                # Apply CORRECTED normalization
-                normalized = self.correct_normalize_spectrum(wavelengths, intensities, light)
-                
-                # Save normalized data
-                output_df = pd.DataFrame({'wavelength': wavelengths, 'intensity': normalized})
-                output_df.to_csv(output_path, header=False, index=False)
-                
-                print(f"     ✅ {light}: {len(output_df)} points, range {normalized.min():.3f}-{normalized.max():.3f}")
-                
-                # Play bleep for each successful conversion
-                if self.bleep_enabled:
-                    self.play_bleep(feature_type="peak")
-            
-            return True
-            
-        except Exception as e:
-            print(f"     ❌ Bypass conversion error: {e}")
-            return False
-    
-    def validate_normalization(self, gem_number):
-        """Validate that normalization produces expected results"""
-        print("   🔍 Checking normalization against database...")
-        
-        for light in ['B', 'L', 'U']:
-            try:
-                # Load our normalized data
-                unknown_path = f'data/unknown/unkgem{light}.csv'
-                unknown_df = pd.read_csv(unknown_path, header=None, names=['wavelength', 'intensity'])
-                
-                # Load database
-                db_path = f'database/reference_spectra/gemini_db_long_{light}.csv'
-                if os.path.exists(db_path):
-                    db_df = pd.read_csv(db_path)
-                    
-                    # Look for exact gem match in database
-                    gem_matches = db_df[db_df['full_name'].str.contains(gem_number, na=False)]
-                    
-                    if not gem_matches.empty:
-                        # Get first match
-                        match = gem_matches.iloc[0]
-                        print(f"     🎯 {light}: Found {match['full_name']} in database")
-                        
-                        # Compare ranges
-                        unknown_range = f"{unknown_df['intensity'].min():.3f}-{unknown_df['intensity'].max():.3f}"
-                        db_subset = db_df[db_df['full_name'] == match['full_name']]
-                        db_range = f"{db_subset['intensity'].min():.3f}-{db_subset['intensity'].max():.3f}"
-                        
-                        print(f"         Unknown range: {unknown_range}")
-                        print(f"         Database range: {db_range}")
-                        
-                        # Play validation bleep
-                        if self.bleep_enabled:
-                            self.play_bleep(feature_type="valley")
-                    else:
-                        print(f"     ⚠️ {light}: No match for {gem_number} in database")
+                if export_success:
+                    exported_count += 1
+                    status = "Exported"
                 else:
-                    print(f"     ❌ {light}: Database file {db_path} not found")
-                    
-            except Exception as e:
-                print(f"     ❌ {light}: Validation error - {e}")
-    
-    def run_numerical_analysis_fixed(self):
-        """Run numerical analysis with enhanced features"""
-        print(f"\n🚀 RUNNING ENHANCED NUMERICAL ANALYSIS...")
-        
-        try:
-            # Run analysis directly in this process
-            self.direct_numerical_analysis()
+                    status = "Failed"
+                
+                ultra_indicator = f"ULTRA {ultra_count}" if ultra_count > 0 else f"STD 0"
+                print(f"{gem_id:<10} {'B+L+U':<15} {feature_count:<10} {ultra_indicator:<8} {status}")
+            
+            print(f"\nEXPORT SUMMARY:")
+            print(f"   Successfully exported: {exported_count}/{len(complete_gems_df)} gems")
+            print(f"   Location: {structural_export_dir}")
+            
+            # Special note about gem 58
+            if gem_58_found:
+                print(f"   Gem 58: FOUND and exported!")
+            else:
+                print(f"   Gem 58: Not found in complete gems list")
+            
+            conn.close()
+            
+            # Now offer to run structural matching analysis
+            if exported_count > 0:
+                print(f"\nSTRUCTURAL MATCHING ANALYSIS OPTIONS:")
+                print("1. Test specific gem (like gem 58)")
+                print("2. Run comprehensive matching test on all exported gems")
+                print("3. Skip matching analysis")
+                
+                choice = input("\nSelect option (1-3): ").strip()
+                
+                if choice == '1':
+                    self.test_specific_gem_matching(complete_gems_df)
+                elif choice == '2':
+                    self.run_comprehensive_matching_test(complete_gems_df)
+                else:
+                    print("Matching analysis skipped")
+            
+            # Play completion bleep
+            if self.bleep_enabled:
+                self.play_bleep(feature_type="completion")
                 
         except Exception as e:
-            print(f"   ❌ Analysis error: {e}")
+            print(f"Error in structural export and matching: {e}")
             import traceback
             traceback.print_exc()
-    
-    def direct_numerical_analysis(self):
-        """Direct numerical analysis with enhanced features and caching"""
-        print("   📊 Starting enhanced analysis with advanced features...")
-        
-        # Clear any previous analysis variables
-        self.current_analysis_results = {}
-        self.current_gem_identifier = None
-        
-        # Check for unknown files
-        unknown_files = {}
-        available_lights = []
-        
-        for light in ['B', 'L', 'U']:
-            found = False
-            for base_path in ['data/unknown', '.']:
-                test_path = os.path.join(base_path, f'unkgem{light}.csv')
-                if os.path.exists(test_path):
-                    unknown_files[light] = test_path
-                    available_lights.append(light)
-                    found = True
-                    break
-        
-        if len(available_lights) < 2:
-            print(f"   ❌ Need at least 2 light sources, found: {available_lights}")
-            return
-        
-        print(f"   ✅ Found {len(available_lights)} light sources: {'+'.join(available_lights)}")
-        
-        # Database files
-        db_files = {
-            'B': 'database/reference_spectra/gemini_db_long_B.csv', 
-            'L': 'database/reference_spectra/gemini_db_long_L.csv', 
-            'U': 'database/reference_spectra/gemini_db_long_U.csv'
-        }
-        
-        # Check database files
-        for light in available_lights:
-            if not os.path.exists(db_files[light]):
-                print(f"   ❌ Database file {db_files[light]} not found")
-                return
-        
-        print("   ✅ All required database files found")
-        
-        # Determine gem ID
-        actual_gem_id = self.identify_unknown_gem(unknown_files)
-        print(f"   🎯 Analyzing enhanced gem: {actual_gem_id}")
-        
-        # Load gem library for descriptions
-        gem_name_map = {}
+
+    def export_gem_structural_data(self, conn, gem_id, export_dir):
+        """Export structural data for a specific gem to CSV files"""
         try:
-            gemlib = pd.read_csv('gemlib_structural_ready.csv')
-            gemlib.columns = gemlib.columns.str.strip()
-            if 'Reference' in gemlib.columns:
-                gemlib['Reference'] = gemlib['Reference'].astype(str).str.strip()
-                expected_columns = ['Nat./Syn.', 'Spec.', 'Var.', 'Treatment', 'Origin']
-                if all(col in gemlib.columns for col in expected_columns):
-                    gemlib['Gem Description'] = gemlib[expected_columns].apply(
-                        lambda x: ' '.join([v if pd.notnull(v) else '' for v in x]).strip(), axis=1)
-                    gem_name_map = dict(zip(gemlib['Reference'], gemlib['Gem Description']))
+            # Create gem-specific directory
+            gem_dir = os.path.join(export_dir, gem_id)
+            os.makedirs(gem_dir, exist_ok=True)
+            
+            success_count = 0
+            
+            # Export data for each light source
+            for light_source in ['B', 'L', 'U', 'Halogen', 'Laser', 'UV']:
+                query = """
+                    SELECT * FROM structural_features 
+                    WHERE file LIKE ? AND (light_source = ? OR light_source LIKE ?)
+                    ORDER BY wavelength
+                """
+                
+                # Try both exact match and partial match for light source
+                light_patterns = [light_source, f"%{light_source.lower()}%"]
+                
+                df = pd.read_sql_query(query, conn, params=[f"%{gem_id}%", light_source, light_patterns[1]])
+                
+                if not df.empty:
+                    # Export to CSV
+                    filename = f"{gem_id}_{light_source}.csv"
+                    filepath = os.path.join(gem_dir, filename)
+                    df.to_csv(filepath, index=False)
+                    success_count += 1
+            
+            return success_count >= 3  # At least 3 light sources exported
+            
         except Exception as e:
-            print(f"   ⚠️ Could not load gem descriptions: {e}")
+            print(f"   Error exporting {gem_id}: {e}")
+            return False
+
+    def test_specific_gem_matching(self, complete_gems_df):
+        """Test structural matching for a specific gem"""
+        print(f"\nSPECIFIC GEM MATCHING TEST")
+        print("=" * 50)
         
-        # Process each light source with enhanced features
-        all_matches = {}
-        gem_best_scores = {}
-        gem_best_names = {}
-        
-        for light_source in available_lights:
-            print(f"\n   🔍 Processing {light_source} light (ENHANCED)...")
+        # Show available complete gems
+        print("Available complete gems:")
+        gem_list = []
+        for i, (_, row) in enumerate(complete_gems_df.iterrows(), 1):
+            gem_id = row['gem_id']
+            feature_count = row['total_features']
+            ultra_count = row['ultra_features']
             
+            special_note = ""
+            if '58' in str(gem_id):
+                special_note = " (This is gem 58!)"
+            
+            ultra_indicator = f"ULTRA {ultra_count}" if ultra_count > 0 else ""
+            print(f"   {i}. {gem_id} - {feature_count} features {ultra_indicator}{special_note}")
+            gem_list.append((gem_id, row))
+        
+        # Get user selection
+        try:
+            choice = input(f"\nSelect gem to test (1-{len(gem_list)}) or enter gem ID: ").strip()
+            
+            # Try as number first
             try:
-                # Load unknown spectrum
-                unknown = pd.read_csv(unknown_files[light_source], header=None, names=['wavelength', 'intensity'])
-                print(f"      Unknown: {len(unknown)} points, range {unknown['intensity'].min():.3f}-{unknown['intensity'].max():.3f}")
+                idx = int(choice) - 1
+                if 0 <= idx < len(gem_list):
+                    selected_gem_id, selected_row = gem_list[idx]
+                else:
+                    print("Invalid selection")
+                    return
+            except ValueError:
+                # Try as direct gem ID
+                selected_gem_id = choice
+                selected_row = None
+                for gem_id, row in gem_list:
+                    if gem_id == choice:
+                        selected_row = row
+                        break
                 
-                # Load database
-                db = pd.read_csv(db_files[light_source])
-                print(f"      Database: {len(db)} points, {db['full_name'].nunique()} unique gems")
-                
-                # Apply 0-100 scaling
-                unknown_scaled = unknown.copy()
-                unknown_scaled['intensity'] = self.apply_0_100_scaling(unknown['wavelength'].values, unknown['intensity'].values)
-                print(f"      Unknown scaled: range {unknown_scaled['intensity'].min():.3f}-{unknown_scaled['intensity'].max():.3f}")
-                
-                # Compute enhanced scores with progress feedback
-                current_scores = []
-                unique_gems = db['full_name'].unique()
-                
-                for i, gem_name in enumerate(unique_gems):
-                    if i % 100 == 0:  # Progress indicator
-                        print(f"      Processing gem {i+1}/{len(unique_gems)}...")
-                    
-                    reference = db[db['full_name'] == gem_name].copy()
-                    
-                    # Apply 0-100 scaling to database reference
-                    reference_scaled = reference.copy()
-                    reference_scaled['intensity'] = self.apply_0_100_scaling(reference['wavelength'].values, reference['intensity'].values)
-                    
-                    # Compute match score
-                    merged = pd.merge(unknown_scaled, reference_scaled, on='wavelength', suffixes=('_unknown', '_ref'))
-                    if len(merged) > 0:
-                        mse = np.mean((merged['intensity_unknown'] - merged['intensity_ref']) ** 2)
-                        log_score = np.log1p(mse)
-                        current_scores.append((gem_name, log_score))
-                
-                # Sort by score
-                current_sorted_scores = sorted(current_scores, key=lambda x: x[1])
-                all_matches[light_source] = current_sorted_scores
-                
-                print(f"      ✅ Enhanced matches for {light_source}:")
-                for i, (gem, score) in enumerate(current_sorted_scores[:5], 1):
-                    print(f"         {i}. {gem}: {score:.6f}")
-                    
-                    # Play bleep for very good matches
-                    if self.bleep_enabled and score < 1e-6:
-                        self.play_bleep(feature_type="significant")
-                
-                # Track best scores per gem ID
-                for gem_name, score in current_sorted_scores:
-                    base_id = gem_name.split('B')[0].split('L')[0].split('U')[0]
-                    if base_id not in gem_best_scores:
-                        gem_best_scores[base_id] = {}
-                        gem_best_names[base_id] = {}
-                    if score < gem_best_scores[base_id].get(light_source, np.inf):
-                        gem_best_scores[base_id][light_source] = score
-                        gem_best_names[base_id][light_source] = gem_name
-                
-            except Exception as e:
-                print(f"      ❌ Error processing {light_source}: {e}")
-        
-        # Filter to gems with all available light sources
-        complete_gems = {gid: scores for gid, scores in gem_best_scores.items() 
-                        if set(scores.keys()) >= set(available_lights)}
-        
-        # Calculate combined scores
-        aggregated_scores = {base_id: sum(scores.values()) 
-                           for base_id, scores in complete_gems.items()}
-        
-        # Sort final results
-        final_sorted = sorted(aggregated_scores.items(), key=lambda x: x[1])
-        
-        print(f"\n🏆 ENHANCED ANALYSIS RESULTS - TOP 20 MATCHES:")
-        print("=" * 75)
-        print(f"   Analysis using: {'+'.join(available_lights)} light sources")
-        print("=" * 75)
-        
-        for i, (base_id, total_score) in enumerate(final_sorted[:20], start=1):
-            gem_desc = gem_name_map.get(str(base_id), f"Gem {base_id}")
-            sources = complete_gems.get(base_id, {})
+                if selected_row is None:
+                    print(f"Gem ID '{choice}' not found in complete gems")
+                    return
             
-            print(f"  Rank {i:2}: {gem_desc} (ID: {base_id})")
-            print(f"          Total Score: {total_score:.6f}")
-            for ls in sorted(available_lights):
-                if ls in sources:
-                    score_val = sources[ls]
-                    best_file = gem_best_names[base_id][ls]
-                    print(f"          {ls} Score: {score_val:.6f} (vs {best_file})")
-            print()
-        
-        # Enhanced self-matching analysis
-        if actual_gem_id in aggregated_scores:
-            self_rank = next(i for i, (gid, _) in enumerate(final_sorted, 1) if gid == actual_gem_id)
-            self_score = aggregated_scores[actual_gem_id]
-            print(f"🎯 {actual_gem_id} ENHANCED SELF-MATCH RESULT:")
-            print(f"   Rank: {self_rank}")
-            print(f"   Total Score: {self_score:.6f}")
-            print(f"   Light sources used: {'+'.join(available_lights)}")
+            print(f"\nTesting structural matching for: {selected_gem_id}")
             
-            if self_score < 1e-10:
-                print(f"   ✅ PERFECT SELF-MATCH!")
-                if self.bleep_enabled:
-                    self.play_bleep(feature_type="completion")
-            elif self_score < 1e-6:
-                print(f"   ✅ EXCELLENT SELF-MATCH!")
-                if self.bleep_enabled:
+            # Run the structural matching analysis
+            conn = sqlite3.connect(self.db_path)
+            self.run_comprehensive_gem_matching_test(conn, selected_gem_id)
+            conn.close()
+            
+        except Exception as e:
+            print(f"Error in specific gem testing: {e}")
+
+    def run_comprehensive_matching_test(self, complete_gems_df):
+        """Run comprehensive structural matching test on all complete gems"""
+        print(f"\nCOMPREHENSIVE MATCHING TEST")
+        print("=" * 50)
+        
+        print(f"Testing {len(complete_gems_df)} complete gems...")
+        
+        try:
+            conn = sqlite3.connect(self.db_path)
+            
+            results = []
+            
+            for i, (_, row) in enumerate(complete_gems_df.iterrows(), 1):
+                gem_id = row['gem_id']
+                print(f"\nTesting {i}/{len(complete_gems_df)}: {gem_id}")
+                
+                # Run matching test for this gem
+                match_result = self.run_comprehensive_gem_matching_test(conn, gem_id, verbose=False)
+                results.append((gem_id, match_result))
+                
+                # Progress indicator
+                if i % 5 == 0:
+                    print(f"   Progress: {i}/{len(complete_gems_df)} gems tested")
+            
+            # Summary results
+            print(f"\nCOMPREHENSIVE MATCHING RESULTS:")
+            print("=" * 60)
+            
+            perfect_matches = 0
+            good_matches = 0
+            
+            for gem_id, result in results:
+                if result and result.get('self_match_found', False):
+                    avg_score = result.get('average_score', 0)
+                    if avg_score > 95:
+                        perfect_matches += 1
+                        status = "PERFECT"
+                    elif avg_score > 80:
+                        good_matches += 1
+                        status = "GOOD"
+                    else:
+                        status = "POOR"
+                    
+                    print(f"   {gem_id}: {avg_score:.1f}% - {status}")
+                else:
+                    print(f"   {gem_id}: FAILED - No self-match")
+            
+            print(f"\nSUMMARY:")
+            print(f"   Perfect matches (>95%): {perfect_matches}")
+            print(f"   Good matches (>80%): {good_matches}")
+            print(f"   Total tested: {len(results)}")
+            
+            conn.close()
+            
+        except Exception as e:
+            print(f"Error in comprehensive testing: {e}")
+
+    def run_comprehensive_gem_matching_test(self, conn, gem_id, verbose=True):
+        """Run structural matching test for a specific gem and return results"""
+        if verbose:
+            print(f"Analyzing structural data for {gem_id}...")
+        
+        try:
+            # Get available light sources for this gem
+            available_lights_query = """
+                SELECT DISTINCT light_source 
+                FROM structural_features 
+                WHERE file LIKE ?
+                ORDER BY light_source
+            """
+            
+            lights_df = pd.read_sql_query(available_lights_query, conn, params=[f"%{gem_id}%"])
+            available_lights = lights_df['light_source'].tolist()
+            
+            if len(available_lights) < 3:
+                if verbose:
+                    print(f"   Insufficient light sources: {available_lights}")
+                return None
+            
+            if verbose:
+                print(f"   Light sources: {', '.join(available_lights)}")
+            
+            # Test matching for each light source
+            light_results = {}
+            total_score = 0
+            
+            for light_source in available_lights:
+                if verbose:
+                    print(f"   Testing {light_source} light...")
+                
+                # Get test features
+                test_query = """
+                    SELECT wavelength, intensity, feature_group, data_type
+                    FROM structural_features 
+                    WHERE file LIKE ? AND light_source = ?
+                    ORDER BY wavelength
+                """
+                
+                test_df = pd.read_sql_query(test_query, conn, params=[f"%{gem_id}%", light_source])
+                
+                if test_df.empty:
+                    if verbose:
+                        print(f"      No data for {light_source}")
+                    continue
+                
+                # Find best matches in database
+                candidates_query = """
+                    SELECT 
+                        CASE 
+                            WHEN file LIKE '%B%' THEN SUBSTR(file, 1, INSTR(file, 'B') - 1)
