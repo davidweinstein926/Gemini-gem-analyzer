@@ -1,0 +1,15 @@
+Feature,File,Light_Source,Wavelength,Intensity,Point_Type,Feature_Group,Processing,SNR,Feature_Key,Baseline_Used,Norm_Factor,Normalization_Method,Reference_Wavelength_Used,Width_nm,Normalization_Scheme,Reference_Wavelength,Intensity_Range_Min,Intensity_Range_Max,Symmetry_Ratio,Skew_Description
+Baseline_End,51BC1.txt,Halogen,300.12,0.17,End,Baseline,Baseline_Then_Halogen_Normalized,34.0,baseline_4,2.94,0.000137,halogen_650nm_50000_to_100,649.983,,Halogen_650nm_50000_to_100,649.983,0.0,100.0,,
+Baseline_Start,51BC1.txt,Halogen,324.97,0.19,Start,Baseline,Baseline_Then_Halogen_Normalized,34.0,baseline_4,2.94,0.000137,halogen_650nm_50000_to_100,649.983,,Halogen_650nm_50000_to_100,649.983,0.0,100.0,,
+Mound_Crest,51BC1.txt,Halogen,624.41,101.13,Crest,Mound,Baseline_Then_Halogen_Normalized,272.1,mound_2,2.94,0.000137,halogen_650nm_50000_to_100,,198.5,Halogen_650nm_50000_to_100,649.983,0.0,100.0,,
+Mound_Crest,51BC1.txt,Halogen,630.35,102.04,Crest,Mound,Baseline_Then_Halogen_Normalized,633.4,mound_4,2.94,0.000137,halogen_650nm_50000_to_100,,197.32,Halogen_650nm_50000_to_100,649.983,0.0,100.0,,
+Mound_Crest,51BC1.txt,Halogen,636.09,102.08,Crest,Mound,Baseline_Then_Halogen_Normalized,719.2,mound_0,2.94,0.000137,halogen_650nm_50000_to_100,,197.32,Halogen_650nm_50000_to_100,649.983,0.0,100.0,,
+Mound_Crest,51BC1.txt,Halogen,643.23,101.58,Crest,Mound,Baseline_Then_Halogen_Normalized,983.7,mound_5,2.94,0.000137,halogen_650nm_50000_to_100,,197.91,Halogen_650nm_50000_to_100,649.983,0.0,100.0,,
+Mound_Crest,51BC1.txt,Halogen,645.61,101.34,Crest,Mound,Baseline_Then_Halogen_Normalized,399.5,mound_9,2.94,0.000137,halogen_650nm_50000_to_100,,198.3,Halogen_650nm_50000_to_100,649.983,0.0,100.0,,
+Mound_Crest,51BC1.txt,Halogen,652.37,100.55,Crest,Mound,Baseline_Then_Halogen_Normalized,969.4,mound_4,2.94,0.000137,halogen_650nm_50000_to_100,,199.28,Halogen_650nm_50000_to_100,649.983,0.0,100.0,,
+Mound_Summary,51BC1.txt,Halogen,624.41,101.13,Summary,Mound,Baseline_Then_Halogen_Normalized,,mound_4,,,halogen_650nm_50000_to_100,,198.5,Halogen_650nm_50000_to_100,649.983,0.0,100.0,0.899,Left Skewed
+Mound_Summary,51BC1.txt,Halogen,630.35,102.04,Summary,Mound,Baseline_Then_Halogen_Normalized,,mound_4,,,halogen_650nm_50000_to_100,,197.32,Halogen_650nm_50000_to_100,649.983,0.0,100.0,0.999,Symmetric
+Mound_Summary,51BC1.txt,Halogen,636.09,102.08,Summary,Mound,Baseline_Then_Halogen_Normalized,,mound_4,,,halogen_650nm_50000_to_100,,197.32,Halogen_650nm_50000_to_100,649.983,0.0,100.0,0.996,Symmetric
+Mound_Summary,51BC1.txt,Halogen,643.23,101.58,Summary,Mound,Baseline_Then_Halogen_Normalized,,mound_4,,,halogen_650nm_50000_to_100,,197.91,Halogen_650nm_50000_to_100,649.983,0.0,100.0,1.007,Symmetric
+Mound_Summary,51BC1.txt,Halogen,645.61,101.34,Summary,Mound,Baseline_Then_Halogen_Normalized,,mound_4,,,halogen_650nm_50000_to_100,,198.3,Halogen_650nm_50000_to_100,649.983,0.0,100.0,0.945,Symmetric
+Mound_Summary,51BC1.txt,Halogen,652.37,100.55,Summary,Mound,Baseline_Then_Halogen_Normalized,,mound_4,,,halogen_650nm_50000_to_100,,199.28,Halogen_650nm_50000_to_100,649.983,0.0,100.0,0.963,Symmetric

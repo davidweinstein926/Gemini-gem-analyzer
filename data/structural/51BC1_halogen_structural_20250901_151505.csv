@@ -1,0 +1,3 @@
+Feature,File,Light_Source,Wavelength,Intensity,Point_Type,Feature_Group,Processing,SNR,Feature_Key,Baseline_Used,Norm_Factor,Normalization_Method,Reference_Wavelength_Used,Width_nm,Normalization_Scheme,Reference_Wavelength,Intensity_Range_Min,Intensity_Range_Max,Symmetry_Ratio,Skew_Description
+Baseline_Start,51BC1.txt,Halogen,350.0,0.31,Start,Baseline,Baseline_Then_Halogen_Normalized,21.9,baseline_3,2.94,0.000137,halogen_650nm_50000_to_100,649.983,,Halogen_650nm_50000_to_100,649.983,0.0,100.0,,
+Baseline_End,51BC1.txt,Halogen,499.96,0.15,End,Baseline,Baseline_Then_Halogen_Normalized,21.9,baseline_3,2.94,0.000137,halogen_650nm_50000_to_100,649.983,,Halogen_650nm_50000_to_100,649.983,0.0,100.0,,
