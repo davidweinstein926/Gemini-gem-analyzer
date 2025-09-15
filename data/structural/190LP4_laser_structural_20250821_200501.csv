@@ -1,0 +1,10 @@
+Feature,File,Light_Source,Wavelength,Intensity,Point_Type,Feature_Group,Processing,SNR,Feature_Key,Baseline_Used,Norm_Factor,Normalization_Method,Reference_Wavelength_Used,Symmetry_Ratio,Skew_Description,Width_nm,Normalization_Scheme,Reference_Wavelength,Intensity_Range_Min,Intensity_Range_Max
+Baseline_Start,190LP4.txt,Laser,302.92,0.49,Start,Baseline,Baseline_Then_Laser_Normalized,0.7,Baseline_0,3.27,5.8074558906302745,laser_max_50000_to_100,,,,,Laser_Max_50000_to_100,738.926,0.0,100.0
+Baseline_End,190LP4.txt,Laser,374.82,3.1,End,Baseline,Baseline_Then_Laser_Normalized,0.7,Baseline_0,3.27,5.8074558906302745,laser_max_50000_to_100,,,,,Laser_Max_50000_to_100,738.926,0.0,100.0
+Peak_Max,190LP4.txt,Laser,431.07,25.64,Max,Peak,Baseline_Then_Laser_Normalized,,Peak_2,3.27,5.8074558906302745,laser_max_50000_to_100,738.926,,,,Laser_Max_50000_to_100,738.926,0.0,100.0
+Mound_Start,190LP4.txt,Laser,433.93,4.17,Start,Mound,Baseline_Then_Laser_Normalized,,Mound_3,3.27,5.8074558906302745,laser_max_50000_to_100,738.926,,,,Laser_Max_50000_to_100,738.926,0.0,100.0
+Mound_Crest,190LP4.txt,Laser,452.59,13.22,Crest,Mound,Baseline_Then_Laser_Normalized,,Mound_3,3.27,5.8074558906302745,laser_max_50000_to_100,738.926,,,,Laser_Max_50000_to_100,738.926,0.0,100.0
+Mound_End,190LP4.txt,Laser,500.46,5.0,End,Mound,Baseline_Then_Laser_Normalized,,Mound_3,3.27,5.8074558906302745,laser_max_50000_to_100,738.926,,,,Laser_Max_50000_to_100,738.926,0.0,100.0
+Mound_Summary,190LP4.txt,Laser,452.59,13.22,Summary,Mound,Baseline_Then_Laser_Normalized,,Mound_3,,,laser_max_50000_to_100,,0.39,Left Skewed,66.53,Laser_Max_50000_to_100,738.926,0.0,100.0
+Peak_Max,190LP4.txt,Laser,504.53,5.55,Max,Peak,Baseline_Then_Laser_Normalized,,Peak_7,3.27,5.8074558906302745,laser_max_50000_to_100,738.926,,,,Laser_Max_50000_to_100,738.926,0.0,100.0
+Peak_Max,190LP4.txt,Laser,738.86,99.84,Max,Peak,Baseline_Then_Laser_Normalized,,Peak_8,3.27,5.8074558906302745,laser_max_50000_to_100,738.926,,,,Laser_Max_50000_to_100,738.926,0.0,100.0

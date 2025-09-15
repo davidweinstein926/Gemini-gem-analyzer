@@ -1,0 +1,7 @@
+Feature,File,Light_Source,Wavelength,Intensity,Point_Type,Feature_Group,Processing,SNR,Feature_Key,Baseline_Used,Norm_Factor,Normalization_Method,Reference_Wavelength_Used,Symmetry_Ratio,Skew_Description,Width_nm,Normalization_Scheme,Reference_Wavelength,Intensity_Range_Min,Intensity_Range_Max
+Baseline_Start,214BP1.txt,Halogen,300.33,129.63,Start,Baseline,Baseline_Then_Halogen_Normalized,10.4,Baseline_0,148.64,4.6106095843692225,halogen_650nm_50000_to_100,,,,,Halogen_650nm_50000_to_100,654.954,0.0,100.0
+Baseline_End,214BP1.txt,Halogen,347.1,181.53,End,Baseline,Baseline_Then_Halogen_Normalized,10.4,Baseline_0,148.64,4.6106095843692225,halogen_650nm_50000_to_100,,,,,Halogen_650nm_50000_to_100,654.954,0.0,100.0
+Mound_Start,214BP1.txt,Halogen,389.55,0.45,Start,Mound,Baseline_Then_Halogen_Normalized,,Mound_2,148.64,4.6106095843692225,halogen_650nm_50000_to_100,654.954,,,,Halogen_650nm_50000_to_100,654.954,0.0,100.0
+Mound_Crest,214BP1.txt,Halogen,694.46,98.75,Crest,Mound,Baseline_Then_Halogen_Normalized,,Mound_2,148.64,4.6106095843692225,halogen_650nm_50000_to_100,654.954,,,,Halogen_650nm_50000_to_100,654.954,0.0,100.0
+Mound_End,214BP1.txt,Halogen,968.2,0.14,End,Mound,Baseline_Then_Halogen_Normalized,,Mound_2,148.64,4.6106095843692225,halogen_650nm_50000_to_100,654.954,,,,Halogen_650nm_50000_to_100,654.954,0.0,100.0
+Mound_Summary,214BP1.txt,Halogen,694.46,98.75,Summary,Mound,Baseline_Then_Halogen_Normalized,,Mound_2,,,halogen_650nm_50000_to_100,,1.114,Symmetric,578.65,Halogen_650nm_50000_to_100,654.954,0.0,100.0
