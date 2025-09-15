@@ -1,0 +1,14 @@
+Feature,File,Light_Source,Wavelength,Intensity,Point_Type,Feature_Group,Processing,SNR,Feature_Key,Baseline_Used,Norm_Factor,Normalization_Method,Reference_Wavelength_Used,Symmetry_Ratio,Skew_Description,Width_nm,Normalization_Scheme,Reference_Wavelength,Intensity_Range_Min,Intensity_Range_Max
+Baseline_Start,140LC2.txt,Laser,301.19,32.55,Start,Baseline,Baseline_Then_Laser_Normalized,4.1,Baseline_0,24.0,11.150937303185957,laser_max_50000_to_100,,,,,Laser_Max_50000_to_100,452.649,0.0,100.0
+Baseline_End,140LC2.txt,Laser,350.57,28.83,End,Baseline,Baseline_Then_Laser_Normalized,4.1,Baseline_0,24.0,11.150937303185957,laser_max_50000_to_100,,,,,Laser_Max_50000_to_100,452.649,0.0,100.0
+Peak_Max,140LC2.txt,Laser,431.42,51.79,Max,Peak,Baseline_Then_Laser_Normalized,,Peak_2,24.0,11.150937303185957,laser_max_50000_to_100,452.649,,,,Laser_Max_50000_to_100,452.649,0.0,100.0
+Peak_Max,140LC2.txt,Laser,504.93,50.77,Max,Peak,Baseline_Then_Laser_Normalized,,Peak_3,24.0,11.150937303185957,laser_max_50000_to_100,452.649,,,,Laser_Max_50000_to_100,452.649,0.0,100.0
+Peak_Max,140LC2.txt,Laser,513.16,58.27,Max,Peak,Baseline_Then_Laser_Normalized,,Peak_4,24.0,11.150937303185957,laser_max_50000_to_100,452.649,,,,Laser_Max_50000_to_100,452.649,0.0,100.0
+Peak_Max,140LC2.txt,Laser,519.54,57.18,Max,Peak,Baseline_Then_Laser_Normalized,,Peak_5,24.0,11.150937303185957,laser_max_50000_to_100,452.649,,,,Laser_Max_50000_to_100,452.649,0.0,100.0
+Peak_Max,140LC2.txt,Laser,439.54,90.86,Max,Peak,Baseline_Then_Laser_Normalized,,Peak_6,24.0,11.150937303185957,laser_max_50000_to_100,452.649,,,,Laser_Max_50000_to_100,452.649,0.0,100.0
+Peak_Max,140LC2.txt,Laser,452.54,99.92,Max,Peak,Baseline_Then_Laser_Normalized,,Peak_7,24.0,11.150937303185957,laser_max_50000_to_100,452.649,,,,Laser_Max_50000_to_100,452.649,0.0,100.0
+Valley_Midpoint,140LC2.txt,Laser,444.3,88.7,Midpoint,Valley,Baseline_Then_Laser_Normalized,,Valley_8,24.0,11.150937303185957,laser_max_50000_to_100,452.649,,,,Laser_Max_50000_to_100,452.649,0.0,100.0
+Mound_Start,140LC2.txt,Laser,619.97,10.72,Start,Mound,Baseline_Then_Laser_Normalized,,Mound_9,24.0,11.150937303185957,laser_max_50000_to_100,452.649,,,,Laser_Max_50000_to_100,452.649,0.0,100.0
+Mound_Crest,140LC2.txt,Laser,683.2,18.1,Crest,Mound,Baseline_Then_Laser_Normalized,,Mound_9,24.0,11.150937303185957,laser_max_50000_to_100,452.649,,,,Laser_Max_50000_to_100,452.649,0.0,100.0
+Mound_End,140LC2.txt,Laser,848.65,0.86,End,Mound,Baseline_Then_Laser_Normalized,,Mound_9,24.0,11.150937303185957,laser_max_50000_to_100,452.649,,,,Laser_Max_50000_to_100,452.649,0.0,100.0
+Mound_Summary,140LC2.txt,Laser,683.2,18.1,Summary,Mound,Baseline_Then_Laser_Normalized,,Mound_9,,,laser_max_50000_to_100,,0.382,Left Skewed,228.69,Laser_Max_50000_to_100,452.649,0.0,100.0

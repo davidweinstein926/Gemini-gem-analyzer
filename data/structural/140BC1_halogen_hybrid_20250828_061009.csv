@@ -1,0 +1,8 @@
+Feature,Wavelength,Intensity,Point_Type,Feature_Group,SNR,Baseline_Used,Processing,Prominence,File,Light_Source,Symmetry_Ratio,Skew_Description,Width_nm,Norm_Factor
+Baseline_Start,300.12,0.09,Start,Baseline,0.8,0.09,Auto_300-325nm_Baseline,,,,,,,
+Baseline_End,324.97,0.09,End,Baseline,0.8,0.09,Auto_300-325nm_Baseline,,,,,,,
+Peak_Max,666.51,100.0,Max,Peak_1,,,Auto_Baseline_Normalized,100.0,140BC1.txt,Halogen,,,,
+Mound_Start,389.37,0.68,Start,Mound_1,0.8,0.09,Auto_Baseline_Normalized,,140BC1.txt,Halogen,,,,
+Mound_Crest,666.51,100.0,Crest,Mound_1,0.8,0.09,Auto_Baseline_Normalized,,140BC1.txt,Halogen,,,,
+Mound_End,953.14,0.35,End,Mound_1,0.8,0.09,Auto_Baseline_Normalized,,140BC1.txt,Halogen,,,,
+Mound_Summary,666.51,100.0,Summary,Mound_1,0.8,0.09,Auto_Baseline_Normalized,,140BC1.txt,Halogen,0.967,Symmetric,563.77,1.0

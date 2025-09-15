@@ -1,0 +1,9 @@
+Feature,File,Light_Source,Wavelength,Intensity,Point_Type,Feature_Group,Processing,SNR,Feature_Key,Baseline_Used,Norm_Factor,Normalization_Method,Reference_Wavelength_Used,Symmetry_Ratio,Skew_Description,Width_nm,Normalization_Scheme,Reference_Wavelength,Intensity_Range_Min,Intensity_Range_Max
+Baseline_End,58LP1.txt,Laser,300.12,0.01,End,Baseline,Baseline_Then_Laser_Normalized,65.3,Baseline_0,1.53,0.000384,laser_650nm_50000_to_100,694.09,,,,Laser_650nm_50000_to_100,694.09,0.0,100.0
+Baseline_Start,58LP1.txt,Laser,350.0,0.02,Start,Baseline,Baseline_Then_Laser_Normalized,65.3,Baseline_0,1.53,0.000384,laser_650nm_50000_to_100,694.09,,,,Laser_650nm_50000_to_100,694.09,0.0,100.0
+Peak,58LP1.txt,Laser,669.9,3.53,Crest,Peak,Baseline_Then_Laser_Normalized,32.6,Peak_1,1.53,0.000384,laser_650nm_50000_to_100,,,,19.17,Laser_650nm_50000_to_100,694.09,0.0,100.0
+Peak,58LP1.txt,Laser,694.09,100.0,Crest,Peak,Baseline_Then_Laser_Normalized,9.7,Peak_0,1.53,0.000384,laser_650nm_50000_to_100,,,,3.21,Laser_650nm_50000_to_100,694.09,0.0,100.0
+Peak,58LP1.txt,Laser,707.73,5.14,Crest,Peak,Baseline_Then_Laser_Normalized,23.8,Peak_5,1.53,0.000384,laser_650nm_50000_to_100,,,,32.32,Laser_650nm_50000_to_100,694.09,0.0,100.0
+Peak,58LP1.txt,Laser,714.56,5.74,Crest,Peak,Baseline_Then_Laser_Normalized,30.6,Peak_0,1.53,0.000384,laser_650nm_50000_to_100,,,,18.49,Laser_650nm_50000_to_100,694.09,0.0,100.0
+Peak,58LP1.txt,Laser,659.33,1.65,Crest,Peak,Baseline_Then_Laser_Normalized,10.0,Peak_9,1.53,0.000384,laser_650nm_50000_to_100,,,,2.0,Laser_650nm_50000_to_100,694.09,0.0,100.0
+Peak,58LP1.txt,Laser,675.68,2.76,Crest,Peak,Baseline_Then_Laser_Normalized,10.0,Peak_3,1.53,0.000384,laser_650nm_50000_to_100,,,,2.0,Laser_650nm_50000_to_100,694.09,0.0,100.0

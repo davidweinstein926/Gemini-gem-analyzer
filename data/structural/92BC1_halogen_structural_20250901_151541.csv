@@ -1,0 +1,10 @@
+Feature,File,Light_Source,Wavelength,Intensity,Point_Type,Feature_Group,Processing,SNR,Feature_Key,Baseline_Used,Norm_Factor,Normalization_Method,Reference_Wavelength_Used,Width_nm,Normalization_Scheme,Reference_Wavelength,Intensity_Range_Min,Intensity_Range_Max,Symmetry_Ratio,Skew_Description
+Baseline_Start,92BC1.txt,Halogen,350.0,0.6,Start,Baseline,Baseline_Then_Halogen_Normalized,17.9,baseline_3,3.22,0.000122,halogen_650nm_50000_to_100,649.983,,Halogen_650nm_50000_to_100,649.983,0.0,100.0,,
+Baseline_End,92BC1.txt,Halogen,499.96,0.32,End,Baseline,Baseline_Then_Halogen_Normalized,17.9,baseline_3,3.22,0.000122,halogen_650nm_50000_to_100,649.983,,Halogen_650nm_50000_to_100,649.983,0.0,100.0,,
+Mound_End,92BC1.txt,Halogen,574.31,24.43,End,Mound,Baseline_Then_Halogen_Normalized,0.3,mound_2,3.22,0.000122,halogen_650nm_50000_to_100,649.983,270.09,Halogen_650nm_50000_to_100,649.983,0.0,100.0,,
+Peak,92BC1.txt,Halogen,656.74,103.05,Crest,Peak,Baseline_Then_Halogen_Normalized,518.5,peak_6,3.22,0.000122,halogen_650nm_50000_to_100,,,Halogen_650nm_50000_to_100,649.983,0.0,100.0,,
+Peak,92BC1.txt,Halogen,694.29,121.88,Crest,Peak,Baseline_Then_Halogen_Normalized,63.8,peak_4,3.22,0.000122,halogen_650nm_50000_to_100,,,Halogen_650nm_50000_to_100,649.983,0.0,100.0,,
+Mound_Crest,92BC1.txt,Halogen,694.29,121.66,Crest,Mound,Baseline_Then_Halogen_Normalized,0.3,mound_4,3.22,0.000122,halogen_650nm_50000_to_100,,270.09,Halogen_650nm_50000_to_100,649.983,0.0,100.0,,
+Peak,92BC1.txt,Halogen,701.71,109.34,Crest,Peak,Baseline_Then_Halogen_Normalized,506.1,peak_1,3.22,0.000122,halogen_650nm_50000_to_100,,,Halogen_650nm_50000_to_100,649.983,0.0,100.0,,
+Mound_Start,92BC1.txt,Halogen,844.4,24.4,Start,Mound,Baseline_Then_Halogen_Normalized,0.3,mound_0,3.22,0.000122,halogen_650nm_50000_to_100,649.983,270.09,Halogen_650nm_50000_to_100,649.983,0.0,100.0,,
+Mound_Summary,92BC1.txt,Halogen,694.29,121.66,Summary,Mound,Baseline_Then_Halogen_Normalized,,Mound_4,,,halogen_650nm_50000_to_100,,270.09,Halogen_650nm_50000_to_100,649.983,0.0,100.0,0.995,Symmetric

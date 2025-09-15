@@ -1,0 +1,4 @@
+Feature,File,Light_Source,Wavelength,Intensity,Effective_Height,Point_Type,Feature_Group,Processing,SNR,Feature_Key,Baseline_Used,Norm_Factor,Normalization_Method,Reference_Wavelength_Used,Width_nm,Normalization_Scheme,Reference_Wavelength,Intensity_Range_Min,Intensity_Range_Max,Symmetry_Ratio,Skew_Description
+Baseline_Start,140LC1.txt,Laser,300.12,0.41,0.0,Start,Baseline,Baseline_Then_Laser_Normalized,10.1,baseline_4,9.95,0.110915,laser_650nm_50000_to_100,452.462,,Laser_650nm_50000_to_100,452.462,0.0,100.0,,
+Baseline_End,140LC1.txt,Laser,350.0,0.45,0.0,End,Baseline,Baseline_Then_Laser_Normalized,10.1,baseline_3,9.95,0.110915,laser_650nm_50000_to_100,452.462,,Laser_650nm_50000_to_100,452.462,0.0,100.0,,
+Peak,140LC1.txt,Laser,512.96,54.42,1.28,Crest,Peak,Baseline_Then_Laser_Normalized,195.2,peak_6,9.95,0.110915,laser_650nm_50000_to_100,,1.34,Laser_650nm_50000_to_100,452.462,0.0,100.0,,
