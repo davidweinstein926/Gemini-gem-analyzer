@@ -1,0 +1,133 @@
+gemini_gemological_analysis					
+	readme				
+	docs				
+		Gemini Gemological Analysis Project - Comprehensive Summary			
+		GEMSTONE SPECTRAL ANALYSIS PROJECT - CONCISE SUMMARY			
+		COMPLETE GEMSTONE SPECTRAL IDENTIFICATION SYSTEM			
+		Project Summary for Next Chat			
+	src				
+		numerical_analysis			
+			gemini1.py		
+			txt_to_split_long_format.py		
+			txt_to_unkgem.py		
+			results		
+				results_unkgemB.csv	
+				results_unkgemL.csv	
+				results_unkgemU.csv	
+				unkgemB_source.txt	
+				unkgemL_source.txt	
+				unkgemU_source.txt	
+		structural_analysis			
+			main.py		
+			gemini_launcher.py		
+			manual_analyzer		
+				gemini_halogen_analyzer.py	
+				gemini_laser_analyzer.py	
+				gemini_uv_analyzer.py	
+				bb_peak_matcher.py	
+				las_peak_matcher.py	
+				uv_peak_matcher.py	
+				enhanced_gemini_structural_marker.py	
+				enhanced_gem_analyzer.py	
+				enhanced_Halogen_auto_analyzer.py	
+				enhanced_laser_auto_analyzer.py	
+				enhanced_matcher.py	
+				uv_peak_validator.py	
+			auto_analysis		
+				gemini_peak_detector.py	
+				gemini_Lpeak_detector.py	
+				l_spectra_auto_detector.py	
+				gemini_Bpeak_detector.py	
+				b_spectra_auto_detector.py	
+			results		
+				structual_features_outputB.csv	
+				structual_features_outputL.csv	
+				structual_features_outputU.csv	
+				structual_match_results_B.csv	
+				structual_match_results_L.csv	
+				structual_match_results_U.csv	
+				structual_match_results.csv	
+			config		
+				__init__.py	
+				settings.py	
+	database				
+		reference_spectra			
+			__init__.py		
+			gemini_db_long_B.csv		
+			gemini_db_long_L.csv		
+			gemini_db_long_U.csv		
+		structural_ spectra			
+			__init__.py		
+			gemini_structural_db		
+			gemstone_reference_database.json		
+			multi_structural_gem_data.csv		
+			spectrum_data.json		
+		gem_library			
+			__init__.py		
+			gemlib_structural_ready.csv		
+		gemasign			
+			gem*.txt		
+		__init__.py			
+		batch_importer.py			
+		corrected database system.py			
+		create_CLEAN_database.py			
+		creation of new structural db_keep old name.py			
+		database structure.py			
+		database_db_manager.py			
+		db_structure_checker.py			
+		direct_import.py			
+		fixed database system.py			
+		new_database_system.py			
+	data				
+		raw			
+			58BC1.txt		
+		raw_txt			
+			*B.txt		
+			*L.txt		
+			*U.txt		
+		structrual_data			
+			halogen		
+				h.csv	
+			laser		
+				l.csv	
+			uv		
+				u.csv	
+		unknown			
+			unkgemB.csv		
+			unkgemB_source.csv		
+			unkgemL.csv		
+			unkgemL_source.csv		
+			unkgemU.csv		
+			unkgemU_source.csv		
+	data_acquisition				
+		__pycache__			
+		aseq			
+			calibration information structure.pdf		
+			func_descr.txt		
+			hid.c		
+			hidapi.h		
+			libspectr.c		
+			libspectr.h		
+			libspectrlib.a		
+			protocal.pdf		
+			spectrlib_shared.lib		
+			spectrlib_shared_64bits.dll		
+			stdbool.h		
+		Lib			
+			libspectr64bit.dll		
+		user			
+			david		
+				gemini sp10 raw	
+					58BC1.txt
+		__init__.py			
+		calibration_diagnostic.py			
+		dark_capture.py			
+		darkfield_utils.py			
+		gem_analysis_broadband.py			
+		gem_capture_uv_laser.py			
+		libspectr.dll			
+		libspectr.py			
+		main_menu.py			
+		spectrlib_shared_64bits.dll			
+		utility.py			
+		whitelight_capture.py			

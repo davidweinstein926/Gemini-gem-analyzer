@@ -1,0 +1,2 @@
+https://raw.githubusercontent.com/davidweinstein926/Gemini-gem-analyzer/refs/heads/main/docs/urls
+https://raw.githubusercontent.com/davidweinstein926/Gemini-gem-analyzer/refs/heads/main/src/visualization/result_visualizer

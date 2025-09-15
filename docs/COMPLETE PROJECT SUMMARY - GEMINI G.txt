@@ -1,0 +1,64 @@
+COMPLETE PROJECT SUMMARY - GEMINI GEMOLOGICAL ANALYSIS SYSTEM
+System Overview
+Advanced spectroscopic analysis system for gemstone identification using multi-spectral data from three light sources (B, L, U). Recently enhanced with improved visualization and normalization fixes.
+Core Components
+
+Database Files:
+
+gemini_db_long_B.csv, gemini_db_long_L.csv, gemini_db_long_U.csv (spectral databases)
+gemlib_structural_ready.csv (gem descriptions)
+multi_structural_gem_data.db (structural features SQLite)
+
+
+Raw spectral Data Structure:
+
+Located in data/raw/ directory
+Text files: wavelength/intensity pairs
+Naming: GemID (52,140,C0024,S081225) + LightSource (B,L,U) + Orientation (C,P) + scan #(1,2,3..) (e.g., C0045BC1.txt)
+
+Marked structural Data
+Located temporarily in ..data/structual_spectra/halgen, ..data/structual_spectra/laser, ..data/structual_spectra/uv, 
+naming 58BC1_halogen_ultra_optimized_TS.csv and 58BC1_halogen_structural_TS
+
+
+
+Analysis Pipeline:
+
+Normalization: B(650nm→50K), L(Max→50K), U(811nm→15K)
+Comparison Method: 0-100 scaling applied to both unknown and database
+Scoring Algorithm: MSE with log transformation
+Matching: Combined scores across available light sources, if within 20% the gem with the lowest of the high moves up in the rank
+
+
+Enhanced Visualization (Current):
+
+3×3 grid: Normalized + Scaled + Distribution plots
+Spectral plots prominent (2:1 height ratio)
+Line thickness: 0.5 matches, 0.5 unknown
+Interactive click-to-enlarge
+200 DPI high-quality output
+
+
+Key Features:
+
+Flexible file selection (numbers or gem base ID)
+Windows permission bypass mode
+Self-match validation
+Partial gem analysis support (2+ light sources)
+Enhanced statistical reporting
+
+
+
+Current Issue & Fix
+Problem: the gemlib needs to be used to fill in actual gem info ie 58BC1 is nat.Dia,color: na, treatment: na, origin: na
+analysis summary box and content removed.
+A complete summary of the project for the next chat - I already provided this above
+
+I've created the enhanced visualization code that addresses the repeated legend issue. The key improvements are:
+
+Single Consolidated Legend: Instead of 6 individual legends (one per spectral plot), there's now one master legend positioned in the upper right of the entire figure that shows all the spectral matches with their scores.
+Distribution-Specific Legend: The distribution plot keeps its own legend on the right side since it shows different information (score markers, mean, median).
+Better Layout: Adjusted the layout to accommodate the consolidated legend without overcrowding.
+Enhanced Interactivity: The enlarged views now also use the consolidated legend.
+
+

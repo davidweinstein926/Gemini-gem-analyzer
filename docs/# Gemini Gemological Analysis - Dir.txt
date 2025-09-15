@@ -1,0 +1,98 @@
+# Gemini Gemological Analysis - Directory Structure
+
+```
+gemini_gemological_analysis/
+├── main.py                                 # Main system hub (✅ READY)
+├── requirements.txt                        # Python dependencies
+├── README.md                              # Project documentation
+│
+├── data/                                  # Data storage
+│   ├── raw/                              # Raw .txt spectral files (operator input)
+│   ├── unknown/                          # Converted CSV files for analysis
+│   └── reference/                        # Reference database CSV files
+│
+├── raw_txt/                              # Intermediate processing folder
+│
+├── databases/                            # Database files
+│   ├── multi_structural_gem_data.db     # Structural features database
+│   ├── gemini_db_long_B.csv            # Halogen reference spectra
+│   ├── gemini_db_long_L.csv            # Laser reference spectra
+│   ├── gemini_db_long_U.csv            # UV reference spectra
+│   └── gemlib_structural_ready.csv      # Gemstone information library
+│
+├── src/                                  # Source code
+│   ├── __init__.py
+│   │
+│   ├── core/                            # Core analysis engines
+│   │   ├── __init__.py
+│   │   ├── spectral_processor.py        # Data conversion & normalization
+│   │   ├── numerical_matcher.py         # gemini1.py functionality
+│   │   └── result_visualizer.py         # NEW: Results display & scoring
+│   │
+│   ├── structural_analysis/             # Manual/automated feature marking
+│   │   ├── __init__.py
+│   │   ├── gemini_launcher.py           # ✅ READY
+│   │   ├── gemini_halogen_analyzer.py   # ✅ READY  
+│   │   ├── gemini_laser_analyzer.py     # ✅ READY
+│   │   ├── gemini_uv_analyzer.py        # ✅ READY
+│   │   └── peak_detectors/              # Peak detection algorithms
+│   │       ├── gemini_peak_detector.py  # ✅ READY
+│   │       ├── b_spectra_auto_detector.py
+│   │       └── l_spectra_auto_detector.py
+│   │
+│   ├── numerical_analysis/              # Numerical comparison engines
+│   │   ├── __init__.py
+│   │   ├── gemini1.py                   # ✅ READY (main numerical engine)
+│   │   └── enhanced_gem_analyzer.py     # ✅ READY (advanced matching)
+│   │
+│   ├── visualization/                   # NEW: Results visualization
+│   │   ├── __init__.py
+│   │   ├── match_display.py             # Score summaries & rankings
+│   │   ├── spectral_plots.py            # Spectral overlay comparisons
+│   │   └── report_generator.py          # Comprehensive analysis reports
+│   │
+│   └── utils/                           # Utility functions
+│       ├── __init__.py
+│       ├── file_manager.py              # File operations
+│       ├── database_manager.py          # Database operations
+│       └── config.py                    # Configuration settings
+│
+├── config/                              # Configuration files
+│   ├── settings.yaml                    # System settings
+│   └── light_source_config.yaml        # Normalization parameters
+│
+├── tests/                               # Test files
+│   ├── __init__.py
+│   ├── test_core/
+│   ├── test_structural/
+│   └── test_numerical/
+│
+├── docs/                                # Documentation
+│   ├── user_guide.md
+│   ├── technical_guide.md
+│   └── api_reference.md
+│
+└── examples/                            # Example data and workflows
+    ├── sample_data/
+    └── tutorials/
+```
+
+## Key Migration Tasks:
+
+### ✅ Files Ready to Move:
+- `main.py` → Root level (working hub)
+- `gemini_launcher.py` → `src/structural_analysis/`
+- All analyzer files → `src/structural_analysis/`
+- `gemini1.py` → `src/numerical_analysis/`
+- Database CSV files → `databases/`
+
+### 🔧 Files Needing Updates:
+- Update import paths in all files
+- Adjust database file references
+- Update data directory paths
+
+### 🆕 New Components Needed:
+- `src/visualization/` modules (priority)
+- `src/core/result_visualizer.py` (priority)  
+- Configuration system
+- Test framework

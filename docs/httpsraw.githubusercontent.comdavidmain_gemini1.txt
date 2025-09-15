@@ -1,0 +1,7 @@
+https://github.com/davidweinstein926/Gemini-gem-analyzer/blob/main/src/numerical_analysis/gemini1.py?v=202514093
+https://raw.githubusercontent.com/davidweinstein926/Gemini-gem-analyzer/refs/heads/main/main.py?v=202514093
+https://raw.githubusercontent.com/davidweinstein926/Gemini-gem-analyzer/refs/heads/main/main.py?v=202512093
+https://raw.githubusercontent.com/davidweinstein926/Gemini-gem-analyzer/refs/heads/main/docs/dir_tree?v=202514093
+
+https://raw.githubusercontent.com/davidweinstein926/Gemini-gem-analyzer/refs/heads/main/src/numerical_analysis/txt_to_unkgem.py?v=202514093
+https://raw.githubusercontent.com/davidweinstein926/Gemini-gem-analyzer/refs/heads/main/gem_selector.py?v=202514093

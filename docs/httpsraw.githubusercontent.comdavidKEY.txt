@@ -1,0 +1,12 @@
+https://raw.githubusercontent.com/davidweinstein926/Gemini-gem-analyzer/refs/heads/main/data_acquisition/main_menu.py?v=202512093
+
+https://raw.githubusercontent.com/davidweinstein926/Gemini-gem-analyzer/refs/heads/main/main.py?v=202512093
+
+https://raw.githubusercontent.com/davidweinstein926/Gemini-gem-analyzer/refs/heads/main/src/numerical_analysis/gemini1.py?v=202512093
+https://raw.githubusercontent.com/davidweinstein926/Gemini-gem-analyzer/refs/heads/main/src/structural_analysis/gemini_launcher.py?v=202512093
+
+https://raw.githubusercontent.com/davidweinstein926/Gemini-gem-analyzer/refs/heads/main/data/structural%20features%20output%20to%20gemini%20structural%20db.py?v=202512093
+
+https://raw.githubusercontent.com/davidweinstein926/Gemini-gem-analyzer/refs/heads/main/data/creation%20of%20new%20structural%20db_keep%20old%20name.py?v=202512093
+https://raw.githubusercontent.com/davidweinstein926/Gemini-gem-analyzer/refs/heads/main/data/txt_to_split_long_format.py?v=202512093
+https://raw.githubusercontent.com/davidweinstein926/Gemini-gem-analyzer/refs/heads/main/main-incomplete.py?v=202512093
