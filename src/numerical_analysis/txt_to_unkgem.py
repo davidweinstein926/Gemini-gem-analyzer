@@ -2,7 +2,7 @@
 """
 txt_to_unkgem.py - Convert selected .txt files to unkgem*.csv format
 This program processes .txt files from raw_txt directory and creates 
-unkgemB.csv, unkgemL.csv, and unkgemU.csv in data/unknown/ directory
+unkgemB.csv, unkgemL.csv, and unkgemU.csv in data/unknown/numerical/ directory
 """
 
 import pandas as pd
@@ -14,7 +14,7 @@ import shutil
 np = np
 
 def normalize_spectrum(wavelengths, intensities, light_source):
-    """Apply normalization based on light source"""
+    """Apply normalization based on light source - CORRECTED VERSION"""
     if light_source == 'B':
         # Halogen: normalize to 650nm = 50000
         anchor = 650
@@ -28,15 +28,13 @@ def normalize_spectrum(wavelengths, intensities, light_source):
             return intensities
             
     elif light_source == 'L':
-        # Laser: normalize to 450nm = 50000
-        anchor = 450
-        target = 50000
-        idx = np.argmin(np.abs(wavelengths - anchor))
-        if intensities[idx] != 0:
-            scale = target / intensities[idx]
+        # Laser: normalize maximum intensity to 50000 (CORRECTED from 450nm method)
+        max_intensity = intensities.max()
+        if max_intensity != 0:
+            scale = 50000 / max_intensity
             return intensities * scale
         else:
-            print(f"⚠️ Warning: Zero intensity at {anchor}nm for {light_source}")
+            print(f"⚠️ Warning: Zero maximum intensity for {light_source}")
             return intensities
             
     elif light_source == 'U':
@@ -82,9 +80,9 @@ def load_and_convert_spectrum(filepath, light_source):
 def main():
     """Main conversion workflow"""
     
-    # Check directories
+    # Check directories - UPDATED TO NEW FOLDER STRUCTURE
     input_dir = 'raw_txt'
-    output_dir = 'data/unknown'
+    output_dir = 'data/unknown/numerical'  # Updated path
     
     if not os.path.exists(input_dir):
         print(f"❌ Input directory '{input_dir}' not found!")
@@ -128,7 +126,7 @@ def main():
         converted_df = load_and_convert_spectrum(filepath, light_source)
         
         if converted_df is not None:
-            # Save as unkgem*.csv
+            # Save as unkgem*.csv in numerical subfolder
             output_filename = f"unkgem{light_source}.csv"
             output_path = os.path.join(output_dir, output_filename)
             
@@ -155,6 +153,7 @@ def main():
         
         print(f"\n✅ Successfully converted {len(converted_files)} files")
         print(f"📁 Output files are in: {output_dir}")
+        print(f"📊 Files will be found by numerical analysis in new folder structure")
         print("\n🔬 Ready for numerical analysis!")
         return True
     else:
@@ -168,3 +167,4 @@ if __name__ == "__main__":
         print("1. Ensure .txt files are in the 'raw_txt' directory")
         print("2. File names should contain B, L, or U to identify light source")
         print("3. Files should be space/tab separated with wavelength,intensity columns")
+        print("4. Output will be in 'data/unknown/numerical/' directory")
