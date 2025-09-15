@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Enhanced L Spectra Auto-Detection Script - CORRECTED PATHS
+Enhanced L Spectra Auto-Detection Script - UPDATED FOR NEW DIRECTORY STRUCTURE
 Interactive graph editor for manual refinement of auto-detected features
-Version: 2.1 (Path corrections + optimized code)
+Version: 3.0 (Updated for new directory structure + enhanced path detection)
 """
 
 import os
@@ -16,42 +16,146 @@ from tkinter import filedialog, messagebox
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 
-# Import detector
-try:
-    from gemini_Lpeak_detector import GeminiLSpectralDetector, load_l_spectrum, LSpectralFeature
-except ImportError:
-    print("Error: gemini_Lpeak_detector.py not found")
-    if len(sys.argv) == 1:
-        messagebox.showerror("Import Error", "gemini_Lpeak_detector.py not found!")
-    sys.exit(1)
+# Add project root to Python path for imports
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
 
-# CORRECTED Configuration - Fixed paths to gemini_gemological_analysis
-CONFIG = {
-    'default_dirs': {
-        'input': r"C:\users\david\onedrive\desktop\gemini_gemological_analysis\data\raw",
-        'laser_output': r"C:\users\david\onedrive\desktop\gemini_gemological_analysis\data\structural_data\laser",
-    },
-    'zoom_regions': [(400, 500), (500, 600), (600, 700), (700, 800)],
-    'feature_colors': {
-        'peak': ('ro', 'darkred', 'Peak'),
-        'mound': ('bs', 'darkblue', 'Mound'),
-        'trough': ('^', 'purple', 'Trough'),
-        'baseline': ('gs', 'green', 'Baseline')
-    },
-    'csv_mapping': {
-        'baseline': {'baseline_start': ('Baseline_Start', 'Start'), 'baseline_end': ('Baseline_End', 'End')},
-        'peak': {'peak': ('Peak', 'Crest')},
-        'mound': {'mound_start': ('Mound_Start', 'Start'), 'mound_crest': ('Mound_Crest', 'Crest'), 'mound_end': ('Mound_End', 'End')},
-        'trough': {'trough_start': ('Trough_Start', 'Start'), 'trough_bottom': ('Trough_Bottom', 'Bottom'), 'trough_end': ('Trough_End', 'End')}
-    }
-}
+class LSpectraAutoDetector:
+    def __init__(self):
+        # UPDATED: Dynamic path detection for new directory structure
+        self.script_dir = Path(__file__).parent.absolute()
+        self.project_root = self.script_dir.parent.parent  # Go up to gemini_gemological_analysis/
+        
+        print(f"🔍 L Spectra Auto Detector Paths:")
+        print(f"   Script directory: {self.script_dir}")
+        print(f"   Project root: {self.project_root}")
+        
+        # UPDATED: Setup directories
+        self.setup_directories()
+        
+        # Import the detector
+        self.import_detector()
+        
+        # UPDATED: Configuration with new paths
+        self.config = {
+            'zoom_regions': [(400, 500), (500, 600), (600, 700), (700, 800)],
+            'feature_colors': {
+                'peak': ('ro', 'darkred', 'Peak'),
+                'mound': ('bs', 'darkblue', 'Mound'),
+                'trough': ('^', 'purple', 'Trough'),
+                'baseline': ('gs', 'green', 'Baseline')
+            },
+            'csv_mapping': {
+                'baseline': {'baseline_start': ('Baseline_Start', 'Start'), 'baseline_end': ('Baseline_End', 'End')},
+                'peak': {'peak': ('Peak', 'Crest')},
+                'mound': {'mound_start': ('Mound_Start', 'Start'), 'mound_crest': ('Mound_Crest', 'Crest'), 'mound_end': ('Mound_End', 'End')},
+                'trough': {'trough_start': ('Trough_Start', 'Start'), 'trough_bottom': ('Trough_Bottom', 'Bottom'), 'trough_end': ('Trough_End', 'End')}
+            }
+        }
+        
+    def setup_directories(self):
+        """UPDATED: Setup directories for new project structure"""
+        # Possible locations for input data
+        input_search_paths = [
+            self.project_root / "data" / "raw",  # New structure - primary
+            self.project_root / "src" / "structural_analysis" / "data" / "raw",  # Local to structural analysis
+            self.project_root / "raw_txt",  # Legacy location
+            Path.home() / "OneDrive" / "Desktop" / "gemini matcher" / "gemini sp10 raw" / "raw text",  # Legacy user path
+        ]
+        
+        # Possible locations for output data
+        output_search_paths = [
+            self.project_root / "data" / "output" / "laser",  # New structure - primary
+            self.project_root / "src" / "structural_analysis" / "results" / "laser",  # Results in structural analysis
+            self.project_root / "output" / "laser",  # Alternative root location
+            self.project_root / "data" / "structural_data" / "laser",  # Alternative data location
+            Path.home() / "OneDrive" / "Desktop" / "gemini_gemological_analysis" / "data" / "structural_data" / "laser",  # Legacy path
+        ]
+        
+        # Find input directory
+        self.input_directory = None
+        for search_path in input_search_paths:
+            if search_path.exists() and search_path.is_dir():
+                self.input_directory = search_path
+                print(f"✅ Found input directory: {self.input_directory}")
+                break
+        
+        if not self.input_directory:
+            # Use the primary new structure path (will be created if needed)
+            self.input_directory = input_search_paths[0]
+            print(f"⚠️  Input directory not found, will use: {self.input_directory}")
+        
+        # Find/create output directory
+        self.output_directory = None
+        for search_path in output_search_paths:
+            if search_path.exists():
+                self.output_directory = search_path
+                print(f"✅ Found output directory: {self.output_directory}")
+                break
+        
+        if not self.output_directory:
+            # Use the primary new structure path and create it
+            self.output_directory = output_search_paths[0]
+            try:
+                self.output_directory.mkdir(parents=True, exist_ok=True)
+                print(f"✅ Created output directory: {self.output_directory}")
+            except Exception as e:
+                print(f"⚠️  Could not create output directory: {e}")
+                # Fallback to a guaranteed writable location
+                self.output_directory = Path.cwd() / "l_spectra_results"
+                self.output_directory.mkdir(exist_ok=True)
+                print(f"📁 Using fallback output directory: {self.output_directory}")
+    
+    def import_detector(self):
+        """UPDATED: Import detector with enhanced error handling"""
+        # Try multiple import paths for the detector
+        detector_import_paths = [
+            "gemini_Lpeak_detector",  # Same directory
+            "src.structural_analysis.auto_analysis.gemini_Lpeak_detector",  # Full project path
+            "auto_analysis.gemini_Lpeak_detector",  # Relative from structural_analysis
+        ]
+        
+        self.detector_class = None
+        self.load_l_spectrum_func = None
+        self.LSpectralFeature = None
+        
+        for import_path in detector_import_paths:
+            try:
+                if import_path == "gemini_Lpeak_detector":
+                    from gemini_Lpeak_detector import GeminiLSpectralDetector, load_l_spectrum, LSpectralFeature
+                else:
+                    # Dynamic import for other paths
+                    import importlib
+                    module = importlib.import_module(import_path)
+                    GeminiLSpectralDetector = getattr(module, 'GeminiLSpectralDetector')
+                    load_l_spectrum = getattr(module, 'load_l_spectrum')
+                    LSpectralFeature = getattr(module, 'LSpectralFeature')
+                
+                self.detector_class = GeminiLSpectralDetector
+                self.load_l_spectrum_func = load_l_spectrum
+                self.LSpectralFeature = LSpectralFeature
+                print(f"✅ Successfully imported L detector from: {import_path}")
+                return True
+                
+            except ImportError as e:
+                print(f"⚠️  Failed to import from {import_path}: {e}")
+                continue
+        
+        # If all imports failed
+        print("❌ Error: gemini_Lpeak_detector.py not found in any expected location")
+        print("Expected locations:")
+        for path in detector_import_paths:
+            print(f"   - {path}")
+        print("Please ensure the detector file is accessible")
+        return False
 
 class InteractiveSpectrumEditor:
-    def __init__(self, wavelengths, intensities, features, input_filepath):
+    def __init__(self, wavelengths, intensities, features, input_filepath, detector_instance):
         self.wavelengths = wavelengths
         self.intensities = intensities
         self.features = features.copy()
         self.input_filepath = input_filepath
+        self.detector = detector_instance
         self.modified = False
         self.current_mode = "view"
         
@@ -62,22 +166,22 @@ class InteractiveSpectrumEditor:
     def setup_gui(self):
         """Initialize GUI components"""
         self.root = tk.Toplevel()
-        self.root.title(f"L-Spectra Editor (CORRECTED) - {Path(self.input_filepath).name}")
+        self.root.title(f"L-Spectra Editor (UPDATED v3.0) - {Path(self.input_filepath).name}")
         
-        # CORRECTED: Better window sizing for your screen
+        # UPDATED: Better window sizing for your screen
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
         window_width = min(1200, int(screen_width * 0.85))
         window_height = min(800, int(screen_height * 0.8))
         self.root.geometry(f"{window_width}x{window_height}")
         
-        # Header with correction notice
+        # Header with update notice
         header_frame = tk.Frame(self.root, bg='darkgreen')
         header_frame.pack(fill=tk.X)
         
-        tk.Label(header_frame, text="L-SPECTRA AUTO-DETECTION - CORRECTED v2.1", 
+        tk.Label(header_frame, text="L-SPECTRA AUTO-DETECTION - UPDATED v3.0", 
                 font=('Arial', 14, 'bold'), fg='white', bg='darkgreen').pack(pady=5)
-        tk.Label(header_frame, text="FIXED: Correct paths & normalization (max → 50,000 → 0-100 scale)", 
+        tk.Label(header_frame, text="UPDATED: New directory structure + enhanced path detection", 
                 font=('Arial', 9), fg='lightgreen', bg='darkgreen').pack(pady=(0,5))
         
         # Matplotlib setup
@@ -113,7 +217,7 @@ class InteractiveSpectrumEditor:
                  bg="white", font=('Arial', 9)).pack(side=tk.LEFT, padx=2)
         
         # Region zoom buttons
-        for start, end in CONFIG['zoom_regions']:
+        for start, end in self.detector.config['zoom_regions']:
             tk.Button(zoom_frame, text=f"Zoom {start}-{end}nm", 
                      command=lambda s=start, e=end: self.zoom_region(s, e),
                      bg="lightblue", font=('Arial', 9)).pack(side=tk.LEFT, padx=2)
@@ -149,7 +253,7 @@ class InteractiveSpectrumEditor:
         plotted_labels = set()
         
         for feature in self.features:
-            color_info = CONFIG['feature_colors'].get(feature.feature_group, ('ko', 'black', 'Unknown'))
+            color_info = self.detector.config['feature_colors'].get(feature.feature_group, ('ko', 'black', 'Unknown'))
             marker, edge_color, label = color_info
             
             # Plot marker
@@ -169,7 +273,7 @@ class InteractiveSpectrumEditor:
         # Formatting
         self.ax.set_xlabel('Wavelength (nm)', fontsize=12)
         self.ax.set_ylabel('Normalized Intensity (0-100 scale)', fontsize=12)
-        self.ax.set_title(f'L-Spectra Analysis (CORRECTED) - {Path(self.input_filepath).name}', fontsize=14)
+        self.ax.set_title(f'L-Spectra Analysis (UPDATED v3.0) - {Path(self.input_filepath).name}', fontsize=14)
         self.ax.grid(True, alpha=0.3)
         self.ax.legend()
         
@@ -219,7 +323,7 @@ class InteractiveSpectrumEditor:
         distances = np.abs(self.wavelengths - wavelength)
         closest_idx = np.argmin(distances)
         
-        new_feature = LSpectralFeature(
+        new_feature = self.detector.LSpectralFeature(
             wavelength=self.wavelengths[closest_idx],
             intensity=self.intensities[closest_idx],
             feature_type="peak",
@@ -343,8 +447,8 @@ class InteractiveSpectrumEditor:
     def reset_features(self):
         """Reset to auto-detected features"""
         if messagebox.askyesno("Reset", "Reset to original auto-detected features?"):
-            detector = GeminiLSpectralDetector()
-            results = detector.analyze_spectrum(self.wavelengths, self.intensities)
+            detector_instance = self.detector.detector_class()
+            results = detector_instance.analyze_spectrum(self.wavelengths, self.intensities)
             self.features = results['features']
             self.modified = False
             self.plot_spectrum()
@@ -388,153 +492,176 @@ class InteractiveSpectrumEditor:
         self.root.wait_window()
         return getattr(self, 'result', None)
 
-def ensure_directories_exist():
-    """Create default directories if needed"""
-    for directory in CONFIG['default_dirs'].values():
-        try:
-            os.makedirs(directory, exist_ok=True)
-        except:
-            pass  # Ignore permission errors
-
-def create_csv_output(detector_results, input_filepath):
-    """Convert detector results to CSV format"""
-    features = detector_results['features']
-    norm_info = detector_results['normalization']
-    baseline_info = detector_results['baseline_assessment']
-    
-    # Extract metadata
-    file_name = os.path.basename(input_filepath)
-    norm_factor = norm_info.get('reference_intensity', 50000) / 50000
-    ref_wavelength = norm_info.get('reference_wavelength', 650.0)
-    baseline_used = baseline_info.get('noise_std', 0.0) * 100
-    
-    csv_rows = []
-    
-    for feature in features:
-        # Map feature to CSV format
-        group_mapping = CONFIG['csv_mapping'].get(feature.feature_group, {})
-        feature_name, point_type = group_mapping.get(feature.feature_type, (feature.feature_type.title(), "Point"))
+    def create_csv_output(self, detector_results, input_filepath):
+        """UPDATED: Convert detector results to CSV format"""
+        features = detector_results['features']
+        norm_info = detector_results['normalization']
+        baseline_info = detector_results['baseline_assessment']
         
-        row = {
-            'Feature': feature_name,
-            'File': file_name,
-            'Light_Source': "Laser",
-            'Wavelength': round(feature.wavelength, 2),
-            'Intensity': round(feature.intensity, 2),
-            'Effective_Height': round(getattr(feature, 'effective_height', 0.0), 2),
-            'Point_Type': point_type,
-            'Feature_Group': feature.feature_group.title(),
-            'Processing': "Baseline_Then_Laser_Normalized_CORRECTED",
-            'SNR': round(feature.snr if feature.snr > 0 else baseline_info.get('noise_std', 0) * 20, 1),
-            'Feature_Key': f"{feature.feature_group}_{hash(feature.wavelength) % 10}",
-            'Baseline_Used': round(baseline_used, 2),
-            'Norm_Factor': round(norm_factor, 6),
-            'Normalization_Method': "laser_max_50000_to_100_CORRECTED",
-            'Reference_Wavelength_Used': round(ref_wavelength, 3) if point_type in ['Start', 'End'] else '',
-            'Width_nm': round(feature.width_nm, 2) if feature.width_nm > 0 else '',
-            'Normalization_Scheme': "Laser_max_50000_to_100_CORRECTED",
-            'Reference_Wavelength': round(ref_wavelength, 3),
-            'Intensity_Range_Min': 0.0,
-            'Intensity_Range_Max': 100.0,
-            'Symmetry_Ratio': '',
-            'Skew_Description': ''
-        }
+        # Extract metadata
+        file_name = os.path.basename(input_filepath)
+        norm_factor = norm_info.get('reference_intensity', 50000) / 50000
+        ref_wavelength = norm_info.get('reference_wavelength', 650.0)
+        baseline_used = baseline_info.get('noise_std', 0.0) * 100
         
-        csv_rows.append(row)
-    
-    return csv_rows
-
-def process_l_spectrum_file(input_filepath, output_dir=None, interactive=True):
-    """Process L spectrum file with optional interactive editing"""
-    try:
-        detector = GeminiLSpectralDetector()
+        csv_rows = []
         
-        print(f"Processing L spectrum: {input_filepath}")
-        wavelengths, intensities = load_l_spectrum(input_filepath)
-        results = detector.analyze_spectrum(wavelengths, intensities)
-        
-        # Get normalized intensities for display
-        normalized_intensities = detector.normalize_l_spectrum(wavelengths, intensities)
-        
-        # Interactive editing
-        if interactive:
-            editor = InteractiveSpectrumEditor(wavelengths, normalized_intensities, results['features'], input_filepath)
-            edited_features = editor.show_modal()
+        for feature in features:
+            # Map feature to CSV format
+            group_mapping = self.config['csv_mapping'].get(feature.feature_group, {})
+            feature_name, point_type = group_mapping.get(feature.feature_type, (feature.feature_type.title(), "Point"))
             
-            if edited_features is not None:
-                results['features'] = edited_features
-                print(f"Interactive editing complete. Features: {len(edited_features)}")
-            else:
-                print("Interactive editing cancelled - using auto-detected features")
+            row = {
+                'Feature': feature_name,
+                'File': file_name,
+                'Light_Source': "Laser",
+                'Wavelength': round(feature.wavelength, 2),
+                'Intensity': round(feature.intensity, 2),
+                'Effective_Height': round(getattr(feature, 'effective_height', 0.0), 2),
+                'Point_Type': point_type,
+                'Feature_Group': feature.feature_group.title(),
+                'Processing': "Baseline_Then_Laser_Normalized_UPDATED",
+                'SNR': round(feature.snr if feature.snr > 0 else baseline_info.get('noise_std', 0) * 20, 1),
+                'Feature_Key': f"{feature.feature_group}_{hash(feature.wavelength) % 10}",
+                'Baseline_Used': round(baseline_used, 2),
+                'Norm_Factor': round(norm_factor, 6),
+                'Normalization_Method': "laser_max_50000_to_100_UPDATED",
+                'Reference_Wavelength_Used': round(ref_wavelength, 3) if point_type in ['Start', 'End'] else '',
+                'Width_nm': round(feature.width_nm, 2) if feature.width_nm > 0 else '',
+                'Normalization_Scheme': "Laser_max_50000_to_100_UPDATED",
+                'Reference_Wavelength': round(ref_wavelength, 3),
+                'Intensity_Range_Min': 0.0,
+                'Intensity_Range_Max': 100.0,
+                'Directory_Structure': 'Updated_New_Structure',  # UPDATED: Add metadata
+                'Output_Location': str(self.output_directory),  # UPDATED: Add output location
+                'Auto_Detection_Method': 'GeminiLSpectralDetector',  # UPDATED: Add detection method
+                'Symmetry_Ratio': '',
+                'Skew_Description': ''
+            }
+            
+            csv_rows.append(row)
         
-        # Generate output
-        output_dir = output_dir or CONFIG['default_dirs']['laser_output']
-        os.makedirs(output_dir, exist_ok=True)
-        
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_filename = f"{Path(input_filepath).stem}_laser_structural_{timestamp}.csv"
-        output_path = Path(output_dir) / output_filename
-        
-        # Save CSV
-        csv_data = create_csv_output(results, input_filepath)
-        pd.DataFrame(csv_data).to_csv(output_path, index=False)
-        
-        # Print summary
-        print(f"✓ L spectrum analysis complete:")
-        print(f"  Input: {input_filepath}")
-        print(f"  Output: {output_path}")
-        print(f"  Features: {results['feature_count']}")
-        print(f"  Strategy: {results['detection_strategy']}")
-        print(f"  Confidence: {results['overall_confidence']:.2f}")
-        print(f"  Normalization: {results['normalization']['method']}")
-        
-        return output_path, results
-        
-    except Exception as e:
-        print(f"Error processing L spectrum {input_filepath}: {str(e)}")
-        return None, None
+        return csv_rows
 
-def main():
-    """Main function - command line or interactive mode"""
-    ensure_directories_exist()
-    
-    if len(sys.argv) > 1:
-        # Command line mode
-        print("Enhanced L Spectra Auto-Detection Script - CORRECTED v2.1")
-        print("FIXED: Correct paths & normalization (max → 50,000 → 0-100 scale)")
-        print("Optimized for laser-induced high-resolution spectra")
-        print("=" * 70)
-        
-        input_files = sys.argv[1:]
-        output_dir = CONFIG['default_dirs']['laser_output']
-        
-        # Check if last argument is output directory
-        if os.path.isdir(sys.argv[-1]):
-            output_dir = sys.argv[-1]
-            input_files = sys.argv[1:-1]
-        
-        for input_file in input_files:
-            if os.path.exists(input_file):
-                process_l_spectrum_file(input_file, output_dir, interactive=False)
+    def process_l_spectrum_file(self, input_filepath, output_dir=None, interactive=True):
+        """UPDATED: Process L spectrum file with optional interactive editing"""
+        try:
+            # Check if detector was imported successfully
+            if not self.detector_class or not self.load_l_spectrum_func:
+                print("❌ Detector not available - cannot process file")
+                return None, None
+            
+            detector = self.detector_class()
+            
+            print(f"🔬 Processing L spectrum: {Path(input_filepath).name}")
+            wavelengths, intensities = self.load_l_spectrum_func(input_filepath)
+            results = detector.analyze_spectrum(wavelengths, intensities)
+            
+            # Get normalized intensities for display
+            normalized_intensities = detector.normalize_l_spectrum(wavelengths, intensities)
+            
+            # Interactive editing
+            if interactive:
+                editor = InteractiveSpectrumEditor(wavelengths, normalized_intensities, results['features'], input_filepath, self)
+                edited_features = editor.show_modal()
+                
+                if edited_features is not None:
+                    results['features'] = edited_features
+                    print(f"Interactive editing complete. Features: {len(edited_features)}")
+                else:
+                    print("Interactive editing cancelled - using auto-detected features")
+            
+            # Generate output
+            output_dir = output_dir or self.output_directory
+            output_dir = Path(output_dir)
+            output_dir.mkdir(parents=True, exist_ok=True)
+            
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            output_filename = f"{Path(input_filepath).stem}_laser_structural_auto_{timestamp}.csv"
+            output_path = output_dir / output_filename
+            
+            # Save CSV
+            csv_data = self.create_csv_output(results, input_filepath)
+            pd.DataFrame(csv_data).to_csv(output_path, index=False)
+            
+            # Print summary
+            print(f"✅ L spectrum analysis complete:")
+            print(f"   Input: {Path(input_filepath).name}")
+            print(f"   Output: {output_path}")
+            print(f"   Output directory: {output_dir}")
+            print(f"   Features: {results['feature_count']}")
+            print(f"   Strategy: {results['detection_strategy']}")
+            print(f"   Confidence: {results['overall_confidence']:.2f}")
+            print(f"   Normalization: {results['normalization']['method']}")
+            
+            return output_path, results
+            
+        except Exception as e:
+            print(f"❌ Error processing L spectrum {input_filepath}: {str(e)}")
+            return None, None
+
+    def file_selection_dialog(self):
+        """UPDATED: File selection dialog with new directory structure support"""
+        try:
+            root = tk.Tk()
+            root.withdraw()
+            root.lift()
+            root.attributes('-topmost', True)
+            
+            # Check if input directory exists and has files
+            if self.input_directory.exists():
+                txt_files = list(self.input_directory.glob("*.txt"))
+                if txt_files:
+                    initial_dir = str(self.input_directory)
+                    print(f"📂 Found {len(txt_files)} txt files in: {self.input_directory}")
+                else:
+                    initial_dir = str(self.input_directory)
+                    print(f"📁 Using input directory (no txt files found): {self.input_directory}")
             else:
-                print(f"Warning: File not found: {input_file}")
-    
-    else:
-        # Interactive GUI mode
-        print("Enhanced L Spectra Auto-Detection Script - CORRECTED v2.1")
-        print("FIXED: Correct paths & normalization (max → 50,000 → 0-100 scale)")
-        print("Optimized for laser-induced high-resolution spectra")
+                initial_dir = str(self.project_root)
+                print(f"📁 Input directory not found, using project root: {self.project_root}")
+            
+            file_path = filedialog.askopenfilename(
+                parent=root, 
+                initialdir=initial_dir,
+                title=f"Select L Spectrum for UPDATED Auto Analysis\nLooking in: {Path(initial_dir).name}",
+                filetypes=[("Text files", "*.txt"), ("CSV files", "*.csv"), ("All files", "*.*")])
+            
+            root.quit()
+            root.destroy()
+            
+            if file_path:
+                print(f"✅ Selected file: {Path(file_path).name}")
+                print(f"   Full path: {file_path}")
+            
+            return file_path if file_path else None
+            
+        except Exception as e:
+            print(f"File dialog error: {e}")
+            return None
+
+    def run_interactive(self):
+        """UPDATED: Run in interactive mode with new directory structure support"""
+        print("="*70)
+        print("L SPECTRA AUTO-DETECTION - UPDATED FOR NEW DIRECTORY STRUCTURE")
+        print("="*70)
+        print(f"📁 Project root: {self.project_root}")
+        print(f"📂 Input directory: {self.input_directory}")
+        print(f"📁 Output directory: {self.output_directory}")
+        print("="*70)
+        
+        # Check if detector is available
+        if not self.detector_class or not self.load_l_spectrum_func:
+            print("❌ Detector not available - cannot run interactive mode")
+            messagebox.showerror("Import Error", "gemini_Lpeak_detector.py not found!\nPlace it in the auto_analysis directory.")
+            return
         
         root = tk.Tk()
         root.withdraw()
         
         while True:
             # File selection
-            input_file = filedialog.askopenfilename(
-                title="Select L Spectrum File (CORRECTED version)",
-                initialdir=CONFIG['default_dirs']['input'] if os.path.exists(CONFIG['default_dirs']['input']) else None,
-                filetypes=[("Text files", "*.txt"), ("CSV files", "*.csv"), ("All files", "*.*")]
-            )
+            input_file = self.file_selection_dialog()
             
             if not input_file:
                 break
@@ -546,21 +673,21 @@ def main():
                 "Yes: Interactive editing (recommended)\n"
                 "- Visual spectrum display\n"
                 "- Click to add/edit peaks\n"
-                "- CORRECTED normalization applied\n\n"
+                "- UPDATED normalization applied\n\n"
                 "No: Automatic only"
             )
             
             # Process file
-            result_path, results = process_l_spectrum_file(input_file, CONFIG['default_dirs']['laser_output'], use_editor)
+            result_path, results = self.process_l_spectrum_file(input_file, self.output_directory, use_editor)
             
             if result_path:
                 messagebox.showinfo(
-                    "Analysis Complete - CORRECTED",
-                    f"✓ L spectrum analysis complete!\n\n"
+                    "Analysis Complete - UPDATED",
+                    f"✅ L spectrum analysis complete!\n\n"
                     f"Features: {results['feature_count']}\n"
                     f"Strategy: {results['detection_strategy']}\n"
                     f"Confidence: {results['overall_confidence']:.2f}\n"
-                    f"Normalization: CORRECTED 2-step process\n\n"
+                    f"Normalization: UPDATED 2-step process\n\n"
                     f"Output: {result_path.name}\n"
                     f"Saved to: {result_path.parent}"
                 )
@@ -572,6 +699,40 @@ def main():
                 break
         
         root.destroy()
+
+def main():
+    """UPDATED: Main function with enhanced command line and interactive support"""
+    detector = LSpectraAutoDetector()
+    
+    if len(sys.argv) > 1:
+        # Command line mode
+        print("Enhanced L Spectra Auto-Detection Script - UPDATED v3.0")
+        print("UPDATED: New directory structure + enhanced path detection")
+        print("Optimized for laser-induced high-resolution spectra")
+        print("=" * 70)
+        
+        input_files = sys.argv[1:]
+        output_dir = detector.output_directory
+        
+        # Check if last argument is output directory
+        if os.path.isdir(sys.argv[-1]):
+            output_dir = sys.argv[-1]
+            input_files = sys.argv[1:-1]
+        
+        processed = 0
+        for input_file in input_files:
+            if os.path.exists(input_file):
+                output_path, results = detector.process_l_spectrum_file(input_file, output_dir, interactive=False)
+                if results:
+                    processed += 1
+            else:
+                print(f"⚠️ Warning: File not found: {input_file}")
+        
+        print(f"\n✅ Command line processing complete: {processed}/{len(input_files)} files processed")
+    
+    else:
+        # Interactive GUI mode
+        detector.run_interactive()
 
 if __name__ == "__main__":
     main()
