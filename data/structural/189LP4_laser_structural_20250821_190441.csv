@@ -1,0 +1,8 @@
+Feature,File,Light_Source,Wavelength,Intensity,Point_Type,Feature_Group,Processing,SNR,Feature_Key,Baseline_Used,Norm_Factor,Normalization_Method,Reference_Wavelength_Used,Normalization_Scheme,Reference_Wavelength,Intensity_Range_Min,Intensity_Range_Max
+Baseline_Start,189LP4.txt,Laser,300.33,-2.13,Start,Baseline,Baseline_Then_Laser_Normalized,-0.5,Baseline_0,-2.2,6.847439057792386,laser_max_50000_to_100,,Laser_Max_50000_to_100,452.649,0.0,100.0
+Baseline_End,189LP4.txt,Laser,374.82,-6.71,End,Baseline,Baseline_Then_Laser_Normalized,-0.5,Baseline_0,-2.2,6.847439057792386,laser_max_50000_to_100,,Laser_Max_50000_to_100,452.649,0.0,100.0
+Peak_Max,189LP4.txt,Laser,430.94,92.99,Max,Peak,Baseline_Then_Laser_Normalized,,Peak_2,-2.2,6.847439057792386,laser_max_50000_to_100,452.649,Laser_Max_50000_to_100,452.649,0.0,100.0
+Peak_Max,189LP4.txt,Laser,452.27,99.82,Max,Peak,Baseline_Then_Laser_Normalized,,Peak_3,-2.2,6.847439057792386,laser_max_50000_to_100,452.649,Laser_Max_50000_to_100,452.649,0.0,100.0
+Peak_Max,189LP4.txt,Laser,503.89,24.17,Max,Peak,Baseline_Then_Laser_Normalized,,Peak_4,-2.2,6.847439057792386,laser_max_50000_to_100,452.649,Laser_Max_50000_to_100,452.649,0.0,100.0
+Peak_Max,189LP4.txt,Laser,574.06,10.86,Max,Peak,Baseline_Then_Laser_Normalized,,Peak_5,-2.2,6.847439057792386,laser_max_50000_to_100,452.649,Laser_Max_50000_to_100,452.649,0.0,100.0
+Peak_Max,189LP4.txt,Laser,738.59,6.25,Max,Peak,Baseline_Then_Laser_Normalized,,Peak_6,-2.2,6.847439057792386,laser_max_50000_to_100,452.649,Laser_Max_50000_to_100,452.649,0.0,100.0

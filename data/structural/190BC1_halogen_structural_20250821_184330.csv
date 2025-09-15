@@ -1,0 +1,10 @@
+Feature,File,Light_Source,Wavelength,Intensity,Point_Type,Feature_Group,Processing,SNR,Feature_Key,Baseline_Used,Norm_Factor,Normalization_Method,Reference_Wavelength_Used,Symmetry_Ratio,Skew_Description,Width_nm,Normalization_Scheme,Reference_Wavelength,Intensity_Range_Min,Intensity_Range_Max
+Baseline_Start,190BC1.txt,Halogen,303.79,-79.13,Start,Baseline,Baseline_Then_Halogen_Normalized,-3.8,Baseline_0,-70.0,5.219045968834989,halogen_650nm_50000_to_100,,,,,Halogen_650nm_50000_to_100,651.772,0.0,100.0
+Baseline_End,190BC1.txt,Halogen,348.84,-72.64,End,Baseline,Baseline_Then_Halogen_Normalized,-3.8,Baseline_0,-70.0,5.219045968834989,halogen_650nm_50000_to_100,,,,,Halogen_650nm_50000_to_100,651.772,0.0,100.0
+Mound_Start,190BC1.txt,Halogen,376.55,0.58,Start,Mound,Baseline_Then_Halogen_Normalized,,Mound_2,-70.0,5.219045968834989,halogen_650nm_50000_to_100,651.772,,,,Halogen_650nm_50000_to_100,651.772,0.0,100.0
+Mound_Crest,190BC1.txt,Halogen,665.88,99.58,Crest,Mound,Baseline_Then_Halogen_Normalized,,Mound_2,-70.0,5.219045968834989,halogen_650nm_50000_to_100,651.772,,,,Halogen_650nm_50000_to_100,651.772,0.0,100.0
+Mound_End,190BC1.txt,Halogen,976.86,0.69,End,Mound,Baseline_Then_Halogen_Normalized,,Mound_2,-70.0,5.219045968834989,halogen_650nm_50000_to_100,651.772,,,,Halogen_650nm_50000_to_100,651.772,0.0,100.0
+Mound_Summary,190BC1.txt,Halogen,665.88,99.58,Summary,Mound,Baseline_Then_Halogen_Normalized,,Mound_2,,,halogen_650nm_50000_to_100,,0.93,Symmetric,600.3,Halogen_650nm_50000_to_100,651.772,0.0,100.0
+Trough_Start,190BC1.txt,Halogen,721.32,82.84,Start,Trough,Baseline_Then_Halogen_Normalized,,Trough_6,-70.0,5.219045968834989,halogen_650nm_50000_to_100,651.772,,,,Halogen_650nm_50000_to_100,651.772,0.0,100.0
+Trough_Bottom,190BC1.txt,Halogen,736.91,56.7,Bottom,Trough,Baseline_Then_Halogen_Normalized,,Trough_6,-70.0,5.219045968834989,halogen_650nm_50000_to_100,651.772,,,,Halogen_650nm_50000_to_100,651.772,0.0,100.0
+Trough_End,190BC1.txt,Halogen,752.5,73.43,End,Trough,Baseline_Then_Halogen_Normalized,,Trough_6,-70.0,5.219045968834989,halogen_650nm_50000_to_100,651.772,,,,Halogen_650nm_50000_to_100,651.772,0.0,100.0
