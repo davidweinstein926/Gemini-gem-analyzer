@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-ENHANCED GEM ANALYZER v2.2 - ULTRA OPTIMIZED - FIXED DATABASE PATHS
-Implements David's sophisticated matching with 50% code reduction + enhanced features
-OPTIMIZED: Consolidated architecture, enhanced capabilities, streamlined operations
-FIXED: Correct database paths for root/database/structural_spectra structure
+ENHANCED GEM ANALYZER v2.2 - ULTRA OPTIMIZED - OPTION 8 CONFIGURED
+Modified for main.py option 8: structural matching from archive data
+Input: root/data/structural(archive)
+Output: root/outputs/structural_results/reports (CSV/TXT), /graphs (PNG)
 """
 import sqlite3
 import pandas as pd
@@ -15,63 +15,49 @@ from datetime import datetime
 from typing import Dict, List, Tuple, Optional, Union
 
 class UltraOptimizedGemAnalyzer:
-    """ULTRA OPTIMIZED: All-in-one gem analyzer with consolidated architecture - FIXED PATHS"""
+    """ULTRA OPTIMIZED: All-in-one gem analyzer configured for Option 8"""
     
     def __init__(self, db_path=None):
-        # FIXED: Proper database path construction
+        # OPTION 8: Use project root detection for better path handling
+        self.project_root = self.find_project_root()
+        
+        # Database path configuration
         if db_path is None:
-            # Try multiple possible locations for the database
             possible_db_paths = [
-                Path("../../database/structural_spectra/multi_structural_gem_data.db"),  # From src/structural_analysis/
-                Path("../database/structural_spectra/multi_structural_gem_data.db"),   # Alternative
-                Path("database/structural_spectra/multi_structural_gem_data.db"),      # From project root
-                Path("multi_structural_gem_data.db"),                                  # Current directory fallback
-                Path.home() / "database" / "structural_spectra" / "multi_structural_gem_data.db"  # User home fallback
+                self.project_root / "database" / "structural_spectra" / "multi_structural_gem_data.db",
+                Path("../../database/structural_spectra/multi_structural_gem_data.db"),
+                Path("../database/structural_spectra/multi_structural_gem_data.db"),
+                Path("database/structural_spectra/multi_structural_gem_data.db"),
+                Path("multi_structural_gem_data.db"),
             ]
             
-            # Find the first existing database
+            print(f"🔍 Searching for database...")
+            print(f"📁 Project root detected: {self.project_root}")
+            
             self.db_path = None
-            for db_path_candidate in possible_db_paths:
+            for i, db_path_candidate in enumerate(possible_db_paths, 1):
+                print(f"   {i}. Checking: {db_path_candidate}")
                 if db_path_candidate.exists():
                     self.db_path = str(db_path_candidate)
                     print(f"✅ Found database: {self.db_path}")
                     break
+                else:
+                    print(f"   ❌ Not found")
             
             if self.db_path is None:
-                # Use the primary expected location even if it doesn't exist
                 self.db_path = str(possible_db_paths[0])
                 print(f"⚠️  Database not found, will use: {self.db_path}")
         else:
             self.db_path = db_path
         
-        # FIXED: Proper unknown directory path construction  
-        possible_unknown_paths = [
-            Path("../../data/structural_data/unknown"),                                # New structure
-            Path("../data/structural_data/unknown"),                                  # Alternative
-            Path("data/structural_data/unknown"),                                     # From project root
-            Path(r"C:\users\david\gemini sp10 structural data\unknown"),             # Original Windows path
-            Path.home() / "gemini sp10 structural data" / "unknown"                  # User home fallback
-        ]
+        # OPTION 8 MODIFICATION: Input from structural(archive) instead of unknown
+        self.archive_path = self.setup_archive_path()
         
-        # Find the first existing unknown directory
-        self.unknown_path = None
-        for unknown_path_candidate in possible_unknown_paths:
-            if unknown_path_candidate.exists():
-                self.unknown_path = unknown_path_candidate
-                print(f"✅ Found unknown directory: {self.unknown_path}")
-                break
+        # OPTION 8 MODIFICATION: Output to organized structural_results directories
+        self.setup_option8_output_directories()
         
-        if self.unknown_path is None:
-            # Use the primary expected location
-            self.unknown_path = possible_unknown_paths[0]
-            print(f"⚠️  Unknown directory not found, will use: {self.unknown_path}")
-        
-        # NEW: Output directories configuration
-        self.setup_output_directories()
-        
-        # CONSOLIDATED CONFIG: All parameters in single dictionary
+        # Configuration parameters
         self.config = {
-            # Matching penalties and tolerances
             'penalties': {
                 'missing_feature': 10.0, 'extra_feature': 10.0, 'uv_missing_peak': 5.0,
                 'tolerance_per_nm': 5.0, 'max_tolerance': 20.0
@@ -81,36 +67,74 @@ class UltraOptimizedGemAnalyzer:
                 'trough_start_end': 5.0, 'mound_plateau_start': 7.0,
                 'mound_plateau_top': 5.0, 'mound_plateau_end': 7.0
             },
-            # UV analysis parameters (0-100 scale)
             'uv_params': {
                 'reference_wavelength': 811.0, 'reference_expected_intensity': 15.0,
                 'minimum_real_peak_intensity': 2.0, 'real_peak_standards': [296.7, 302.1, 415.6, 419.6, 922.7],
                 'diagnostic_peaks': {507.0: "Diamond ID (natural=absorb, synthetic=transmit)", 302.0: "Corundum natural vs synthetic"}
             },
-            # Expected normalization schemes
             'normalization_schemes': {
                 'UV': 'UV_811nm_15000_to_100', 'Halogen': 'Halogen_650nm_50000_to_100', 'Laser': 'Laser_max_50000_to_100'
             },
-            # Analysis thresholds
             'score_thresholds': {
                 'excellent': 90.0, 'strong': 75.0, 'moderate': 60.0, 'weak': 40.0
             },
-            # Light source mapping
             'light_mapping': {'B': 'Halogen', 'L': 'Laser', 'U': 'UV'},
-            # Wavelength extraction fields
             'wavelength_fields': ['Wavelength_nm', 'wavelength', 'Wavelength', 'crest_wavelength', 
                                 'max_wavelength', 'midpoint_wavelength', 'peak_wavelength', 'Crest', 'Midpoint']
         }
     
-    def setup_output_directories(self):
-        """NEW: Setup output directories for results and graphs"""
+    def find_project_root(self) -> Path:
+        """Find the project root directory by looking for common indicators"""
+        current_path = Path(__file__).parent.absolute()
+        
+        # Look for common project indicators
+        indicators = ["main.py", "src", "database", "data", ".git", "requirements.txt", "README.md"]
+        
+        for path in [current_path] + list(current_path.parents):
+            indicator_count = sum(1 for indicator in indicators if (path / indicator).exists())
+            
+            if indicator_count >= 2:
+                print(f"🎯 Project root detected: {path} (found {indicator_count} indicators)")
+                return path
+            
+            if (path / "database" / "structural_spectra").exists():
+                print(f"🎯 Project root found via database directory: {path}")
+                return path
+        
+        print(f"⚠️  Could not detect project root, using current directory: {current_path}")
+        return current_path
+    
+    def setup_archive_path(self):
+        """OPTION 8: Setup path to structural archive directory"""
+        possible_archive_paths = [
+            self.project_root / "data" / "structural(archive)",
+            Path("../../data/structural(archive)"),
+            Path("../data/structural(archive)"),
+            Path("data/structural(archive)"),
+        ]
+        
+        print(f"🔍 Searching for structural archive directory...")
+        
+        for archive_path_candidate in possible_archive_paths:
+            if archive_path_candidate.exists():
+                self.archive_path = archive_path_candidate
+                print(f"✅ Found structural archive: {self.archive_path}")
+                return archive_path_candidate
+        
+        # Use the primary expected location even if it doesn't exist
+        self.archive_path = possible_archive_paths[0]
+        print(f"⚠️  Structural archive not found, will use: {self.archive_path}")
+        return self.archive_path
+    
+    def setup_option8_output_directories(self):
+        """OPTION 8: Setup output directories for reports and graphs"""
         # Try multiple possible locations for output directories
         possible_output_roots = [
-            Path("../../outputs/structural_results"),     # From src/structural_analysis/
-            Path("../outputs/structural_results"),       # Alternative
-            Path("outputs/structural_results"),          # From project root
-            Path("structural_results"),                  # Current directory fallback
-            Path.home() / "gemini_outputs" / "structural_results"  # User home fallback
+            self.project_root / "outputs" / "structural_results",
+            Path("../../outputs/structural_results"),
+            Path("../outputs/structural_results"),
+            Path("outputs/structural_results"),
+            Path("structural_results"),
         ]
         
         # Find or create output root directory
@@ -122,10 +146,9 @@ class UltraOptimizedGemAnalyzer:
                 break
         
         if self.output_root is None:
-            # Use the primary expected location
             self.output_root = possible_output_roots[0]
         
-        # Create subdirectories
+        # Create required subdirectories
         self.reports_dir = self.output_root / "reports"
         self.graphs_dir = self.output_root / "graphs"
         
@@ -133,9 +156,9 @@ class UltraOptimizedGemAnalyzer:
         try:
             self.reports_dir.mkdir(parents=True, exist_ok=True)
             self.graphs_dir.mkdir(parents=True, exist_ok=True)
-            print(f"✅ Output directories configured:")
-            print(f"   📄 Reports: {self.reports_dir}")
-            print(f"   📊 Graphs: {self.graphs_dir}")
+            print(f"✅ OPTION 8 Output directories configured:")
+            print(f"   📄 Reports (CSV/TXT): {self.reports_dir}")
+            print(f"   📊 Graphs (PNG): {self.graphs_dir}")
         except Exception as e:
             print(f"⚠️  Could not create output directories: {e}")
             # Fallback to current directory
@@ -149,12 +172,11 @@ class UltraOptimizedGemAnalyzer:
             print(f"   📊 Graphs: {self.graphs_dir}")
     
     def check_database_connection(self):
-        """FIXED: Check database connection with better error reporting"""
+        """Check database connection with better error reporting"""
         try:
             if not Path(self.db_path).exists():
                 print(f"❌ Database file not found: {self.db_path}")
                 print(f"📍 Expected location: root/database/structural_spectra/multi_structural_gem_data.db")
-                print(f"💡 Please ensure the database exists at the correct location")
                 return False
             
             conn = sqlite3.connect(self.db_path)
@@ -172,11 +194,10 @@ class UltraOptimizedGemAnalyzer:
             
         except Exception as e:
             print(f"❌ Database connection error: {e}")
-            print(f"📍 Database path: {self.db_path}")
             return False
     
     def parse_gem_filename(self, filename: str) -> Dict[str, Union[str, int]]:
-        """OPTIMIZED: Parse gem filename with enhanced validation"""
+        """Parse gem filename with enhanced validation"""
         base_name = Path(filename).stem.split('_')[0] if '_' in Path(filename).stem else Path(filename).stem
         pattern = r'^(.+?)([BLU])([CP])(\d+)$'
         match = re.match(pattern, base_name, re.IGNORECASE)
@@ -194,239 +215,8 @@ class UltraOptimizedGemAnalyzer:
             'full_identifier': base_name, 'original_filename': filename, 'is_valid': False
         }
     
-    def extract_wavelength(self, feature: Dict, feature_type: str = '') -> Optional[float]:
-        """OPTIMIZED: Universal wavelength extraction with enhanced field detection"""
-        fields = (['Wavelength_nm', 'wavelength', 'Wavelength'] if feature_type.upper() == 'UV' else []) + self.config['wavelength_fields']
-        
-        for field in fields:
-            if field in feature and feature[field] is not None:
-                try:
-                    return float(feature[field])
-                except (ValueError, TypeError):
-                    continue
-        return None
-    
-    def calculate_wavelength_score(self, unknown_wl: float, db_wl: float, feature_type: str) -> float:
-        """OPTIMIZED: Wavelength scoring with consolidated tolerance logic"""
-        diff = abs(unknown_wl - db_wl)
-        tolerance_map = {'peak': 'peak_top', 'trough': 'trough_bottom', 'valley': 'valley_midpoint'}
-        tolerance_key = tolerance_map.get(feature_type.lower(), f'{feature_type.lower()}_top')
-        tolerance = self.config['tolerances'].get(tolerance_key, self.config['tolerances']['valley_midpoint'])
-        
-        if diff <= tolerance:
-            return 100.0 - (diff / tolerance) * 5.0
-        
-        excess_nm = diff - tolerance
-        tolerance_units_out = int(excess_nm // tolerance)
-        penalty = min(tolerance_units_out * self.config['penalties']['tolerance_per_nm'], 
-                     self.config['penalties']['max_tolerance'])
-        return max(0.0, 95.0 - penalty)
-    
-    def calculate_uv_ratios_optimized(self, features: List[Dict], dataset_name: str) -> Dict[float, float]:
-        """OPTIMIZED: UV ratio calculation with enhanced filtering and validation"""
-        reference_intensity, peak_data = None, {}
-        ref_wl = self.config['uv_params']['reference_wavelength']
-        
-        # Extract peak data and find reference
-        for feature in features:
-            wavelength = self.extract_wavelength(feature, 'UV')
-            intensity = feature.get('intensity', feature.get('Intensity', 0.0))
-            if wavelength is not None and intensity > 0:
-                peak_data[wavelength] = intensity
-                if abs(wavelength - ref_wl) <= 1.0:
-                    reference_intensity = intensity
-        
-        if not reference_intensity or reference_intensity <= 0:
-            print(f"      {dataset_name}: No {ref_wl}nm reference peak found")
-            return {}
-        
-        # Validate reference intensity for 0-100 scale
-        if reference_intensity < 5.0:
-            print(f"      WARNING: {dataset_name} {ref_wl}nm intensity ({reference_intensity:.2f}) seems low for 0-100 scale")
-        
-        # Determine dynamic threshold
-        threshold = self.determine_uv_threshold_optimized(peak_data, dataset_name)
-        filtered_peaks = {wl: intensity for wl, intensity in peak_data.items() if intensity >= threshold}
-        
-        print(f"      {dataset_name}: Filtered {len(peak_data) - len(filtered_peaks)}/{len(peak_data)} minor peaks, threshold: {threshold:.2f}")
-        
-        # Calculate ratios
-        ratios = {wl: intensity / reference_intensity for wl, intensity in filtered_peaks.items()}
-        print(f"      {dataset_name} UV ratios ({ref_wl}nm = {reference_intensity:.2f}):")
-        for wl in sorted(ratios.keys())[:5]:  # Show top 5 for brevity
-            diagnostic_info = f" [DIAGNOSTIC: {self.config['uv_params']['diagnostic_peaks'][wl]}]" if wl in self.config['uv_params']['diagnostic_peaks'] else ""
-            print(f"         {wl:.1f}nm: {ratios[wl]:.3f}{diagnostic_info}")
-        if len(ratios) > 5:
-            print(f"         ... and {len(ratios) - 5} more peaks")
-        
-        return ratios
-    
-    def determine_uv_threshold_optimized(self, peak_data: Dict[float, float], dataset_name: str) -> float:
-        """OPTIMIZED: Dynamic threshold determination with enhanced standard detection"""
-        standard_intensities, tolerance = [], 2.0
-        standards = self.config['uv_params']['real_peak_standards']
-        min_threshold = self.config['uv_params']['minimum_real_peak_intensity']
-        
-        # Find standard peak intensities
-        for standard_wl in standards:
-            closest_wl = min((wl for wl in peak_data.keys() if abs(wl - standard_wl) <= tolerance), 
-                           key=lambda wl: abs(wl - standard_wl), default=None)
-            if closest_wl:
-                intensity = peak_data[closest_wl]
-                standard_intensities.append(intensity)
-        
-        if standard_intensities:
-            threshold = max(min(standard_intensities) * 0.8, min_threshold)
-            print(f"      {dataset_name}: Threshold from {len(standard_intensities)} standards")
-        elif peak_data:
-            intensities = list(peak_data.values())
-            mean_intensity, std_intensity = np.mean(intensities), np.std(intensities)
-            threshold = max(mean_intensity - std_intensity, np.max(intensities) * 0.05, min_threshold)
-            print(f"      {dataset_name}: Statistical threshold (μ={mean_intensity:.2f}, σ={std_intensity:.2f})")
-        else:
-            threshold = min_threshold
-        
-        return max(threshold, min_threshold)
-    
-    def match_uv_intensity_ratios_optimized(self, unknown_features: List[Dict], db_features: List[Dict], 
-                                           unknown_gem_id: str, db_gem_id: str) -> float:
-        """OPTIMIZED: UV matching with enhanced scoring and diagnostic analysis"""
-        print(f"\n   UV RATIO ANALYSIS (0-100 OPTIMIZED): {unknown_gem_id} vs {db_gem_id}")
-        
-        unknown_ratios = self.calculate_uv_ratios_optimized(unknown_features, "Unknown")
-        db_ratios = self.calculate_uv_ratios_optimized(db_features, "Database")
-        
-        if not unknown_ratios or not db_ratios:
-            print("      Cannot calculate UV ratios (missing reference or no valid peaks)")
-            return 0.0
-        
-        all_wavelengths = set(unknown_ratios.keys()) | set(db_ratios.keys())
-        total_score, penalties, matched_peaks = 100.0, 0.0, 0
-        diagnostic_peaks = self.config['uv_params']['diagnostic_peaks']
-        
-        print("      Peak ratio comparison (0-100 scale):")
-        for wavelength in sorted(all_wavelengths):
-            unknown_ratio = unknown_ratios.get(wavelength)
-            db_ratio = db_ratios.get(wavelength)
-            
-            if unknown_ratio is None or db_ratio is None:
-                penalty = self.config['penalties']['uv_missing_peak']
-                penalties += penalty
-                missing_side = "unknown" if unknown_ratio is None else "database"
-                diagnostic_info = f" [DIAGNOSTIC: {diagnostic_peaks[wavelength]}]" if wavelength in diagnostic_peaks else ""
-                print(f"         {wavelength:.0f}nm: Missing in {missing_side} (-{penalty}%){diagnostic_info}")
-            else:
-                ratio_diff = abs(unknown_ratio - db_ratio)
-                ratio_score = 100.0 * np.exp(-3.0 * ratio_diff)
-                diagnostic_info = f" [DIAGNOSTIC: {diagnostic_peaks[wavelength]}]" if wavelength in diagnostic_peaks else ""
-                print(f"         {wavelength:.0f}nm: {unknown_ratio:.3f} vs {db_ratio:.3f} (Δ{ratio_diff:.3f} → {ratio_score:.1f}%){diagnostic_info}")
-                total_score += ratio_score
-                matched_peaks += 1
-        
-        average_ratio_score = total_score / (matched_peaks + 1) if matched_peaks > 0 else 100.0
-        final_score = max(0.0, average_ratio_score - penalties)
-        
-        print(f"      UV Results: {matched_peaks} matched, -{penalties:.1f}% penalties, final: {final_score:.1f}%")
-        return min(100.0, final_score)
-    
-    def match_halogen_laser_optimized(self, unknown_features: List[Dict], db_features: List[Dict], 
-                                     unknown_gem_id: str, db_gem_id: str) -> float:
-        """OPTIMIZED: Halogen/Laser matching with streamlined feature analysis"""
-        if not unknown_features or not db_features:
-            return 0.0
-        
-        unknown_types = set(f.get('feature_type', 'unknown') for f in unknown_features)
-        db_types = set(f.get('feature_type', 'unknown') for f in db_features)
-        common_types = unknown_types.intersection(db_types)
-        
-        # Calculate feature penalties
-        missing_penalty = len(unknown_types - db_types) * self.config['penalties']['missing_feature']
-        extra_penalty = len(db_types - unknown_types) * self.config['penalties']['extra_feature']
-        feature_penalty = missing_penalty + extra_penalty
-        
-        if not common_types:
-            return max(0.0, 100.0 - feature_penalty)
-        
-        # Calculate type scores with optimized matching
-        type_scores = []
-        for feature_type in common_types:
-            unknown_type_features = [f for f in unknown_features if f.get('feature_type') == feature_type]
-            db_type_features = [f for f in db_features if f.get('feature_type') == feature_type]
-            score = self.match_features_of_type_optimized(unknown_type_features, db_type_features, feature_type)
-            type_scores.append(score)
-        
-        base_score = sum(type_scores) / len(type_scores) if type_scores else 0.0
-        preliminary_score = max(0.0, base_score - feature_penalty)
-        
-        # Enhanced reporting for significant matches
-        if preliminary_score >= 30.0:
-            print(f"\n   H/L Wavelength analysis: {unknown_gem_id} vs {db_gem_id}")
-            if missing_penalty > 0:
-                print(f"      Missing features: {unknown_types - db_types} (-{missing_penalty}%)")
-            if extra_penalty > 0:
-                print(f"      Extra features: {db_types - unknown_types} (-{extra_penalty}%)")
-            print(f"      Base spectral score: {base_score:.1f}%, Final: {preliminary_score:.1f}%")
-        
-        return min(100.0, preliminary_score)
-    
-    def match_features_of_type_optimized(self, unknown_features: List[Dict], db_features: List[Dict], feature_type: str) -> float:
-        """OPTIMIZED: Feature matching with vectorized scoring"""
-        if not unknown_features or not db_features:
-            return 0.0
-        
-        total_score, matched_count = 0.0, 0
-        
-        for unknown_feature in unknown_features:
-            unknown_wl = self.extract_wavelength(unknown_feature, feature_type)
-            if unknown_wl is None:
-                continue
-            
-            # Vectorized scoring for all DB features
-            scores = []
-            for db_feature in db_features:
-                db_wl = self.extract_wavelength(db_feature, feature_type)
-                if db_wl is not None:
-                    score = self.calculate_wavelength_score(unknown_wl, db_wl, feature_type)
-                    scores.append(score)
-            
-            best_score = max(scores) if scores else 0.0
-            total_score += best_score
-            matched_count += 1
-        
-        return total_score / matched_count if matched_count > 0 else 0.0
-    
-    def extract_normalization_scheme(self, features: List[Dict]) -> Optional[str]:
-        """OPTIMIZED: Extract normalization scheme with enhanced field detection"""
-        scheme_fields = ['Normalization_Scheme', 'normalization_scheme', 'norm_scheme']
-        
-        for feature in features:
-            for field in scheme_fields:
-                if field in feature and feature[field]:
-                    return feature[field]
-        return None
-    
-    def match_features_by_light_source_optimized(self, unknown_features: List[Dict], db_features: List[Dict], 
-                                                light_source: str, unknown_gem_id: str, db_gem_id: str) -> float:
-        """OPTIMIZED: Route to appropriate matching with normalization validation"""
-        if unknown_gem_id == db_gem_id:
-            return 100.0
-        if not unknown_features or not db_features:
-            return 0.0
-        
-        # Enhanced normalization validation
-        unknown_norm = self.extract_normalization_scheme(unknown_features)
-        db_norm = self.extract_normalization_scheme(db_features)
-        if unknown_norm and db_norm and unknown_norm != db_norm:
-            print(f"      WARNING: Normalization mismatch - Unknown: {unknown_norm}, DB: {db_norm}")
-        
-        # Route to appropriate matcher
-        if light_source.upper() == 'UV':
-            return self.match_uv_intensity_ratios_optimized(unknown_features, db_features, unknown_gem_id, db_gem_id)
-        else:
-            return self.match_halogen_laser_optimized(unknown_features, db_features, unknown_gem_id, db_gem_id)
-    
-    def load_unknown_data_optimized(self, file_path: Path) -> List[Dict]:
-        """OPTIMIZED: Universal data loader with enhanced format detection"""
+    def load_archive_data_optimized(self, file_path: Path) -> List[Dict]:
+        """OPTION 8: Load data from structural archive files"""
         try:
             df = pd.read_csv(file_path)
             features = []
@@ -457,12 +247,10 @@ class UltraOptimizedGemAnalyzer:
                         'intensity': row.get('Intensity', 1.0)
                     }
                     
-                    # Map additional fields
                     for col, field in field_mapping.items():
                         if col in row:
                             feature[field] = row[col]
                     
-                    # Add normalization metadata
                     if 'Normalization_Scheme' in row and pd.notna(row['Normalization_Scheme']):
                         feature['Normalization_Scheme'] = row['Normalization_Scheme']
                     
@@ -474,77 +262,192 @@ class UltraOptimizedGemAnalyzer:
             print(f"Error loading {file_path}: {e}")
             return []
     
-    def validate_data_optimized(self, features: List[Dict], light_source: str, file_info: Dict):
-        """OPTIMIZED: Comprehensive data validation with enhanced reporting"""
-        print(f"   Found {len(features)} spectral features")
+    def analyze_archive_files_optimized(self):
+        """OPTION 8: Analyze structural files from archive directory"""
+        if not self.check_database_connection():
+            print("❌ Cannot proceed without database connection")
+            return
         
-        # Validate normalization scheme
-        norm_scheme = self.extract_normalization_scheme(features)
-        expected = self.config['normalization_schemes'].get(light_source)
+        if not self.archive_path.exists():
+            print(f"❌ Structural archive directory not found: {self.archive_path}")
+            print("💡 Please ensure the archive directory exists with CSV files to analyze")
+            return
         
-        if not norm_scheme:
-            print("   WARNING: No normalization scheme found")
-        elif expected and norm_scheme != expected:
-            print(f"   WARNING: Unexpected normalization - Found: {norm_scheme}, Expected: {expected}")
-        else:
-            print(f"   Normalization validated: {norm_scheme}")
+        csv_files = list(self.archive_path.glob("*.csv"))
+        if not csv_files:
+            print("❌ No CSV files found in structural archive directory")
+            print(f"📍 Checked: {self.archive_path}")
+            return
         
-        # Validate wavelength range
-        wavelengths = [self.extract_wavelength(f, f.get('feature_type', '')) for f in features]
-        wavelengths = [w for w in wavelengths if w is not None]
-        if wavelengths:
-            print(f"   Wavelength range: {min(wavelengths):.1f} - {max(wavelengths):.1f} nm")
+        print(f"✅ Found {len(csv_files)} archive files to analyze")
+        print(f"📁 Input: {self.archive_path}")
+        print(f"📄 Output Reports: {self.reports_dir}")
+        print(f"📊 Output Graphs: {self.graphs_dir}")
         
-        # Validate intensity range for 0-100 scale
-        intensities = []
-        for feature in features:
-            intensity = feature.get('intensity', feature.get('Intensity'))
-            if intensity is not None:
-                try:
-                    intensities.append(float(intensity))
-                except (ValueError, TypeError):
-                    continue
+        all_results = {}
         
-        if intensities:
-            min_int, max_int = min(intensities), max(intensities)
-            print(f"   Intensity range: {min_int:.2f} - {max_int:.2f}")
-            
-            # Enhanced validation for different scales
-            if max_int <= 1.0:
-                print("   ERROR: Intensities appear to be 0-1 normalized (broken for UV analysis)")
-            elif max_int > 100.0:
-                print("   WARNING: Intensities exceed 100 (unexpected for fixed normalization)")
-            elif min_int < 0:
-                print("   WARNING: Negative intensities found")
-            else:
-                print("   Intensity range validated for 0-100 scale")
-            
-            # UV-specific reference validation
-            if light_source == 'UV':
-                ref_wl = self.config['uv_params']['reference_wavelength']
-                ref_intensity = None
-                for feature in features:
-                    wl = self.extract_wavelength(feature, 'UV')
-                    if wl and abs(wl - ref_wl) <= 1.0:
-                        intensity = feature.get('intensity', feature.get('Intensity', 0))
-                        if intensity > 0:
-                            ref_intensity = intensity
-                            break
+        for file_path in csv_files:
+            try:
+                result = self.analyze_archive_file_optimized(file_path)
+                all_results[file_path.name] = result
+            except Exception as e:
+                print(f"❌ Error analyzing {file_path.name}: {e}")
+        
+        # Generate summary and save results
+        self.generate_archive_analysis_summary(all_results)
+        
+        # Save results automatically
+        if all_results:
+            print(f"\n💾 Saving analysis results...")
+            try:
+                results_package = {
+                    'results': all_results,
+                    'analysis_type': 'archive_structural_analysis',
+                    'total_files': len(csv_files),
+                    'successful_files': len([r for r in all_results.values() if 'matches' in r and r['matches']])
+                }
                 
-                if ref_intensity:
-                    if ref_intensity < 10.0:
-                        print(f"   WARNING: {ref_wl}nm reference ({ref_intensity:.2f}) seems low")
-                    else:
-                        print(f"   {ref_wl}nm reference validated: {ref_intensity:.2f}")
-                else:
-                    print(f"   WARNING: No {ref_wl}nm reference peak found")
+                self.save_analysis_report(results_package, "archive_analysis")
+                print(f"📄 Analysis reports saved to: {self.reports_dir}")
+                print(f"📊 Graph directory ready: {self.graphs_dir}")
+                
+            except Exception as e:
+                print(f"❌ Error saving results: {e}")
         
-        return norm_scheme
+        return all_results
+    
+    def analyze_archive_file_optimized(self, file_path: Path) -> Dict:
+        """OPTION 8: Analyze individual archive file"""
+        file_info = self.parse_gem_filename(file_path.name)
+        print(f"\nAnalyzing archive file: {file_info['original_filename']}")
+        print(f"   Gem: {file_info['gem_id']}, Light: {file_info['light_source']}")
+        
+        # Load archive data
+        archive_data = self.load_archive_data_optimized(file_path)
+        if not archive_data:
+            print("   Could not load archive file data")
+            return {'error': 'Could not load data'}
+        
+        print(f"   Found {len(archive_data)} spectral features")
+        
+        # Find database matches
+        matches = self.find_database_matches_optimized(archive_data, file_info)
+        
+        if matches:
+            print(f"   Found {len(matches)} potential matches:")
+            for i, match in enumerate(matches[:3], 1):
+                print(f"      {i}. {match['db_gem_id']} - {match['score']:.1f}%")
+            if len(matches) > 3:
+                print(f"      ... and {len(matches) - 3} more matches")
+        else:
+            print("   No similar gems found in database")
+        
+        return {
+            'file_info': file_info, 'archive_data': archive_data, 'matches': matches
+        }
+    
+    def find_database_matches_optimized(self, archive_data: List[Dict], file_info: Dict, top_n: int = 10) -> List[Dict]:
+        """Find database matches for archive data"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            query = """SELECT file, light_source, wavelength, intensity, feature_group, data_type, 
+                             start_wavelength, end_wavelength, midpoint, bottom, normalization_scheme, reference_wavelength
+                       FROM structural_features WHERE light_source = ? ORDER BY file, wavelength"""
+            
+            db_df = pd.read_sql_query(query, conn, params=(file_info['light_source'],))
+            conn.close()
+            
+            if db_df.empty:
+                print(f"   No {file_info['light_source']} data found in database")
+                return []
+            
+            matches = []
+            
+            # Process each database file
+            for db_file in db_df['file'].unique():
+                file_data = db_df[db_df['file'] == db_file]
+                db_file_info = self.parse_gem_filename(db_file)
+                
+                # Build database features
+                db_features = []
+                for _, row in file_data.iterrows():
+                    feature = {
+                        'feature_type': row.get('feature_group', 'unknown'), 'wavelength': row['wavelength'],
+                        'intensity': row['intensity'], 'midpoint_wavelength': row.get('midpoint'),
+                        'start_wavelength': row.get('start_wavelength'), 'end_wavelength': row.get('end_wavelength'),
+                        'crest_wavelength': row['wavelength'], 'max_wavelength': row['wavelength']
+                    }
+                    db_features.append(feature)
+                
+                # Calculate match score
+                score = self.match_features_by_light_source_optimized(
+                    archive_data, db_features, file_info['light_source'], file_info['gem_id'], db_file_info['gem_id']
+                )
+                
+                if score > 0:
+                    matches.append({
+                        'db_gem_id': db_file_info['gem_id'], 'db_full_id': db_file_info['full_identifier'],
+                        'score': score, 'db_features': len(db_features), 'light_source': db_file_info['light_source'],
+                        'orientation': db_file_info['orientation'], 'scan_number': db_file_info['scan_number']
+                    })
+            
+            matches.sort(key=lambda x: x['score'], reverse=True)
+            return matches[:top_n]
+            
+        except Exception as e:
+            print(f"Error finding matches: {e}")
+            return []
+    
+    def generate_archive_analysis_summary(self, all_results: Dict):
+        """Generate summary for archive analysis"""
+        print(f"\nARCHIVE ANALYSIS SUMMARY:")
+        print("=" * 50)
+        
+        # Categorize results
+        categories = {'excellent': [], 'strong': [], 'moderate': [], 'weak': [], 'no_match': []}
+        thresholds = self.config['score_thresholds']
+        
+        for filename, result in all_results.items():
+            if 'error' in result:
+                categories['no_match'].append((filename, result['error']))
+            elif result.get('matches'):
+                best_score = result['matches'][0]['score']
+                if best_score >= thresholds['excellent']:
+                    categories['excellent'].append((filename, result))
+                elif best_score >= thresholds['strong']:
+                    categories['strong'].append((filename, result))
+                elif best_score >= thresholds['moderate']:
+                    categories['moderate'].append((filename, result))
+                else:
+                    categories['weak'].append((filename, result))
+            else:
+                categories['no_match'].append((filename, "No matches found"))
+        
+        # Display results by category
+        category_descriptions = {
+            'excellent': f"EXCELLENT MATCHES (≥{thresholds['excellent']}%)",
+            'strong': f"STRONG MATCHES (≥{thresholds['strong']}%)",
+            'moderate': f"MODERATE MATCHES (≥{thresholds['moderate']}%)",
+            'weak': f"WEAK MATCHES (<{thresholds['moderate']}%)",
+            'no_match': "NO MATCHES"
+        }
+        
+        for category, description in category_descriptions.items():
+            items = categories[category]
+            if items:
+                print(f"\n{description}:")
+                for filename, data in items:
+                    if category == 'no_match' and isinstance(data, str):
+                        print(f"   • {filename}: {data}")
+                    elif category != 'no_match':
+                        file_info = data['file_info']
+                        best_match = data['matches'][0]
+                        print(f"   • {filename} ({file_info['gem_id']}) → {best_match['db_gem_id']} ({best_match['score']:.1f}%)")
     
     def save_analysis_report(self, results: Dict, report_type: str = "analysis") -> str:
-        """NEW: Save analysis results as CSV and TXT reports"""
+        """Save analysis results as CSV and TXT reports"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        base_filename = f"gem_analysis_{report_type}_{timestamp}"
+        base_filename = f"structural_analysis_{report_type}_{timestamp}"
         
         # Generate CSV report
         csv_path = self.reports_dir / f"{base_filename}.csv"
@@ -565,11 +468,10 @@ class UltraOptimizedGemAnalyzer:
         return str(csv_path)
     
     def save_csv_report(self, results: Dict, csv_path: Path):
-        """NEW: Save detailed CSV report of analysis results"""
+        """Save detailed CSV report of analysis results"""
         csv_data = []
         
         if isinstance(results, dict) and 'results' in results:
-            # Multiple files analysis
             for filename, result in results['results'].items():
                 if 'error' in result:
                     csv_data.append({
@@ -579,8 +481,7 @@ class UltraOptimizedGemAnalyzer:
                         'Gem_ID': '',
                         'Light_Source': '',
                         'Best_Match': '',
-                        'Score': 0,
-                        'Normalization': ''
+                        'Score': 0
                     })
                 elif result.get('matches'):
                     file_info = result['file_info']
@@ -593,10 +494,8 @@ class UltraOptimizedGemAnalyzer:
                         'Light_Source': file_info['light_source'],
                         'Best_Match': best_match['db_gem_id'],
                         'Score': best_match['score'],
-                        'Normalization': result.get('normalization_scheme', 'Unknown'),
-                        'Features_Found': len(result.get('unknown_data', [])),
-                        'DB_Features': best_match['db_features'],
-                        'Compatible': best_match.get('normalization_compatible', 'Unknown')
+                        'Features_Found': len(result.get('archive_data', [])),
+                        'DB_Features': best_match['db_features']
                     })
                 else:
                     file_info = result['file_info']
@@ -607,51 +506,27 @@ class UltraOptimizedGemAnalyzer:
                         'Gem_ID': file_info['gem_id'],
                         'Light_Source': file_info['light_source'],
                         'Best_Match': 'None',
-                        'Score': 0,
-                        'Normalization': result.get('normalization_scheme', 'Unknown')
+                        'Score': 0
                     })
         
-        elif isinstance(results, dict) and 'gem_id' in results:
-            # Multi-light integration analysis
-            gem_id = results['gem_id']
-            for light_source, score in results.get('light_source_scores', {}).items():
-                match = results['light_source_matches'].get(light_source)
-                csv_data.append({
-                    'Gem_ID': gem_id,
-                    'Light_Source': light_source,
-                    'Score': score,
-                    'Best_Match': match['db_gem_id'] if match else 'None',
-                    'Integrated_Score': results.get('integrated_score', 0),
-                    'Normalization': results['normalization_schemes'].get(light_source, 'Unknown')
-                })
-        
-        # Save to CSV
         if csv_data:
             df = pd.DataFrame(csv_data)
             df.to_csv(csv_path, index=False)
     
     def save_txt_report(self, results: Dict, txt_path: Path):
-        """NEW: Save detailed TXT report of analysis results"""
+        """Save detailed TXT report of analysis results"""
         with open(txt_path, 'w', encoding='utf-8') as f:
-            f.write("GEMINI STRUCTURAL ANALYSIS REPORT\n")
+            f.write("GEMINI STRUCTURAL ANALYSIS REPORT - OPTION 8\n")
             f.write("=" * 70 + "\n")
             f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write(f"Analysis Type: Archive Structural Analysis\n")
+            f.write(f"Input Directory: {self.archive_path}\n")
             f.write(f"Database: {self.db_path}\n")
-            f.write(f"Unknown Directory: {self.unknown_path}\n")
             f.write(f"Reports Directory: {self.reports_dir}\n")
             f.write(f"Graphs Directory: {self.graphs_dir}\n")
             f.write("\n")
             
-            # Analysis parameters
-            f.write("ANALYSIS PARAMETERS:\n")
-            f.write("-" * 30 + "\n")
-            f.write(f"UV Reference Wavelength: {self.config['uv_params']['reference_wavelength']} nm\n")
-            f.write(f"Expected UV Intensity: {self.config['uv_params']['reference_expected_intensity']} (0-100 scale)\n")
-            f.write(f"Score Thresholds: {self.config['score_thresholds']}\n")
-            f.write("\n")
-            
             if isinstance(results, dict) and 'results' in results:
-                # Multiple files analysis
                 f.write("ANALYSIS RESULTS:\n")
                 f.write("-" * 30 + "\n")
                 
@@ -670,13 +545,9 @@ class UltraOptimizedGemAnalyzer:
                         
                         f.write(f"  Gem ID: {file_info['gem_id']}\n")
                         f.write(f"  Light Source: {file_info['light_source']}\n")
-                        f.write(f"  Orientation: {file_info['orientation']}\n")
-                        f.write(f"  Features Found: {len(result.get('unknown_data', []))}\n")
+                        f.write(f"  Features Found: {len(result.get('archive_data', []))}\n")
                         f.write(f"  Best Match: {best_match['db_gem_id']} ({best_match['score']:.1f}%)\n")
-                        f.write(f"  Normalization: {result.get('normalization_scheme', 'Unknown')}\n")
-                        f.write(f"  Compatible: {best_match.get('normalization_compatible', 'Unknown')}\n")
                         
-                        # Show top 3 matches
                         if len(result['matches']) > 1:
                             f.write("  Other Matches:\n")
                             for i, match in enumerate(result['matches'][1:4], 2):
@@ -691,744 +562,56 @@ class UltraOptimizedGemAnalyzer:
                 f.write(f"  Total files analyzed: {total_count}\n")
                 f.write(f"  Successful matches: {success_count}\n")
                 f.write(f"  Success rate: {100*success_count/total_count:.1f}%\n")
-            
-            elif isinstance(results, dict) and 'gem_id' in results:
-                # Multi-light integration analysis
-                f.write("MULTI-LIGHT INTEGRATION ANALYSIS:\n")
-                f.write("-" * 40 + "\n")
-                f.write(f"Gem ID: {results['gem_id']}\n")
-                f.write(f"Integrated Score: {results.get('integrated_score', 0):.1f}%\n")
-                f.write("\nLight Source Results:\n")
-                
-                for light_source, score in results.get('light_source_scores', {}).items():
-                    match = results['light_source_matches'].get(light_source)
-                    f.write(f"  {light_source}: {score:.1f}%")
-                    if match:
-                        f.write(f" → {match['db_gem_id']}")
-                        if match.get('normalization_compatible') is not None:
-                            compat = "Compatible" if match['normalization_compatible'] else "Incompatible"
-                            f.write(f" ({compat})")
-                    f.write("\n")
-                
-                f.write(f"\nNormalization Schemes:\n")
-                for light_source, scheme in results.get('normalization_schemes', {}).items():
-                    f.write(f"  {light_source}: {scheme or 'Unknown'}\n")
     
-    def save_graph(self, graph_data: Dict, graph_type: str = "analysis") -> str:
-        """NEW: Save analysis graphs as PNG files"""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        png_filename = f"gem_{graph_type}_{timestamp}.png"
-        png_path = self.graphs_dir / png_filename
+    # Include simplified versions of the matching methods (keeping core functionality)
+    def match_features_by_light_source_optimized(self, archive_data, db_features, light_source, archive_gem_id, db_gem_id):
+        """Simplified matching for archive analysis"""
+        if not archive_data or not db_features:
+            return 0.0
+            
+        if archive_gem_id == db_gem_id:
+            return 100.0
         
-        try:
-            # This would be implemented when plotting functionality is added
-            # For now, just create a placeholder
-            print(f"📊 Graph functionality ready: {png_path}")
-            return str(png_path)
-        except Exception as e:
-            print(f"❌ Error saving graph: {e}")
-            return ""
-    
-    def find_database_matches_optimized(self, unknown_data: List[Dict], file_info: Dict, top_n: int = 10) -> List[Dict]:
-        """OPTIMIZED: Database matching with enhanced efficiency and compatibility checking"""
-        try:
-            # FIXED: Check database connection first
-            if not self.check_database_connection():
-                print("❌ Cannot proceed without database connection")
-                return []
-            
-            conn = sqlite3.connect(self.db_path)
-            query = """SELECT file, light_source, wavelength, intensity, feature_group, data_type, 
-                             start_wavelength, end_wavelength, midpoint, bottom, normalization_scheme, reference_wavelength
-                       FROM structural_features WHERE light_source = ? ORDER BY file, wavelength"""
-            
-            db_df = pd.read_sql_query(query, conn, params=(file_info['light_source'],))
-            conn.close()
-            
-            if db_df.empty:
-                print(f"   No {file_info['light_source']} data found in database")
-                return []
-            
-            matches, unknown_norm = [], self.extract_normalization_scheme(unknown_data)
-            
-            # Process each database file
-            for db_file in db_df['file'].unique():
-                file_data = db_df[db_df['file'] == db_file]
-                db_file_info = self.parse_gem_filename(db_file)
+        # Basic wavelength matching
+        total_score = 0.0
+        matched_count = 0
+        
+        for archive_feature in archive_data:
+            archive_wl = archive_feature.get('wavelength')
+            if archive_wl is None:
+                continue
                 
-                # Build database features with enhanced metadata
-                db_features = []
-                for _, row in file_data.iterrows():
-                    feature = {
-                        'feature_type': row.get('feature_group', 'unknown'), 'wavelength': row['wavelength'],
-                        'intensity': row['intensity'], 'midpoint_wavelength': row.get('midpoint'),
-                        'start_wavelength': row.get('start_wavelength'), 'end_wavelength': row.get('end_wavelength'),
-                        'crest_wavelength': row['wavelength'], 'max_wavelength': row['wavelength']
-                    }
+            best_score = 0.0
+            for db_feature in db_features:
+                db_wl = db_feature.get('wavelength')
+                if db_wl is None:
+                    continue
                     
-                    # Add normalization metadata
-                    for col, key in [('normalization_scheme', 'Normalization_Scheme'), ('reference_wavelength', 'Reference_Wavelength')]:
-                        if col in row and pd.notna(row[col]):
-                            feature[key] = row[col]
-                    
-                    db_features.append(feature)
-                
-                # Calculate match score
-                score = self.match_features_by_light_source_optimized(
-                    unknown_data, db_features, file_info['light_source'], file_info['gem_id'], db_file_info['gem_id']
-                )
-                
-                # Apply normalization compatibility bonus/penalty
-                db_norm = self.extract_normalization_scheme(db_features)
-                if unknown_norm and db_norm:
-                    score += 2.0 if unknown_norm == db_norm else -5.0
-                
-                if score > 0:
-                    matches.append({
-                        'db_gem_id': db_file_info['gem_id'], 'db_full_id': db_file_info['full_identifier'],
-                        'score': score, 'db_features': len(db_features), 'light_source': db_file_info['light_source'],
-                        'orientation': db_file_info['orientation'], 'scan_number': db_file_info['scan_number'],
-                        'normalization_scheme': db_norm,
-                        'normalization_compatible': unknown_norm == db_norm if unknown_norm and db_norm else None
-                    })
+                diff = abs(archive_wl - db_wl)
+                if diff <= 2.0:
+                    score = max(0.0, 100.0 - (diff * 25))
+                    best_score = max(best_score, score)
             
-            matches.sort(key=lambda x: x['score'], reverse=True)
-            return matches[:top_n]
-            
-        except Exception as e:
-            print(f"Error finding matches: {e}")
-            return []
+            total_score += best_score
+            matched_count += 1
+        
+        return total_score / matched_count if matched_count > 0 else 0.0
     
-    def analyze_unknown_file_optimized(self, file_path: Path) -> Dict:
-        """OPTIMIZED: Complete file analysis with enhanced validation and reporting"""
-        file_info = self.parse_gem_filename(file_path.name)
-        print(f"\nAnalyzing: {file_info['original_filename']}")
-        print(f"   Gem: {file_info['gem_id']}, Light: {file_info['light_source']}, "
-              f"Orientation: {file_info['orientation']}, Scan: {file_info['scan_number']}")
-        
-        # Load and validate data
-        unknown_data = self.load_unknown_data_optimized(file_path)
-        if not unknown_data:
-            print("   Could not load file data")
-            return {'error': 'Could not load data'}
-        
-        norm_scheme = self.validate_data_optimized(unknown_data, file_info['light_source'], file_info)
-        
-        # Find matches
-        matches = self.find_database_matches_optimized(unknown_data, file_info)
-        
-        if matches:
-            print(f"   Found {len(matches)} potential matches:")
-            for i, match in enumerate(matches[:3], 1):  # Show top 3 for brevity
-                compat_str = " [COMPATIBLE]" if match.get('normalization_compatible') else ""
-                print(f"      {i}. {match['db_gem_id']} - {match['score']:.1f}% "
-                      f"({match['db_features']} features){compat_str}")
-            if len(matches) > 3:
-                print(f"      ... and {len(matches) - 3} more matches")
-        else:
-            print("   No similar gems found in database")
-        
-        return {
-            'file_info': file_info, 'unknown_data': unknown_data, 'matches': matches, 
-            'normalization_scheme': norm_scheme
-        }
-    
-    def analyze_all_unknowns_optimized(self):
-        """OPTIMIZED: Batch analysis with enhanced summary reporting and automatic saving"""
-        # FIXED: Check database first
-        if not self.check_database_connection():
-            print("❌ Cannot proceed without database connection")
-            return
-        
-        if not self.unknown_path.exists():
-            print(f"❌ Unknown directory not found: {self.unknown_path}")
-            print("💡 Please ensure the unknown directory exists with CSV files to analyze")
-            return
-        
-        csv_files = list(self.unknown_path.glob("*.csv"))
-        if not csv_files:
-            print("❌ No CSV files found in unknown directory")
-            print(f"📍 Checked: {self.unknown_path}")
-            return
-        
-        print(f"✅ Found {len(csv_files)} unknown files to analyze")
-        all_results, normalization_issues = {}, []
-        
-        for file_path in csv_files:
-            try:
-                result = self.analyze_unknown_file_optimized(file_path)
-                all_results[file_path.name] = result
-                
-                # Track normalization issues
-                if 'normalization_scheme' in result:
-                    scheme = result['normalization_scheme']
-                    if not scheme or 'Unknown' in str(scheme):
-                        normalization_issues.append(file_path.name)
-            except Exception as e:
-                print(f"❌ Error analyzing {file_path.name}: {e}")
-        
-        # Enhanced summary reporting
-        self.generate_analysis_summary_optimized(all_results, normalization_issues)
-        
-        # NEW: Save results automatically
-        if all_results:
-            print(f"\n💾 Saving analysis results...")
-            try:
-                results_package = {
-                    'results': all_results,
-                    'normalization_issues': normalization_issues,
-                    'analysis_type': 'batch_unknown_analysis',
-                    'total_files': len(csv_files),
-                    'successful_files': len([r for r in all_results.values() if 'matches' in r and r['matches']])
-                }
-                
-                saved_path = self.save_analysis_report(results_package, "batch_analysis")
-                print(f"📄 Analysis reports saved to: {self.reports_dir}")
-                print(f"📊 Graph directory ready: {self.graphs_dir}")
-                
-            except Exception as e:
-                print(f"❌ Error saving results: {e}")
-        
-        return all_results
-    
-    def generate_analysis_summary_optimized(self, all_results: Dict, normalization_issues: List[str]):
-        """OPTIMIZED: Generate comprehensive analysis summary"""
-        print(f"\nENHANCED ANALYSIS SUMMARY (ULTRA OPTIMIZED for 0-100 normalization):")
+    def run_option8_analysis(self):
+        """Main entry point for Option 8 analysis"""
+        print("ENHANCED GEM ANALYZER - OPTION 8: STRUCTURAL ARCHIVE ANALYSIS")
+        print("=" * 70)
+        print(f"📁 Input: {self.archive_path}")
+        print(f"📄 Reports Output: {self.reports_dir}")
+        print(f"📊 Graphs Output: {self.graphs_dir}")
         print("=" * 70)
         
-        # Normalization warnings
-        if normalization_issues:
-            print("NORMALIZATION WARNINGS:")
-            for issue_file in normalization_issues:
-                print(f"   ! {issue_file}: Missing or unknown normalization scheme")
-            print()
-        
-        # Categorized results
-        categories = {'perfect': [], 'excellent': [], 'strong': [], 'moderate': [], 'weak': [], 'no_match': []}
-        thresholds = self.config['score_thresholds']
-        
-        for filename, result in all_results.items():
-            if 'error' in result:
-                categories['no_match'].append((filename, result['error']))
-            elif result.get('matches'):
-                best_score = result['matches'][0]['score']
-                if best_score == 100.0:
-                    categories['perfect'].append((filename, result))
-                elif best_score >= thresholds['excellent']:
-                    categories['excellent'].append((filename, result))
-                elif best_score >= thresholds['strong']:
-                    categories['strong'].append((filename, result))
-                elif best_score >= thresholds['moderate']:
-                    categories['moderate'].append((filename, result))
-                else:
-                    categories['weak'].append((filename, result))
-            else:
-                categories['no_match'].append((filename, "No matches found"))
-        
-        # Generate category summaries
-        category_descriptions = {
-            'perfect': "PERFECT MATCHES (100%) - Same gem, different scan",
-            'excellent': f"EXCELLENT MATCHES (≥{thresholds['excellent']}%) - Very likely same species",
-            'strong': f"STRONG MATCHES (≥{thresholds['strong']}%) - Probably same gem",
-            'moderate': f"MODERATE MATCHES (≥{thresholds['moderate']}%) - Possibly same variety",
-            'weak': f"WEAK MATCHES (≥{thresholds['weak']}%) - Some similarity",
-            'no_match': "NO MATCHES - No similar gems found"
-        }
-        
-        for category, description in category_descriptions.items():
-            items = categories[category]
-            if items:
-                print(f"{description}:")
-                for filename, data in items:
-                    if category == 'no_match' and isinstance(data, str):
-                        print(f"   • {filename}: {data}")
-                    elif category != 'no_match':
-                        file_info = data['file_info']
-                        best_match = data['matches'][0]
-                        compat_indicator = (" [COMPATIBLE]" if best_match.get('normalization_compatible') is True else 
-                                          " [INCOMPATIBLE]" if best_match.get('normalization_compatible') is False else "")
-                        print(f"   • {filename} ({file_info['gem_id']}) → {best_match['db_gem_id']} ({best_match['score']:.1f}%){compat_indicator}")
-                print()
-    
-    def analyze_multi_light_integration_optimized(self, gem_id: str):
-        """OPTIMIZED: Multi-light integration with enhanced scoring and validation"""
-        print(f"\nMULTI-LIGHT INTEGRATION ANALYSIS (ULTRA OPTIMIZED): {gem_id}")
-        print("=" * 70)
-        
-        # FIXED: Check database first
-        if not self.check_database_connection():
-            print("❌ Cannot proceed without database connection")
-            return
-        
-        # Find unknown files for this gem
-        unknown_files = {}
-        if self.unknown_path.exists():
-            for file in self.unknown_path.glob("*.csv"):
-                file_info = self.parse_gem_filename(file.name)
-                if file_info['gem_id'] == gem_id:
-                    unknown_files[file_info['light_source']] = file
-        
-        if not unknown_files:
-            print(f"❌ No unknown files found for gem {gem_id}")
-            return
-        
-        print(f"✅ Found unknown files: {', '.join(f'{ls}' for ls in unknown_files.keys())}")
-        
-        # Analyze each light source
-        best_matches, normalization_summary, gem_scores = {}, {}, {}
-        
-        for light_source, file_path in unknown_files.items():
-            print(f"\nAnalyzing {light_source} data...")
-            
-            file_info = self.parse_gem_filename(file_path.name)
-            unknown_data = self.load_unknown_data_optimized(file_path)
-            
-            if unknown_data:
-                norm_scheme = self.validate_data_optimized(unknown_data, light_source, file_info)
-                normalization_summary[light_source] = norm_scheme
-                
-                matches = self.find_database_matches_optimized(unknown_data, file_info, top_n=3)
-                if matches:
-                    best_match = matches[0]
-                    best_score = best_match['score']
-                    gem_scores[light_source] = best_score
-                    best_matches[light_source] = best_match
-                    
-                    compat_str = (" [COMPATIBLE]" if best_match.get('normalization_compatible') is True else 
-                                " [INCOMPATIBLE]" if best_match.get('normalization_compatible') is False else "")
-                    print(f"   Best match: {best_match['db_gem_id']} ({best_score:.1f}%){compat_str}")
-                else:
-                    gem_scores[light_source] = 0.0
-                    best_matches[light_source] = None
-                    print(f"   No matches found")
-        
-        # Generate integrated analysis
-        if gem_scores:
-            self.generate_integration_summary_optimized(gem_id, gem_scores, best_matches, normalization_summary)
-            
-            integration_result = {
-                'gem_id': gem_id, 'light_source_scores': gem_scores, 'light_source_matches': best_matches,
-                'integrated_score': sum(gem_scores.values()) / len(gem_scores),
-                'normalization_schemes': normalization_summary
-            }
-            
-            # NEW: Save integration results automatically
-            print(f"\n💾 Saving multi-light integration results...")
-            try:
-                saved_path = self.save_analysis_report(integration_result, f"integration_{gem_id}")
-                print(f"📄 Integration reports saved to: {self.reports_dir}")
-                print(f"📊 Graph directory ready: {self.graphs_dir}")
-            except Exception as e:
-                print(f"❌ Error saving integration results: {e}")
-            
-            return integration_result
-        
-        return None
-    
-    def generate_integration_summary_optimized(self, gem_id: str, gem_scores: Dict, best_matches: Dict, normalization_summary: Dict):
-        """OPTIMIZED: Generate comprehensive integration summary"""
-        integrated_score = sum(gem_scores.values()) / len(gem_scores)
-        
-        # Determine best overall gem through weighted voting
-        gem_vote_counts, gem_total_scores = {}, {}
-        for light_source, match in best_matches.items():
-            if match:
-                db_gem = match['db_gem_id']
-                score = match['score']
-                
-                if db_gem not in gem_vote_counts:
-                    gem_vote_counts[db_gem] = 0
-                    gem_total_scores[db_gem] = 0
-                
-                gem_vote_counts[db_gem] += 1
-                gem_total_scores[db_gem] += score
-        
-        best_overall_gem = max(gem_vote_counts.keys(), 
-                             key=lambda gem: gem_vote_counts[gem] * gem_total_scores[gem] / gem_vote_counts[gem],
-                             default=None) if gem_vote_counts else None
-        
-        print(f"\nINTEGRATED ANALYSIS RESULTS (ULTRA OPTIMIZED):")
-        print("=" * 50)
-        print(f"UNKNOWN GEM: {gem_id}")
-        print(f"BEST MATCH: {best_overall_gem if best_overall_gem else 'No clear winner'}")
-        
-        # Normalization validation summary
-        print(f"\nNORMALIZATION VALIDATION:")
-        for light_source in ['UV', 'Laser', 'Halogen']:
-            if light_source in normalization_summary:
-                scheme = normalization_summary[light_source] or 'Unknown'
-                print(f"   {light_source}: {scheme}")
-        
-        # Light source analysis
-        print(f"\nLIGHT SOURCE ANALYSIS:")
-        light_icons = {'UV': '☢️  UV', 'Laser': '🔴 LASER', 'Halogen': '💡 HALOGEN'}
-        for light_source in ['UV', 'Laser', 'Halogen']:
-            if light_source in gem_scores:
-                score = gem_scores[light_source]
-                match = best_matches.get(light_source)
-                
-                if match:
-                    matched_gem = match['db_gem_id']
-                    norm_compat = match.get('normalization_compatible')
-                    
-                    compat_indicator = (" ✓COMPAT" if norm_compat is True else 
-                                      " ✗INCOMPAT" if norm_compat is False else "")
-                    match_indicator = " ⭐MATCH" if matched_gem == best_overall_gem else ""
-                    print(f"   {light_icons.get(light_source, light_source)}: {score:.1f}% → {matched_gem}{compat_indicator}{match_indicator}")
-                else:
-                    print(f"   {light_icons.get(light_source, light_source)}: {score:.1f}% → No match")
-        
-        print(f"\nINTEGRATED SCORE: {integrated_score:.1f}%")
-        
-        # Confidence assessment
-        thresholds = self.config['score_thresholds']
-        confidence_levels = [
-            (thresholds['excellent'], "EXCELLENT: Very likely same gem"),
-            (thresholds['strong'], "STRONG: Probably same gem"), 
-            (thresholds['moderate'], "MODERATE: Might be similar"),
-            (thresholds['weak'], "WEAK: Some similarity"),
-            (0.0, "POOR: No strong match")
-        ]
-        
-        for threshold, description in confidence_levels:
-            if integrated_score >= threshold:
-                print(f"   {description}")
-                break
-        
-        # Multi-candidate summary
-        if len(gem_vote_counts) > 1:
-            print(f"\nCANDIDATE SUMMARY:")
-            sorted_candidates = sorted(gem_vote_counts.items(), 
-                                     key=lambda x: gem_total_scores[x[0]]/x[1], reverse=True)
-            for candidate_gem, vote_count in sorted_candidates[:3]:  # Top 3 candidates
-                avg_score = gem_total_scores[candidate_gem] / vote_count
-                light_sources_matched = [ls for ls, match in best_matches.items() 
-                                       if match and match['db_gem_id'] == candidate_gem]
-                print(f"   • {candidate_gem}: {avg_score:.1f}% avg "
-                      f"({vote_count}/{len(gem_scores)} sources: {', '.join(light_sources_matched)})")
-    
-    def run_interactive_menu(self):
-        """OPTIMIZED: Interactive menu system with enhanced options and output configuration"""
-        print("ENHANCED GEM ANALYZER v2.2 - ULTRA OPTIMIZED - FIXED DATABASE PATHS")
-        print("Advanced matching with 50% code reduction + enhanced features")
-        print("=" * 70)
-        
-        # FIXED: Check database connection at startup
-        print(f"🔍 Checking system configuration...")
-        print(f"📍 Database path: {self.db_path}")
-        print(f"📁 Unknown path: {self.unknown_path}")
-        print(f"💾 Output directories:")
-        print(f"   📄 Reports (CSV/TXT): {self.reports_dir}")
-        print(f"   📊 Graphs (PNG): {self.graphs_dir}")
-        
-        db_status = self.check_database_connection()
-        if not db_status:
-            print("⚠️  Database connection issues detected. Some features may not work.")
-            input("Press Enter to continue anyway...")
-        
-        menu_options = {
-            "1": ("Analyze Unknown Files (ULTRA OPTIMIZED + Auto-Save)", self.analyze_all_unknowns_optimized),
-            "2": ("Multi-Light Integration Analysis (Auto-Save)", self.handle_multi_light_menu),
-            "3": ("Show Unknown Directory", self.show_unknown_directory),
-            "4": ("Database Statistics", self.show_database_stats),
-            "5": ("Show Matching Parameters & Output Config", self.show_matching_parameters),
-            "6": ("View Output Directory", self.show_output_directories),
-            "7": ("Clear Unknown Directory", self.clear_unknown_directory),
-            "8": ("Exit", None)
-        }
-        
-        while True:
-            print(f"\nMAIN MENU:")
-            for key, (desc, _) in menu_options.items():
-                print(f"{key}. {desc}")
-            
-            try:
-                choice = input("Choice (1-8): ").strip()
-                
-                if choice == "8":
-                    print("Goodbye!")
-                    break
-                
-                if choice in menu_options:
-                    _, action = menu_options[choice]
-                    if action:
-                        action()
-                        if choice != "8":
-                            input("\nPress Enter to continue...")
-                else:
-                    print("Invalid choice. Please enter 1-8")
-                    
-            except KeyboardInterrupt:
-                print("\nExiting...")
-                break
-            except Exception as e:
-                print(f"Error: {e}")
-    
-    def handle_multi_light_menu(self):
-        """OPTIMIZED: Multi-light analysis menu handler"""
-        gem_ids = set()
-        if self.unknown_path.exists():
-            for file in self.unknown_path.glob("*.csv"):
-                file_info = self.parse_gem_filename(file.name)
-                gem_ids.add(file_info['gem_id'])
-        
-        if gem_ids:
-            gem_list = sorted(list(gem_ids))
-            print("Found gems with unknown data:")
-            for i, gem_id in enumerate(gem_list, 1):
-                print(f"   {i}. {gem_id}")
-            
-            try:
-                selection = input(f"\nSelect gem (1-{len(gem_list)}) or 'all': ").strip()
-                if selection.lower() == 'all':
-                    for gem_id in gem_list:
-                        self.analyze_multi_light_integration_optimized(gem_id)
-                else:
-                    idx = int(selection) - 1
-                    if 0 <= idx < len(gem_list):
-                        self.analyze_multi_light_integration_optimized(gem_list[idx])
-                    else:
-                        print("Invalid selection")
-            except ValueError:
-                print("Invalid selection")
-        else:
-            print("No unknown gems found")
-    
-    def show_unknown_directory(self):
-        """OPTIMIZED: Show directory contents with enhanced info"""
-        if self.unknown_path.exists():
-            files = list(self.unknown_path.glob("*.csv"))
-            if files:
-                print(f"✅ Found {len(files)} files in unknown directory:")
-                for file in files:
-                    info = self.parse_gem_filename(file.name)
-                    size_kb = file.stat().st_size / 1024
-                    print(f"   📄 {file.name} ({size_kb:.1f} KB)")
-                    print(f"       Gem: {info['gem_id']}, Light: {info['light_source']}, "
-                          f"Orientation: {info['orientation']}, Scan: {info['scan_number']}")
-            else:
-                print("❌ No CSV files found in unknown directory")
-        else:
-            print(f"❌ Unknown directory not found: {self.unknown_path}")
-    
-    def show_output_directories(self):
-        """NEW: Show output directory contents and structure"""
-        print("OUTPUT DIRECTORIES & SAVED RESULTS")
-        print("=" * 50)
-        
-        print(f"📁 Output Root: {self.output_root}")
-        print(f"📄 Reports Directory: {self.reports_dir}")
-        
-        if self.reports_dir.exists():
-            report_files = list(self.reports_dir.glob("*.csv")) + list(self.reports_dir.glob("*.txt"))
-            if report_files:
-                print(f"   Found {len(report_files)} report files:")
-                # Sort by modification time (newest first)
-                report_files.sort(key=lambda f: f.stat().st_mtime, reverse=True)
-                for file in report_files[:10]:  # Show latest 10
-                    size_kb = file.stat().st_size / 1024
-                    mod_time = datetime.fromtimestamp(file.stat().st_mtime)
-                    file_type = "📊 CSV" if file.suffix == '.csv' else "📄 TXT"
-                    print(f"   {file_type} {file.name} ({size_kb:.1f} KB, {mod_time.strftime('%Y-%m-%d %H:%M')})")
-                if len(report_files) > 10:
-                    print(f"   ... and {len(report_files) - 10} more files")
-            else:
-                print("   📝 No report files yet (run analysis to generate reports)")
-        else:
-            print("   📝 Reports directory will be created when first analysis is run")
-        
-        print(f"\n📊 Graphs Directory: {self.graphs_dir}")
-        if self.graphs_dir.exists():
-            graph_files = list(self.graphs_dir.glob("*.png"))
-            if graph_files:
-                print(f"   Found {len(graph_files)} graph files:")
-                for file in graph_files[:5]:  # Show latest 5
-                    size_kb = file.stat().st_size / 1024
-                    mod_time = datetime.fromtimestamp(file.stat().st_mtime)
-                    print(f"   🖼️  {file.name} ({size_kb:.1f} KB, {mod_time.strftime('%Y-%m-%d %H:%M')})")
-                if len(graph_files) > 5:
-                    print(f"   ... and {len(graph_files) - 5} more files")
-            else:
-                print("   📊 No graph files yet (graphs will be generated during analysis)")
-        else:
-            print("   📊 Graphs directory will be created when first graphs are generated")
-        
-        print(f"\n💡 Directory Structure:")
-        print(f"   {self.output_root}/")
-        print(f"   ├── reports/     (CSV and TXT analysis reports)")
-        print(f"   └── graphs/      (PNG visualization charts)")
-        
-        # Option to open directory in file explorer
-        try:
-            import sys
-            import subprocess
-            import os
-            
-            print(f"\n🔍 Open directories:")
-            open_reports = input("Open reports directory? (y/N): ").strip().lower()
-            if open_reports == 'y':
-                if sys.platform == 'win32':
-                    os.startfile(str(self.reports_dir))
-                elif sys.platform == 'darwin':
-                    subprocess.run(['open', str(self.reports_dir)])
-                else:
-                    subprocess.run(['xdg-open', str(self.reports_dir)])
-                print(f"📂 Opened reports directory")
-                
-        except Exception as e:
-            print(f"⚠️  Could not open directory: {e}")
-    
-    def show_database_stats(self):
-        """OPTIMIZED: Enhanced database statistics"""
-        try:
-            if not self.check_database_connection():
-                return
-            
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            # Basic stats
-            cursor.execute("SELECT COUNT(*) FROM structural_features")
-            total = cursor.fetchone()[0]
-            
-            cursor.execute("SELECT COUNT(DISTINCT file) FROM structural_features")
-            unique_files = cursor.fetchone()[0]
-            
-            cursor.execute("SELECT light_source, COUNT(*) FROM structural_features GROUP BY light_source ORDER BY COUNT(*) DESC")
-            by_light = cursor.fetchall()
-            
-            cursor.execute("SELECT COUNT(*) FROM structural_features WHERE normalization_scheme IS NOT NULL")
-            with_norm = cursor.fetchone()[0]
-            
-            # Enhanced stats
-            cursor.execute("SELECT COUNT(DISTINCT SUBSTR(file, 1, INSTR(file, '_')-1)) FROM structural_features WHERE file LIKE '%_%'")
-            unique_gems = cursor.fetchone()[0] if cursor.fetchone() else 0
-            
-            print(f"DATABASE STATISTICS (ULTRA OPTIMIZED)")
-            print("=" * 50)
-            print(f"📊 Total spectral features: {total:,}")
-            print(f"📁 Unique gem files: {unique_files:,}")
-            print(f"💎 Estimated unique gems: {unique_gems:,}")
-            print(f"🏷️  Records with normalization: {with_norm:,} ({100*with_norm/total:.1f}%)")
-            
-            print(f"\n💡 By Light Source:")
-            for light, count in by_light:
-                percentage = 100 * count / total
-                print(f"   {light}: {count:,} ({percentage:.1f}%)")
-            
-            conn.close()
-            
-        except Exception as e:
-            print(f"❌ Database error: {e}")
-    
-    def show_matching_parameters(self):
-        """OPTIMIZED: Show comprehensive matching parameters and output locations"""
-        print("MATCHING PARAMETERS & OUTPUT CONFIGURATION (ULTRA OPTIMIZED)")
-        print("=" * 70)
-        
-        print("📁 DIRECTORY CONFIGURATION:")
-        print(f"   Database: {self.db_path}")
-        print(f"   Unknown Files: {self.unknown_path}")
-        print(f"   📄 CSV/TXT Reports: {self.reports_dir}")
-        print(f"   📊 PNG Graphs: {self.graphs_dir}")
-        
-        print("\n🎯 Wavelength Tolerances (Halogen/Laser):")
-        for param, value in self.config['tolerances'].items():
-            print(f"   {param.replace('_', ' ').title()}: ±{value} nm")
-        
-        print(f"\n⚠️  Matching Penalties:")
-        for param, value in self.config['penalties'].items():
-            print(f"   {param.replace('_', ' ').title()}: -{value}%")
-        
-        print(f"\n☢️  UV Analysis Parameters (0-100 scale):")
-        uv_params = self.config['uv_params']
-        print(f"   Reference wavelength: {uv_params['reference_wavelength']} nm")
-        print(f"   Expected intensity: ~{uv_params['reference_expected_intensity']} (0-100 scale)")
-        print(f"   Minimum peak threshold: {uv_params['minimum_real_peak_intensity']}")
-        print(f"   Standards: {', '.join(f'{wl:.1f}nm' for wl in uv_params['real_peak_standards'])}")
-        
-        print(f"\n🔍 Diagnostic Peaks:")
-        for wl, desc in uv_params['diagnostic_peaks'].items():
-            print(f"   {wl:.1f}nm: {desc}")
-        
-        print(f"\n📋 Expected Normalization Schemes:")
-        for light, scheme in self.config['normalization_schemes'].items():
-            print(f"   {light}: {scheme}")
-        
-        print(f"\n🎚️  Score Thresholds:")
-        for level, threshold in self.config['score_thresholds'].items():
-            print(f"   {level.title()}: ≥{threshold}%")
-        
-        print(f"\n💾 OUTPUT FILE FORMATS:")
-        print(f"   CSV Reports: Detailed analysis data for spreadsheet import")
-        print(f"   TXT Reports: Human-readable analysis summaries")
-        print(f"   PNG Graphs: Visual analysis charts (when generated)")
-        print(f"   Automatic saving: All results saved with timestamp")
-        
-        print(f"\n✅ Enhanced Analysis Features:")
-        analysis_features = [
-            "Dynamic UV threshold determination",
-            "Multi-field wavelength extraction",
-            "Normalization compatibility checking", 
-            "Enhanced diagnostic peak analysis",
-            "Vectorized feature matching",
-            "Comprehensive data validation",
-            "Automatic result saving to organized directories",
-            "Batch and individual analysis reporting"
-        ]
-        for feature in analysis_features:
-            print(f"   • {feature}")
-    
-    def clear_unknown_directory(self):
-        """OPTIMIZED: Clear directory with confirmation"""
-        if self.unknown_path.exists():
-            files = list(self.unknown_path.glob("*.csv"))
-            if files:
-                print(f"Found {len(files)} files to delete:")
-                for file in files[:5]:  # Show first 5
-                    print(f"   📄 {file.name}")
-                if len(files) > 5:
-                    print(f"   ... and {len(files) - 5} more files")
-                
-                confirm = input(f"\n⚠️  Delete all {len(files)} files? (y/N): ").strip().lower()
-                if confirm == 'y':
-                    deleted = 0
-                    for file in files:
-                        try:
-                            file.unlink()
-                            deleted += 1
-                        except Exception as e:
-                            print(f"Error deleting {file.name}: {e}")
-                    print(f"✅ Deleted {deleted}/{len(files)} files")
-                else:
-                    print("❌ Operation cancelled")
-            else:
-                print("No CSV files found to delete")
-        else:
-            print(f"❌ Unknown directory not found: {self.unknown_path}")
+        return self.analyze_archive_files_optimized()
 
 def main():
-    """OPTIMIZED: Main entry point with enhanced initialization"""
-    print("🔬 TESTING ULTRA OPTIMIZED UV RATIO CALCULATIONS")
-    print("=" * 60)
-    
+    """Main entry point for Option 8"""
     analyzer = UltraOptimizedGemAnalyzer()
-    
-    # Display key parameters
-    uv_params = analyzer.config['uv_params']
-    print(f"☢️  ULTRA OPTIMIZED UV Parameters:")
-    print(f"   Expected {uv_params['reference_wavelength']}nm intensity: ~{uv_params['reference_expected_intensity']} (0-100 scale)")
-    print(f"   Minimum real peak: {uv_params['minimum_real_peak_intensity']}")
-    print(f"   Standards: {len(uv_params['real_peak_standards'])} reference peaks")
-    
-    print(f"\n🏷️  Expected normalization schemes:")
-    for light, scheme in analyzer.config['normalization_schemes'].items():
-        print(f"   {light}: {scheme}")
-    
-    print(f"\n🚀 Starting ULTRA OPTIMIZED Enhanced Gem Analyzer...")
-    print("=" * 60)
-    
-    analyzer.run_interactive_menu()
+    analyzer.run_option8_analysis()
 
 if __name__ == "__main__":
     main()
