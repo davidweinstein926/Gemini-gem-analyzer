@@ -3,7 +3,7 @@
 ENHANCED GEM ANALYZER v2.2 - ULTRA OPTIMIZED - FIXED DATABASE PATHS
 Implements David's sophisticated matching with 50% code reduction + enhanced features
 OPTIMIZED: Consolidated architecture, enhanced capabilities, streamlined operations
-FIXED: Correct database paths for root/database/structural_spectra structure
+FIXED: Database and directory paths for proper file location
 """
 import sqlite3
 import pandas as pd
@@ -18,10 +18,14 @@ class UltraOptimizedGemAnalyzer:
     """ULTRA OPTIMIZED: All-in-one gem analyzer with consolidated architecture - FIXED PATHS"""
     
     def __init__(self, db_path=None):
-        # FIXED: Proper database path construction
+        # FIXED: More robust database path construction
         if db_path is None:
+            # First, try to find the project root by looking for common indicators
+            self.project_root = self.find_project_root()
+            
             # Try multiple possible locations for the database
             possible_db_paths = [
+                self.project_root / "database" / "structural_spectra" / "multi_structural_gem_data.db",  # Direct from project root
                 Path("../../database/structural_spectra/multi_structural_gem_data.db"),  # From src/structural_analysis/
                 Path("../database/structural_spectra/multi_structural_gem_data.db"),   # Alternative
                 Path("database/structural_spectra/multi_structural_gem_data.db"),      # From project root
@@ -29,29 +33,46 @@ class UltraOptimizedGemAnalyzer:
                 Path.home() / "database" / "structural_spectra" / "multi_structural_gem_data.db"  # User home fallback
             ]
             
+            print(f"🔍 Searching for database...")
+            print(f"📁 Project root detected: {self.project_root}")
+            
             # Find the first existing database
             self.db_path = None
-            for db_path_candidate in possible_db_paths:
+            for i, db_path_candidate in enumerate(possible_db_paths, 1):
+                print(f"   {i}. Checking: {db_path_candidate}")
                 if db_path_candidate.exists():
                     self.db_path = str(db_path_candidate)
                     print(f"✅ Found database: {self.db_path}")
                     break
+                else:
+                    print(f"   ❌ Not found")
             
             if self.db_path is None:
                 # Use the primary expected location even if it doesn't exist
                 self.db_path = str(possible_db_paths[0])
                 print(f"⚠️  Database not found, will use: {self.db_path}")
+                print(f"📍 Expected location: root/database/structural_spectra/multi_structural_gem_data.db")
         else:
             self.db_path = db_path
         
-        # FIXED: Proper unknown directory path construction  
-        possible_unknown_paths = [
-            Path("../../data/structural_data/unknown"),                                # New structure
-            Path("../data/structural_data/unknown"),                                  # Alternative
-            Path("data/structural_data/unknown"),                                     # From project root
-            Path(r"C:\users\david\gemini sp10 structural data\unknown"),             # Original Windows path
-            Path.home() / "gemini sp10 structural data" / "unknown"                  # User home fallback
-        ]
+        # FIXED: Proper unknown directory path construction using project root
+        if hasattr(self, 'project_root'):
+            possible_unknown_paths = [
+                self.project_root / "data" / "structural_data" / "unknown",            # Direct from project root
+                Path("../../data/structural_data/unknown"),                           # From src/structural_analysis/
+                Path("../data/structural_data/unknown"),                              # Alternative
+                Path("data/structural_data/unknown"),                                 # From project root
+                Path(r"C:\users\david\gemini sp10 structural data\unknown"),         # Original Windows path
+                Path.home() / "gemini sp10 structural data" / "unknown"              # User home fallback
+            ]
+        else:
+            possible_unknown_paths = [
+                Path("../../data/structural_data/unknown"),                           # From src/structural_analysis/
+                Path("../data/structural_data/unknown"),                              # Alternative
+                Path("data/structural_data/unknown"),                                 # From project root
+                Path(r"C:\users\david\gemini sp10 structural data\unknown"),         # Original Windows path
+                Path.home() / "gemini sp10 structural data" / "unknown"              # User home fallback
+            ]
         
         # Find the first existing unknown directory
         self.unknown_path = None
@@ -65,9 +86,6 @@ class UltraOptimizedGemAnalyzer:
             # Use the primary expected location
             self.unknown_path = possible_unknown_paths[0]
             print(f"⚠️  Unknown directory not found, will use: {self.unknown_path}")
-        
-        # NEW: Output directories configuration
-        self.setup_output_directories()
         
         # CONSOLIDATED CONFIG: All parameters in single dictionary
         self.config = {
@@ -102,51 +120,39 @@ class UltraOptimizedGemAnalyzer:
                                 'max_wavelength', 'midpoint_wavelength', 'peak_wavelength', 'Crest', 'Midpoint']
         }
     
-    def setup_output_directories(self):
-        """NEW: Setup output directories for results and graphs"""
-        # Try multiple possible locations for output directories
-        possible_output_roots = [
-            Path("../../outputs/structural_results"),     # From src/structural_analysis/
-            Path("../outputs/structural_results"),       # Alternative
-            Path("outputs/structural_results"),          # From project root
-            Path("structural_results"),                  # Current directory fallback
-            Path.home() / "gemini_outputs" / "structural_results"  # User home fallback
+    def find_project_root(self) -> Path:
+        """ADDED: Find the project root directory by looking for common indicators"""
+        current_path = Path(__file__).parent.absolute()
+        
+        # Look for common project indicators as we traverse up
+        indicators = [
+            "main.py",
+            "src",
+            "database",
+            "data", 
+            ".git",
+            "requirements.txt",
+            "README.md"
         ]
         
-        # Find or create output root directory
-        self.output_root = None
-        for output_root_candidate in possible_output_roots:
-            parent = output_root_candidate.parent
-            if parent.exists() or output_root_candidate.exists():
-                self.output_root = output_root_candidate
-                break
+        # Start from current file location and go up
+        for path in [current_path] + list(current_path.parents):
+            # Check if this looks like the project root
+            indicator_count = sum(1 for indicator in indicators if (path / indicator).exists())
+            
+            # If we find multiple indicators, this is likely the root
+            if indicator_count >= 2:
+                print(f"🎯 Project root detected: {path} (found {indicator_count} indicators)")
+                return path
+            
+            # Specifically look for database directory
+            if (path / "database" / "structural_spectra").exists():
+                print(f"🎯 Project root found via database directory: {path}")
+                return path
         
-        if self.output_root is None:
-            # Use the primary expected location
-            self.output_root = possible_output_roots[0]
-        
-        # Create subdirectories
-        self.reports_dir = self.output_root / "reports"
-        self.graphs_dir = self.output_root / "graphs"
-        
-        # Ensure directories exist
-        try:
-            self.reports_dir.mkdir(parents=True, exist_ok=True)
-            self.graphs_dir.mkdir(parents=True, exist_ok=True)
-            print(f"✅ Output directories configured:")
-            print(f"   📄 Reports: {self.reports_dir}")
-            print(f"   📊 Graphs: {self.graphs_dir}")
-        except Exception as e:
-            print(f"⚠️  Could not create output directories: {e}")
-            # Fallback to current directory
-            self.output_root = Path.cwd() / "structural_results"
-            self.reports_dir = self.output_root / "reports"
-            self.graphs_dir = self.output_root / "graphs"
-            self.reports_dir.mkdir(parents=True, exist_ok=True)
-            self.graphs_dir.mkdir(parents=True, exist_ok=True)
-            print(f"🔄 Using fallback directories:")
-            print(f"   📄 Reports: {self.reports_dir}")
-            print(f"   📊 Graphs: {self.graphs_dir}")
+        # Fallback to current directory
+        print(f"⚠️  Could not detect project root, using current directory: {current_path}")
+        return current_path
     
     def check_database_connection(self):
         """FIXED: Check database connection with better error reporting"""
@@ -541,194 +547,6 @@ class UltraOptimizedGemAnalyzer:
         
         return norm_scheme
     
-    def save_analysis_report(self, results: Dict, report_type: str = "analysis") -> str:
-        """NEW: Save analysis results as CSV and TXT reports"""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        base_filename = f"gem_analysis_{report_type}_{timestamp}"
-        
-        # Generate CSV report
-        csv_path = self.reports_dir / f"{base_filename}.csv"
-        try:
-            self.save_csv_report(results, csv_path)
-            print(f"✅ CSV report saved: {csv_path}")
-        except Exception as e:
-            print(f"❌ Error saving CSV report: {e}")
-        
-        # Generate TXT report
-        txt_path = self.reports_dir / f"{base_filename}.txt"
-        try:
-            self.save_txt_report(results, txt_path)
-            print(f"✅ TXT report saved: {txt_path}")
-        except Exception as e:
-            print(f"❌ Error saving TXT report: {e}")
-        
-        return str(csv_path)
-    
-    def save_csv_report(self, results: Dict, csv_path: Path):
-        """NEW: Save detailed CSV report of analysis results"""
-        csv_data = []
-        
-        if isinstance(results, dict) and 'results' in results:
-            # Multiple files analysis
-            for filename, result in results['results'].items():
-                if 'error' in result:
-                    csv_data.append({
-                        'Filename': filename,
-                        'Status': 'Error',
-                        'Error': result['error'],
-                        'Gem_ID': '',
-                        'Light_Source': '',
-                        'Best_Match': '',
-                        'Score': 0,
-                        'Normalization': ''
-                    })
-                elif result.get('matches'):
-                    file_info = result['file_info']
-                    best_match = result['matches'][0]
-                    csv_data.append({
-                        'Filename': filename,
-                        'Status': 'Success',
-                        'Error': '',
-                        'Gem_ID': file_info['gem_id'],
-                        'Light_Source': file_info['light_source'],
-                        'Best_Match': best_match['db_gem_id'],
-                        'Score': best_match['score'],
-                        'Normalization': result.get('normalization_scheme', 'Unknown'),
-                        'Features_Found': len(result.get('unknown_data', [])),
-                        'DB_Features': best_match['db_features'],
-                        'Compatible': best_match.get('normalization_compatible', 'Unknown')
-                    })
-                else:
-                    file_info = result['file_info']
-                    csv_data.append({
-                        'Filename': filename,
-                        'Status': 'No Matches',
-                        'Error': '',
-                        'Gem_ID': file_info['gem_id'],
-                        'Light_Source': file_info['light_source'],
-                        'Best_Match': 'None',
-                        'Score': 0,
-                        'Normalization': result.get('normalization_scheme', 'Unknown')
-                    })
-        
-        elif isinstance(results, dict) and 'gem_id' in results:
-            # Multi-light integration analysis
-            gem_id = results['gem_id']
-            for light_source, score in results.get('light_source_scores', {}).items():
-                match = results['light_source_matches'].get(light_source)
-                csv_data.append({
-                    'Gem_ID': gem_id,
-                    'Light_Source': light_source,
-                    'Score': score,
-                    'Best_Match': match['db_gem_id'] if match else 'None',
-                    'Integrated_Score': results.get('integrated_score', 0),
-                    'Normalization': results['normalization_schemes'].get(light_source, 'Unknown')
-                })
-        
-        # Save to CSV
-        if csv_data:
-            df = pd.DataFrame(csv_data)
-            df.to_csv(csv_path, index=False)
-    
-    def save_txt_report(self, results: Dict, txt_path: Path):
-        """NEW: Save detailed TXT report of analysis results"""
-        with open(txt_path, 'w', encoding='utf-8') as f:
-            f.write("GEMINI STRUCTURAL ANALYSIS REPORT\n")
-            f.write("=" * 70 + "\n")
-            f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-            f.write(f"Database: {self.db_path}\n")
-            f.write(f"Unknown Directory: {self.unknown_path}\n")
-            f.write(f"Reports Directory: {self.reports_dir}\n")
-            f.write(f"Graphs Directory: {self.graphs_dir}\n")
-            f.write("\n")
-            
-            # Analysis parameters
-            f.write("ANALYSIS PARAMETERS:\n")
-            f.write("-" * 30 + "\n")
-            f.write(f"UV Reference Wavelength: {self.config['uv_params']['reference_wavelength']} nm\n")
-            f.write(f"Expected UV Intensity: {self.config['uv_params']['reference_expected_intensity']} (0-100 scale)\n")
-            f.write(f"Score Thresholds: {self.config['score_thresholds']}\n")
-            f.write("\n")
-            
-            if isinstance(results, dict) and 'results' in results:
-                # Multiple files analysis
-                f.write("ANALYSIS RESULTS:\n")
-                f.write("-" * 30 + "\n")
-                
-                success_count = 0
-                total_count = len(results['results'])
-                
-                for filename, result in results['results'].items():
-                    f.write(f"\nFile: {filename}\n")
-                    
-                    if 'error' in result:
-                        f.write(f"  Status: ERROR - {result['error']}\n")
-                    elif result.get('matches'):
-                        success_count += 1
-                        file_info = result['file_info']
-                        best_match = result['matches'][0]
-                        
-                        f.write(f"  Gem ID: {file_info['gem_id']}\n")
-                        f.write(f"  Light Source: {file_info['light_source']}\n")
-                        f.write(f"  Orientation: {file_info['orientation']}\n")
-                        f.write(f"  Features Found: {len(result.get('unknown_data', []))}\n")
-                        f.write(f"  Best Match: {best_match['db_gem_id']} ({best_match['score']:.1f}%)\n")
-                        f.write(f"  Normalization: {result.get('normalization_scheme', 'Unknown')}\n")
-                        f.write(f"  Compatible: {best_match.get('normalization_compatible', 'Unknown')}\n")
-                        
-                        # Show top 3 matches
-                        if len(result['matches']) > 1:
-                            f.write("  Other Matches:\n")
-                            for i, match in enumerate(result['matches'][1:4], 2):
-                                f.write(f"    {i}. {match['db_gem_id']} ({match['score']:.1f}%)\n")
-                    else:
-                        file_info = result['file_info']
-                        f.write(f"  Gem ID: {file_info['gem_id']}\n")
-                        f.write(f"  Light Source: {file_info['light_source']}\n")
-                        f.write(f"  Status: No matches found\n")
-                
-                f.write(f"\nSUMMARY:\n")
-                f.write(f"  Total files analyzed: {total_count}\n")
-                f.write(f"  Successful matches: {success_count}\n")
-                f.write(f"  Success rate: {100*success_count/total_count:.1f}%\n")
-            
-            elif isinstance(results, dict) and 'gem_id' in results:
-                # Multi-light integration analysis
-                f.write("MULTI-LIGHT INTEGRATION ANALYSIS:\n")
-                f.write("-" * 40 + "\n")
-                f.write(f"Gem ID: {results['gem_id']}\n")
-                f.write(f"Integrated Score: {results.get('integrated_score', 0):.1f}%\n")
-                f.write("\nLight Source Results:\n")
-                
-                for light_source, score in results.get('light_source_scores', {}).items():
-                    match = results['light_source_matches'].get(light_source)
-                    f.write(f"  {light_source}: {score:.1f}%")
-                    if match:
-                        f.write(f" → {match['db_gem_id']}")
-                        if match.get('normalization_compatible') is not None:
-                            compat = "Compatible" if match['normalization_compatible'] else "Incompatible"
-                            f.write(f" ({compat})")
-                    f.write("\n")
-                
-                f.write(f"\nNormalization Schemes:\n")
-                for light_source, scheme in results.get('normalization_schemes', {}).items():
-                    f.write(f"  {light_source}: {scheme or 'Unknown'}\n")
-    
-    def save_graph(self, graph_data: Dict, graph_type: str = "analysis") -> str:
-        """NEW: Save analysis graphs as PNG files"""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        png_filename = f"gem_{graph_type}_{timestamp}.png"
-        png_path = self.graphs_dir / png_filename
-        
-        try:
-            # This would be implemented when plotting functionality is added
-            # For now, just create a placeholder
-            print(f"📊 Graph functionality ready: {png_path}")
-            return str(png_path)
-        except Exception as e:
-            print(f"❌ Error saving graph: {e}")
-            return ""
-    
     def find_database_matches_optimized(self, unknown_data: List[Dict], file_info: Dict, top_n: int = 10) -> List[Dict]:
         """OPTIMIZED: Database matching with enhanced efficiency and compatibility checking"""
         try:
@@ -834,7 +652,7 @@ class UltraOptimizedGemAnalyzer:
         }
     
     def analyze_all_unknowns_optimized(self):
-        """OPTIMIZED: Batch analysis with enhanced summary reporting and automatic saving"""
+        """OPTIMIZED: Batch analysis with enhanced summary reporting"""
         # FIXED: Check database first
         if not self.check_database_connection():
             print("❌ Cannot proceed without database connection")
@@ -869,26 +687,6 @@ class UltraOptimizedGemAnalyzer:
         
         # Enhanced summary reporting
         self.generate_analysis_summary_optimized(all_results, normalization_issues)
-        
-        # NEW: Save results automatically
-        if all_results:
-            print(f"\n💾 Saving analysis results...")
-            try:
-                results_package = {
-                    'results': all_results,
-                    'normalization_issues': normalization_issues,
-                    'analysis_type': 'batch_unknown_analysis',
-                    'total_files': len(csv_files),
-                    'successful_files': len([r for r in all_results.values() if 'matches' in r and r['matches']])
-                }
-                
-                saved_path = self.save_analysis_report(results_package, "batch_analysis")
-                print(f"📄 Analysis reports saved to: {self.reports_dir}")
-                print(f"📊 Graph directory ready: {self.graphs_dir}")
-                
-            except Exception as e:
-                print(f"❌ Error saving results: {e}")
-        
         return all_results
     
     def generate_analysis_summary_optimized(self, all_results: Dict, normalization_issues: List[str]):
@@ -1006,22 +804,11 @@ class UltraOptimizedGemAnalyzer:
         if gem_scores:
             self.generate_integration_summary_optimized(gem_id, gem_scores, best_matches, normalization_summary)
             
-            integration_result = {
+            return {
                 'gem_id': gem_id, 'light_source_scores': gem_scores, 'light_source_matches': best_matches,
                 'integrated_score': sum(gem_scores.values()) / len(gem_scores),
                 'normalization_schemes': normalization_summary
             }
-            
-            # NEW: Save integration results automatically
-            print(f"\n💾 Saving multi-light integration results...")
-            try:
-                saved_path = self.save_analysis_report(integration_result, f"integration_{gem_id}")
-                print(f"📄 Integration reports saved to: {self.reports_dir}")
-                print(f"📊 Graph directory ready: {self.graphs_dir}")
-            except Exception as e:
-                print(f"❌ Error saving integration results: {e}")
-            
-            return integration_result
         
         return None
     
@@ -1108,7 +895,7 @@ class UltraOptimizedGemAnalyzer:
                       f"({vote_count}/{len(gem_scores)} sources: {', '.join(light_sources_matched)})")
     
     def run_interactive_menu(self):
-        """OPTIMIZED: Interactive menu system with enhanced options and output configuration"""
+        """OPTIMIZED: Interactive menu system with enhanced options"""
         print("ENHANCED GEM ANALYZER v2.2 - ULTRA OPTIMIZED - FIXED DATABASE PATHS")
         print("Advanced matching with 50% code reduction + enhanced features")
         print("=" * 70)
@@ -1117,9 +904,6 @@ class UltraOptimizedGemAnalyzer:
         print(f"🔍 Checking system configuration...")
         print(f"📍 Database path: {self.db_path}")
         print(f"📁 Unknown path: {self.unknown_path}")
-        print(f"💾 Output directories:")
-        print(f"   📄 Reports (CSV/TXT): {self.reports_dir}")
-        print(f"   📊 Graphs (PNG): {self.graphs_dir}")
         
         db_status = self.check_database_connection()
         if not db_status:
@@ -1127,14 +911,13 @@ class UltraOptimizedGemAnalyzer:
             input("Press Enter to continue anyway...")
         
         menu_options = {
-            "1": ("Analyze Unknown Files (ULTRA OPTIMIZED + Auto-Save)", self.analyze_all_unknowns_optimized),
-            "2": ("Multi-Light Integration Analysis (Auto-Save)", self.handle_multi_light_menu),
+            "1": ("Analyze Unknown Files (ULTRA OPTIMIZED)", self.analyze_all_unknowns_optimized),
+            "2": ("Multi-Light Integration Analysis", self.handle_multi_light_menu),
             "3": ("Show Unknown Directory", self.show_unknown_directory),
             "4": ("Database Statistics", self.show_database_stats),
-            "5": ("Show Matching Parameters & Output Config", self.show_matching_parameters),
-            "6": ("View Output Directory", self.show_output_directories),
-            "7": ("Clear Unknown Directory", self.clear_unknown_directory),
-            "8": ("Exit", None)
+            "5": ("Show Matching Parameters", self.show_matching_parameters),
+            "6": ("Clear Unknown Directory", self.clear_unknown_directory),
+            "7": ("Exit", None)
         }
         
         while True:
@@ -1143,9 +926,9 @@ class UltraOptimizedGemAnalyzer:
                 print(f"{key}. {desc}")
             
             try:
-                choice = input("Choice (1-8): ").strip()
+                choice = input("Choice (1-7): ").strip()
                 
-                if choice == "8":
+                if choice == "7":
                     print("Goodbye!")
                     break
                 
@@ -1153,10 +936,10 @@ class UltraOptimizedGemAnalyzer:
                     _, action = menu_options[choice]
                     if action:
                         action()
-                        if choice != "8":
+                        if choice != "7":
                             input("\nPress Enter to continue...")
                 else:
-                    print("Invalid choice. Please enter 1-8")
+                    print("Invalid choice. Please enter 1-7")
                     
             except KeyboardInterrupt:
                 print("\nExiting...")
@@ -1211,73 +994,6 @@ class UltraOptimizedGemAnalyzer:
         else:
             print(f"❌ Unknown directory not found: {self.unknown_path}")
     
-    def show_output_directories(self):
-        """NEW: Show output directory contents and structure"""
-        print("OUTPUT DIRECTORIES & SAVED RESULTS")
-        print("=" * 50)
-        
-        print(f"📁 Output Root: {self.output_root}")
-        print(f"📄 Reports Directory: {self.reports_dir}")
-        
-        if self.reports_dir.exists():
-            report_files = list(self.reports_dir.glob("*.csv")) + list(self.reports_dir.glob("*.txt"))
-            if report_files:
-                print(f"   Found {len(report_files)} report files:")
-                # Sort by modification time (newest first)
-                report_files.sort(key=lambda f: f.stat().st_mtime, reverse=True)
-                for file in report_files[:10]:  # Show latest 10
-                    size_kb = file.stat().st_size / 1024
-                    mod_time = datetime.fromtimestamp(file.stat().st_mtime)
-                    file_type = "📊 CSV" if file.suffix == '.csv' else "📄 TXT"
-                    print(f"   {file_type} {file.name} ({size_kb:.1f} KB, {mod_time.strftime('%Y-%m-%d %H:%M')})")
-                if len(report_files) > 10:
-                    print(f"   ... and {len(report_files) - 10} more files")
-            else:
-                print("   📝 No report files yet (run analysis to generate reports)")
-        else:
-            print("   📝 Reports directory will be created when first analysis is run")
-        
-        print(f"\n📊 Graphs Directory: {self.graphs_dir}")
-        if self.graphs_dir.exists():
-            graph_files = list(self.graphs_dir.glob("*.png"))
-            if graph_files:
-                print(f"   Found {len(graph_files)} graph files:")
-                for file in graph_files[:5]:  # Show latest 5
-                    size_kb = file.stat().st_size / 1024
-                    mod_time = datetime.fromtimestamp(file.stat().st_mtime)
-                    print(f"   🖼️  {file.name} ({size_kb:.1f} KB, {mod_time.strftime('%Y-%m-%d %H:%M')})")
-                if len(graph_files) > 5:
-                    print(f"   ... and {len(graph_files) - 5} more files")
-            else:
-                print("   📊 No graph files yet (graphs will be generated during analysis)")
-        else:
-            print("   📊 Graphs directory will be created when first graphs are generated")
-        
-        print(f"\n💡 Directory Structure:")
-        print(f"   {self.output_root}/")
-        print(f"   ├── reports/     (CSV and TXT analysis reports)")
-        print(f"   └── graphs/      (PNG visualization charts)")
-        
-        # Option to open directory in file explorer
-        try:
-            import sys
-            import subprocess
-            import os
-            
-            print(f"\n🔍 Open directories:")
-            open_reports = input("Open reports directory? (y/N): ").strip().lower()
-            if open_reports == 'y':
-                if sys.platform == 'win32':
-                    os.startfile(str(self.reports_dir))
-                elif sys.platform == 'darwin':
-                    subprocess.run(['open', str(self.reports_dir)])
-                else:
-                    subprocess.run(['xdg-open', str(self.reports_dir)])
-                print(f"📂 Opened reports directory")
-                
-        except Exception as e:
-            print(f"⚠️  Could not open directory: {e}")
-    
     def show_database_stats(self):
         """OPTIMIZED: Enhanced database statistics"""
         try:
@@ -1322,17 +1038,11 @@ class UltraOptimizedGemAnalyzer:
             print(f"❌ Database error: {e}")
     
     def show_matching_parameters(self):
-        """OPTIMIZED: Show comprehensive matching parameters and output locations"""
-        print("MATCHING PARAMETERS & OUTPUT CONFIGURATION (ULTRA OPTIMIZED)")
-        print("=" * 70)
+        """OPTIMIZED: Show comprehensive matching parameters"""
+        print("MATCHING PARAMETERS (ULTRA OPTIMIZED)")
+        print("=" * 60)
         
-        print("📁 DIRECTORY CONFIGURATION:")
-        print(f"   Database: {self.db_path}")
-        print(f"   Unknown Files: {self.unknown_path}")
-        print(f"   📄 CSV/TXT Reports: {self.reports_dir}")
-        print(f"   📊 PNG Graphs: {self.graphs_dir}")
-        
-        print("\n🎯 Wavelength Tolerances (Halogen/Laser):")
+        print("🎯 Wavelength Tolerances (Halogen/Laser):")
         for param, value in self.config['tolerances'].items():
             print(f"   {param.replace('_', ' ').title()}: ±{value} nm")
         
@@ -1359,24 +1069,16 @@ class UltraOptimizedGemAnalyzer:
         for level, threshold in self.config['score_thresholds'].items():
             print(f"   {level.title()}: ≥{threshold}%")
         
-        print(f"\n💾 OUTPUT FILE FORMATS:")
-        print(f"   CSV Reports: Detailed analysis data for spreadsheet import")
-        print(f"   TXT Reports: Human-readable analysis summaries")
-        print(f"   PNG Graphs: Visual analysis charts (when generated)")
-        print(f"   Automatic saving: All results saved with timestamp")
-        
-        print(f"\n✅ Enhanced Analysis Features:")
-        analysis_features = [
+        print(f"\n✅ Enhanced Validation Features:")
+        validation_features = [
             "Dynamic UV threshold determination",
             "Multi-field wavelength extraction",
             "Normalization compatibility checking", 
             "Enhanced diagnostic peak analysis",
             "Vectorized feature matching",
-            "Comprehensive data validation",
-            "Automatic result saving to organized directories",
-            "Batch and individual analysis reporting"
+            "Comprehensive data validation"
         ]
-        for feature in analysis_features:
+        for feature in validation_features:
             print(f"   • {feature}")
     
     def clear_unknown_directory(self):
