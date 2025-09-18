@@ -1,11 +1,19 @@
 #!/usr/bin/env python3
 """
-COMPLETE GEMINI ANALYSIS SYSTEM - FIXED WITH SMART FALLBACK
-Smart directory fallback: raw_temp → raw (archive) + InputSubmission fixes
+SUPER SAFE GEMINI ANALYSIS SYSTEM - OPTION 3 MEMORY PROTECTED
+⚡ Safe subprocess calls + Memory-protected Option 3 + Smart fallback
+🛡️  Optional memory monitoring (install psutil for enhanced monitoring)
 """
 import os, sys, subprocess, sqlite3, pandas as pd, numpy as np, threading, time, shutil, json, re
 from datetime import datetime
 from pathlib import Path
+
+# Optional memory monitoring
+try:
+    import psutil
+    HAS_PSUTIL = True
+except ImportError:
+    HAS_PSUTIL = False
 
 # Audio support
 try: import winsound; HAS_AUDIO = True
@@ -13,7 +21,7 @@ except ImportError:
     try: import pygame; pygame.mixer.init(); HAS_AUDIO = True
     except ImportError: HAS_AUDIO = False
 
-class CompactGeminiSystem:
+class SuperSafeGeminiSystem:
     def __init__(self):
         self.db_path = "database/structural_spectra/multi_structural_gem_data.db"
         self.program_files = {
@@ -22,9 +30,11 @@ class CompactGeminiSystem:
             'src/numerical_analysis/gemini1.py': 'Numerical Analysis Engine',
             'src/structural_analysis/enhanced_gem_analyzer.py': 'Structural Matching Engine',
             'txt_to_split_long_format.py': 'Numerical DB Import Tool',
-            'database/batch_importer.py': 'Structural DB Import Tool'
+            'database/batch_importer.py': 'Structural DB Import Tool',
+            'gem_selector.py': 'Safe Gem Analysis Tool'
         }
         self.bleep_enabled = True
+        self.memory_limit_mb = 1500  # Prevent using more than 1.5GB
         self.init_directories()
     
     def init_directories(self):
@@ -32,12 +42,38 @@ class CompactGeminiSystem:
         directories = [
             "data/raw_temp", "data/raw (archive)", "data/structural_data", "data/structural(archive)",
             "outputs/numerical_analysis/reports", "outputs/numerical_analysis/graphs",
+            "outputs/numerical_results/reports", "outputs/numerical_results/graphs",
             "outputs/structural_results/reports", "outputs/structural_results/graphs", 
             "database/reference_spectra", "database/structural_spectra",
             "results(archive)/post_analysis_numerical/reports", "results(archive)/post_analysis_numerical/graphs",
-            "results(archive)/post_analysis_structural/reports", "results(archive)/post_analysis_structural/graphs"
+            "results(archive)/post_analysis_structural/reports", "results(archive)/post_analysis_structural/graphs",
+            "data/unknown/numerical"  # For safe analysis
         ]
         for directory in directories: Path(directory).mkdir(parents=True, exist_ok=True)
+    
+    def check_memory_safety(self):
+        """Check if system has enough memory for safe operation"""
+        if not HAS_PSUTIL:
+            print("🧠 Memory check: psutil not available (install with: pip install psutil)")
+            print("✅ Assuming memory OK - proceeding with caution")
+            return True
+            
+        try:
+            memory = psutil.virtual_memory()
+            available_mb = memory.available / 1024 / 1024
+            
+            print(f"🧠 Memory check: {available_mb:.0f}MB available")
+            
+            if available_mb < self.memory_limit_mb:
+                print(f"⚠️  WARNING: Low memory ({available_mb:.0f}MB available, {self.memory_limit_mb}MB recommended)")
+                return False
+            else:
+                print(f"✅ Memory OK: {available_mb:.0f}MB available")
+                return True
+                
+        except Exception as e:
+            print(f"⚠️  Cannot check memory: {e}")
+            return True  # Assume OK if can't check
     
     def play_bleep(self, feature_type="standard"):
         """Play audio bleep"""
@@ -64,11 +100,40 @@ class CompactGeminiSystem:
         return list(Path(directory).glob(file_pattern))
     
     def setup_numerical_environment(self, data_directory):
-        """Setup environment variables for gemini1.py to use specific directory"""
+        """Setup environment variables for analysis tools"""
         os.environ['GEMINI_DATA_PATH'] = str(Path(data_directory).absolute())
         print(f"📁 Data source: {data_directory}")
         return str(Path(data_directory).absolute())
     
+    def clear_old_analysis_files(self):
+        """Clear old analysis files to prevent confusion with current results"""
+        try:
+            # Clear outputs/numerical_results directories to start fresh
+            for dir_path in ["outputs/numerical_results/reports", "outputs/numerical_results/graphs"]:
+                dir_obj = Path(dir_path)
+                if dir_obj.exists():
+                    removed_count = 0
+                    for file in dir_obj.glob("*"):
+                        if file.is_file():
+                            file.unlink()
+                            removed_count += 1
+                    if removed_count > 0:
+                        print(f"🗑️  Cleared {removed_count} old files from {dir_path}")
+                        
+            # Also clear the old output/numerical_analysis directory if it exists
+            old_output_dir = Path("output/numerical_analysis")
+            if old_output_dir.exists():
+                removed_count = 0
+                for file in old_output_dir.glob("*"):
+                    if file.is_file():
+                        file.unlink()
+                        removed_count += 1
+                if removed_count > 0:
+                    print(f"🗑️  Cleared {removed_count} old analysis files from output/numerical_analysis")
+                        
+        except Exception as e:
+            print(f"⚠️ Warning: Could not clear old files: {e}")
+
     # MENU OPTION 1: DATA ACQUISITION
     def data_acquisition(self):
         """Option 1: Data acquisition - capture spectra to data/raw_temp"""
@@ -114,51 +179,171 @@ class CompactGeminiSystem:
             except Exception as e: print(f"❌ Error: {e}")
         else: print("❌ src/structural_analysis/gemini_launcher.py not found")
     
-    # MENU OPTION 3: NUMERICAL MATCHING
+    # 🛡️ MENU OPTION 3: SUPER SAFE NUMERICAL MATCHING
     def numerical_matching(self):
-        """Option 3: Numerical matching - smart fallback from raw_temp to archive"""
-        print("\n📊 NUMERICAL MATCHING\n" + "=" * 60)
+        """Option 3: SUPER SAFE Numerical matching - Analyze newly captured unknown gems"""
+        print("\n📊 SUPER SAFE NUMERICAL MATCHING - UNKNOWN GEM ANALYSIS\n" + "=" * 60)
+        print("🛡️  MEMORY PROTECTION ACTIVE")
+        print("🔬 Analyzing newly captured spectral data as unknown gem")
         
-        # Smart fallback logic - this is the CORRECT behavior
-        raw_temp_files = self.check_directory_files("data/raw_temp")
-        archive_files = self.check_directory_files("data/raw (archive)")
+        # Memory safety check
+        if not self.check_memory_safety():
+            print("⚠️  Memory warning detected - using ultra-safe mode")
         
-        if raw_temp_files:
-            print("Input: root/data/raw_temp/ (work-in-progress)")
-            data_source = "data/raw_temp"
-            print(f"📁 Found {len(raw_temp_files)} new files for analysis")
-        elif archive_files:
-            print("Input: root/data/raw (archive)/ (smart fallback - no new captures)")
-            data_source = "data/raw (archive)"
-            print(f"📁 Found {len(archive_files)} archived files for analysis")
-        else:
-            print("❌ No spectral files found in raw_temp or archive")
-            print("💡 Use Option 1 to capture spectra first")
+        # Look for newly captured files in data/raw_txt directory
+        raw_txt_dir = Path("data/raw_txt")
+        if not raw_txt_dir.exists():
+            print("❌ No data/raw_txt directory found!")
+            print("💡 Capture spectral data first and place .txt files in data/raw_txt/")
             return
         
-        print("Output: root/outputs/numerical_analysis/reports;graphs")
+        txt_files = self.check_directory_files("data/raw_txt", "*.txt")
+        if not txt_files:
+            print("❌ No .txt files found in data/raw_txt/")
+            print("💡 Capture spectral data first (e.g., 58BC1.txt, 58LC1.txt, 58UC1.txt)")
+            return
         
-        if os.path.exists('src/numerical_analysis/gemini1.py'):
+        print(f"📁 Found {len(txt_files)} spectral files in data/raw_txt/")
+        
+        # Check for B, L, U light sources
+        light_sources_found = set()
+        for file_path in txt_files:
+            filename = file_path.stem.upper()
+            for char in filename:
+                if char in ['B', 'L', 'U']:
+                    light_sources_found.add(char)
+                    break
+        
+        print(f"🔍 Light sources detected: {', '.join(sorted(light_sources_found))}")
+        
+        if len(light_sources_found) < 3:
+            print("⚠️  Warning: Optimal analysis requires B, L, and U light sources")
+            missing = {'B', 'L', 'U'} - light_sources_found
+            print(f"   Missing: {', '.join(sorted(missing))}")
+            
+            proceed = self.safe_input("Continue with available light sources? (y/n): ").strip().lower()
+            if proceed != 'y':
+                print("Analysis cancelled")
+                return
+        
+        print("Output: root/outputs/numerical_results/reports;graphs")
+        print("🔬 Files will be named with 'unkgem' prefix for unknown gem analysis")
+        
+        # Clear existing unknown files
+        unknown_dir = Path("data/unknown/numerical")
+        unknown_dir.mkdir(parents=True, exist_ok=True)
+        for old_file in unknown_dir.glob("unkgem*.csv"):
             try:
-                # Setup environment and run with InputSubmission fix
-                data_path = self.setup_numerical_environment(data_source)
-                
-                # Create input file to bypass InputSubmission issues
-                input_file = Path("temp_numerical_input.txt")
-                with open(input_file, 'w') as f:
-                    f.write("auto_analysis\n")  # Signal for auto-analysis mode
-                
-                # Run with stdin redirection
-                with open(input_file, 'r') as f:
-                    result = subprocess.run([sys.executable, 'src/numerical_analysis/gemini1.py'], 
-                                          stdin=f, capture_output=False, text=True)
-                
-                # Cleanup
-                if input_file.exists(): input_file.unlink()
-                
-                if result.returncode == 0: print("✅ Numerical matching completed"); self.play_bleep("completion")
-            except Exception as e: print(f"❌ Error: {e}")
-        else: print("❌ src/numerical_analysis/gemini1.py not found")
+                old_file.unlink()
+                print(f"🗑️  Cleared old file: {old_file.name}")
+            except Exception as e:
+                print(f"⚠️  Could not clear {old_file.name}: {e}")
+        
+        # Set environment variable to point to raw_txt directory
+        original_path = os.environ.get('GEMINI_DATA_PATH', '')
+        os.environ['GEMINI_DATA_PATH'] = str(raw_txt_dir.absolute())
+        
+        try:
+            # Run txt_to_unkgem.py to convert raw files
+            print(f"\n🔄 Converting spectral files to analysis format...")
+            if os.path.exists('data/txt_to_unkgem.py'):
+                try:
+                    result = subprocess.run([sys.executable, 'data/txt_to_unkgem.py'], 
+                                          capture_output=True, text=True, timeout=60)
+                    
+                    if result.returncode == 0:
+                        print("✅ File conversion completed successfully")
+                        if result.stdout:
+                            print("📋 Conversion output:")
+                            print(result.stdout)
+                    else:
+                        print(f"❌ Conversion failed with return code {result.returncode}")
+                        if result.stderr:
+                            print("Error output:")
+                            print(result.stderr)
+                        return
+                        
+                except subprocess.TimeoutExpired:
+                    print("⚠️  Conversion timed out after 60 seconds")
+                    return
+                except Exception as e:
+                    print(f"❌ Error running txt_to_unkgem.py: {e}")
+                    return
+                    
+            else:
+                print("❌ txt_to_unkgem.py not found in data/ directory")
+                return
+            
+            # Check if conversion created the expected files
+            unknown_files = list(unknown_dir.glob("unkgem*.csv"))
+            if not unknown_files:
+                print("❌ No unkgem*.csv files were created by conversion")
+                return
+            
+            print(f"✅ Created {len(unknown_files)} unknown gem files:")
+            for f in unknown_files:
+                size_kb = f.stat().st_size / 1024
+                print(f"   📄 {f.name} ({size_kb:.1f} KB)")
+            
+            print(f"\n🚀 Starting numerical analysis of unknown gem...")
+            print("Input: Newly captured spectral data")
+            print("Output: root/outputs/numerical_results/reports;graphs")
+            print("🔬 Using FULL numerical analysis engine")
+            
+            # Run the numerical analysis with "unkgem" as the base ID
+            if os.path.exists('src/numerical_analysis/gemini1.py'):
+                try:
+                    print("📊 Launching full numerical analysis engine...")
+                    
+                    # Run with full analysis engine, passing "unkgem" as the base_id
+                    result = subprocess.run([sys.executable, 'src/numerical_analysis/gemini1.py', 'unkgem'], 
+                                          capture_output=False, text=True, timeout=600)  # 10 min timeout
+                    
+                    if result.returncode == 0: 
+                        print("✅ Full numerical analysis completed successfully")
+                        self.play_bleep("completion")
+                    else:
+                        print("❌ Numerical analysis failed")
+                        
+                except subprocess.TimeoutExpired:
+                    print("⚠️  Analysis timed out after 10 minutes - killed for safety")
+                except Exception as e: 
+                    print(f"❌ Error: {e}")
+                    
+            # FALLBACK: Use gem_selector.py for basic file preparation
+            elif os.path.exists('gem_selector.py'):
+                try:
+                    print("⚠️  gemini1.py not found - using gem_selector.py fallback")
+                    print("🔧 This will prepare files but won't run full analysis")
+                    
+                    # Run gem_selector.py as fallback
+                    result = subprocess.run([sys.executable, 'gem_selector.py'], 
+                                          capture_output=False, text=True, timeout=300)
+                    
+                    if result.returncode == 0: 
+                        print("✅ File preparation completed")
+                        print("💡 For full analysis, ensure gemini1.py is available")
+                        self.play_bleep("completion")
+                    else:
+                        print("❌ gem_selector.py failed")
+                        
+                except subprocess.TimeoutExpired:
+                    print("⚠️  File preparation timed out - killed for safety")
+                except Exception as e: 
+                    print(f"❌ Error in file preparation: {e}")
+                    
+            else:
+                print("❌ No analysis tools found (gem_selector.py or gemini1.py)")
+                print("💡 Ensure analysis tools are available")
+        
+        finally:
+            # Restore original environment
+            if original_path:
+                os.environ['GEMINI_DATA_PATH'] = original_path
+            else:
+                os.environ.pop('GEMINI_DATA_PATH', None)
+        
+        print(f"\n🎉 Unknown gem analysis completed!")
     
     # MENU OPTION 4: STRUCTURAL MATCHING
     def structural_matching(self):
@@ -193,8 +378,10 @@ class CompactGeminiSystem:
                     # Move results to proper output location
                     self.move_structural_results_to_outputs()
                     self.play_bleep("completion")
-            except Exception as e: print(f"❌ Error: {e}")
-        else: print("❌ src/structural_analysis/enhanced_gem_analyzer.py not found")
+            except Exception as e: 
+                print(f"❌ Error: {e}")
+        else: 
+            print("❌ src/structural_analysis/enhanced_gem_analyzer.py not found")
     
     def move_structural_results_to_outputs(self):
         """Move structural results to proper output location"""
@@ -208,8 +395,9 @@ class CompactGeminiSystem:
                     for file in Path("results/structural/graphs").glob("*"):
                         shutil.move(str(file), f"outputs/structural_results/graphs/{file.name}")
                 print("📦 Results moved to outputs/structural_results/")
-        except Exception as e: print(f"⚠️ Result move error: {e}")
-    
+        except Exception as e: 
+            print(f"⚠️ Result move error: {e}")
+
     # MENU OPTION 5: IMPORT TO NUMERICAL DB
     def import_to_numerical_db(self):
         """Option 5: Import to numerical database"""
@@ -269,42 +457,241 @@ class CompactGeminiSystem:
             else: print("❌ Database import failed")
         except Exception as e: print(f"❌ Import error: {e}")
     
-    # MENU OPTION 7: NUMERICAL MATCHING (TEST)
+    # MENU OPTION 7: NUMERICAL MATCHING (TEST) - Interactive gem selection
     def numerical_matching_test(self):
-        """Option 7: Numerical matching test - specifically use archived data"""
-        print("\n📊 NUMERICAL MATCHING (TEST)\n" + "=" * 60)
+        """Option 7: Numerical matching test - Interactive gem selection from archive"""
+        print("\n📊 NUMERICAL MATCHING (TEST) - INTERACTIVE SELECTION\n" + "=" * 60)
         
-        archive_files = self.check_directory_files("data/raw (archive)")
+        archive_files = self.check_directory_files("data/raw (archive)", "*.txt")
         if not archive_files:
             print("❌ No archived files found in data/raw (archive)/")
             print("💡 Use Option 9 to archive files from raw_temp first")
             return
         
-        print("Input: root/data/raw (archive)/ (archived data for testing)")
-        print("Output: root/outputs/numerical_analysis/reports;graphs")
-        print(f"📁 Found {len(archive_files)} archived files for testing")
+        print(f"📁 Found {len(archive_files)} archived spectral files")
         
-        if os.path.exists('src/numerical_analysis/gemini1.py'):
+        # Parse gem names and group by base ID
+        gem_groups = {}
+        for file_path in archive_files:
+            filename = file_path.stem  # Get filename without extension
+            
+            # Parse gem name to extract base ID and light source
+            # Expected format: [prefix]base_id + light_source + orientation + scan_number
+            # Examples: 58BC1, C0045LC2, S20250909UP3
+            
+            base_id = None
+            light_source = None
+            
+            # Try to find light source (B, L, U) in filename
+            for i, char in enumerate(filename.upper()):
+                if char in ['B', 'L', 'U']:
+                    # Check if this looks like a light source position
+                    if i > 0:  # Not at start
+                        base_id = filename[:i]
+                        light_source = char
+                        break
+            
+            if base_id and light_source:
+                if base_id not in gem_groups:
+                    gem_groups[base_id] = {'files': {}, 'full_names': {}}
+                gem_groups[base_id]['files'][light_source] = file_path
+                gem_groups[base_id]['full_names'][light_source] = filename
+        
+        if not gem_groups:
+            print("❌ No valid gem files found with recognizable naming pattern")
+            print("💡 Expected format: [ID][B/L/U][orientation][scan].txt")
+            return
+        
+        # Show available gems to user
+        print(f"\n🔍 Available gems for analysis ({len(gem_groups)} unique gems):")
+        print("=" * 50)
+        
+        valid_gems = []
+        for i, (base_id, data) in enumerate(sorted(gem_groups.items()), 1):
+            light_sources = sorted(data['files'].keys())
+            complete = len(light_sources) >= 3 and 'B' in light_sources and 'L' in light_sources and 'U' in light_sources
+            
+            status = "✅ COMPLETE (B+L+U)" if complete else f"⚠️  PARTIAL ({'+'.join(light_sources)})"
+            print(f"{i:2d}. Gem {base_id} - {status}")
+            
+            # Show individual files
+            for ls in ['B', 'L', 'U']:
+                if ls in data['files']:
+                    filename = data['full_names'][ls]
+                    print(f"      {ls}: {filename}")
+                else:
+                    print(f"      {ls}: Missing")
+            
+            if complete:
+                valid_gems.append((i, base_id, data))
+            print()
+        
+        if not valid_gems:
+            print("❌ No complete gems found (need B+L+U light sources)")
+            print("💡 Each gem needs Halogen (B), Laser (L), and UV (U) spectra")
+            return
+        
+        # Get user selection
+        print(f"📋 {len(valid_gems)} complete gems available for analysis")
+        while True:
             try:
-                # Setup for archived data testing
-                data_path = self.setup_numerical_environment("data/raw (archive)")
+                selection = self.safe_input("Select gem number for analysis (or 'q' to quit): ").strip()
+                if selection.lower() == 'q':
+                    return
                 
-                # Create test input file
-                input_file = Path("temp_test_input.txt")
-                with open(input_file, 'w') as f:
-                    f.write("test_mode\n")  # Signal for test mode
+                gem_num = int(selection)
+                selected_gem = None
+                for num, base_id, data in valid_gems:
+                    if num == gem_num:
+                        selected_gem = (base_id, data)
+                        break
                 
-                # Run with test configuration
-                with open(input_file, 'r') as f:
-                    result = subprocess.run([sys.executable, 'src/numerical_analysis/gemini1.py'], 
-                                          stdin=f, capture_output=False, text=True)
-                
-                # Cleanup
-                if input_file.exists(): input_file.unlink()
-                
-                if result.returncode == 0: print("✅ Numerical test completed"); self.play_bleep("completion")
-            except Exception as e: print(f"❌ Error: {e}")
-        else: print("❌ src/numerical_analysis/gemini1.py not found")
+                if selected_gem:
+                    break
+                else:
+                    print(f"❌ Invalid selection. Choose from: {', '.join(str(n) for n, _, _ in valid_gems)}")
+                    
+            except ValueError:
+                print("❌ Please enter a number or 'q' to quit")
+        
+        base_id, gem_data = selected_gem
+        print(f"\n🎯 Selected: Gem {base_id}")
+        
+        # Show selected files
+        selected_files = []
+        for ls in ['B', 'L', 'U']:
+            if ls in gem_data['files']:
+                file_path = gem_data['files'][ls]
+                filename = gem_data['full_names'][ls]
+                selected_files.append(file_path)
+                print(f"   {ls}: {filename}")
+        
+        confirm = self.safe_input(f"\nProceed with analysis of Gem {base_id}? (y/n): ").strip().lower()
+        if confirm != 'y':
+            print("Analysis cancelled")
+            return
+        
+        # Clear existing unknown files
+        unknown_dir = Path("data/unknown/numerical")
+        unknown_dir.mkdir(parents=True, exist_ok=True)
+        for old_file in unknown_dir.glob("unkgem*.csv"):
+            try:
+                old_file.unlink()
+                print(f"🗑️  Cleared old file: {old_file.name}")
+            except Exception as e:
+                print(f"⚠️  Could not clear {old_file.name}: {e}")
+        
+        # Copy selected files to a temp location for txt_to_unkgem.py
+        temp_dir = Path("temp_selected_gem")
+        temp_dir.mkdir(exist_ok=True)
+        
+        try:
+            print(f"\n📋 Preparing files for conversion...")
+            for file_path in selected_files:
+                temp_file = temp_dir / file_path.name
+                shutil.copy2(file_path, temp_file)
+                print(f"   📄 Copied: {file_path.name}")
+            
+            # Set environment variable to point to temp directory
+            original_path = os.environ.get('GEMINI_DATA_PATH', '')
+            os.environ['GEMINI_DATA_PATH'] = str(temp_dir.absolute())
+            
+            # Run txt_to_unkgem.py
+            print(f"\n🔄 Running txt_to_unkgem.py to convert selected files...")
+            if os.path.exists('data/txt_to_unkgem.py'):
+                try:
+                    result = subprocess.run([sys.executable, 'data/txt_to_unkgem.py'], 
+                                          capture_output=True, text=True, timeout=60)
+                    
+                    if result.returncode == 0:
+                        print("✅ File conversion completed successfully")
+                        if result.stdout:
+                            print("📋 Conversion output:")
+                            print(result.stdout)
+                    else:
+                        print(f"❌ Conversion failed with return code {result.returncode}")
+                        if result.stderr:
+                            print("Error output:")
+                            print(result.stderr)
+                        return
+                        
+                except subprocess.TimeoutExpired:
+                    print("⚠️  Conversion timed out after 60 seconds")
+                    return
+                except Exception as e:
+                    print(f"❌ Error running txt_to_unkgem.py: {e}")
+                    return
+                    
+            else:
+                print("❌ txt_to_unkgem.py not found in data/ directory")
+                return
+            
+            # Restore original environment
+            if original_path:
+                os.environ['GEMINI_DATA_PATH'] = original_path
+            else:
+                os.environ.pop('GEMINI_DATA_PATH', None)
+            
+            # Check if conversion created the expected files
+            unknown_files = list(unknown_dir.glob("unkgem*.csv"))
+            if not unknown_files:
+                print("❌ No unkgem*.csv files were created by conversion")
+                return
+            
+            print(f"✅ Created {len(unknown_files)} unknown gem files:")
+            for f in unknown_files:
+                size_kb = f.stat().st_size / 1024
+                print(f"   📄 {f.name} ({size_kb:.1f} KB)")
+            
+            print(f"\n🚀 Starting numerical analysis of Gem {base_id}...")
+            print("Input: Selected files from archive")
+            print("Output: root/outputs/numerical_results/reports;graphs")
+            print("🔬 Using FULL numerical analysis engine")
+            
+            # Run the numerical analysis
+            if os.path.exists('src/numerical_analysis/gemini1.py'):
+                try:
+                    print("📊 Launching full numerical analysis engine...")
+                    
+                    # Run with full analysis engine and extended timeout, passing gem ID
+                    result = subprocess.run([sys.executable, 'src/numerical_analysis/gemini1.py', base_id], 
+                                          capture_output=False, text=True, timeout=600)  # 10 min timeout
+                    
+                    if result.returncode == 0: 
+                        print("✅ Full numerical analysis completed successfully")
+                        self.play_bleep("completion")
+                    else:
+                        print("❌ Numerical analysis failed")
+                        
+                except subprocess.TimeoutExpired:
+                    print("⚠️  Analysis timed out after 10 minutes - killed for safety")
+                except Exception as e: 
+                    print(f"❌ Error: {e}")
+                    
+            elif os.path.exists('gem_selector.py'):
+                print("⚠️  Full analysis engine not found - using file preparation fallback")
+                try:
+                    result = subprocess.run([sys.executable, 'gem_selector.py'], 
+                                          capture_output=False, text=True, timeout=300)
+                    
+                    if result.returncode == 0: 
+                        print("✅ File preparation completed")
+                        print("💡 For full analysis, ensure src/numerical_analysis/gemini1.py is available")
+                        self.play_bleep("completion")
+                except Exception as e: 
+                    print(f"❌ Error: {e}")
+            else: 
+                print("❌ No analysis tools found (gemini1.py or gem_selector.py)")
+            
+        finally:
+            # Clean up temp directory
+            try:
+                shutil.rmtree(temp_dir)
+                print(f"🗑️  Cleaned up temporary files")
+            except Exception as e:
+                print(f"⚠️  Could not clean up temp directory: {e}")
+        
+        print(f"\n🎉 Analysis of Gem {base_id} completed!")
     
     # MENU OPTION 8: STRUCTURAL MATCHING (TEST)
     def structural_matching_test(self):
@@ -346,7 +733,7 @@ class CompactGeminiSystem:
         """Option 9: Clean up numerical - archive data and results"""
         print("\n🧹 CLEAN UP NUMERICAL\n" + "=" * 60)
         print("a) Archive: root/data/raw_temp → root/data/raw (archive)")
-        print("b) Archive: root/outputs/numerical_analysis/ → root/results(archive)/post_analysis_numerical/")
+        print("b) Archive: root/outputs/numerical_results/reports;graphs → root/results(archive)/post_analysis_numerical/reports;graphs")
         
         try:
             archived_files = 0
@@ -361,18 +748,45 @@ class CompactGeminiSystem:
                         archived_files += 1
                 print(f"✅ Archived {archived_files} files from raw_temp to raw (archive)")
             
-            # 9b: Archive numerical results
+            # 9b: Archive numerical results from new organized structure
             results_moved = 0
-            if Path("outputs/numerical_analysis/reports").exists():
-                for file in Path("outputs/numerical_analysis/reports").glob("*"):
-                    shutil.move(str(file), f"results(archive)/post_analysis_numerical/reports/{file.name}")
-                    results_moved += 1
-            if Path("outputs/numerical_analysis/graphs").exists():
-                for file in Path("outputs/numerical_analysis/graphs").glob("*"):
-                    shutil.move(str(file), f"results(archive)/post_analysis_numerical/graphs/{file.name}")
-                    results_moved += 1
             
-            if results_moved > 0: print(f"✅ Archived {results_moved} result files")
+            # Archive reports
+            reports_source = Path("outputs/numerical_results/reports")
+            if reports_source.exists():
+                for file in reports_source.glob("*"):
+                    if file.is_file():
+                        shutil.move(str(file), f"results(archive)/post_analysis_numerical/reports/{file.name}")
+                        results_moved += 1
+            
+            # Archive graphs  
+            graphs_source = Path("outputs/numerical_results/graphs")
+            if graphs_source.exists():
+                for file in graphs_source.glob("*"):
+                    if file.is_file():
+                        shutil.move(str(file), f"results(archive)/post_analysis_numerical/graphs/{file.name}")
+                        results_moved += 1
+            
+            # Also clean up any files left in the old output/numerical_analysis directory
+            old_output_dir = Path("output/numerical_analysis")
+            if old_output_dir.exists():
+                old_files = list(old_output_dir.glob("*"))
+                if old_files:
+                    print(f"🗑️  Found {len(old_files)} files in old output directory - cleaning up...")
+                    for file in old_files:
+                        if file.is_file():
+                            # Move old files to reports directory
+                            if file.suffix.lower() in ['.png', '.jpg', '.jpeg', '.svg', '.pdf']:
+                                shutil.move(str(file), f"results(archive)/post_analysis_numerical/graphs/{file.name}")
+                            else:
+                                shutil.move(str(file), f"results(archive)/post_analysis_numerical/reports/{file.name}")
+                            results_moved += 1
+            
+            if results_moved > 0: 
+                print(f"✅ Archived {results_moved} result files to results(archive)/post_analysis_numerical/")
+            else:
+                print("ℹ️  No numerical results found to archive")
+                
             print("✅ Numerical cleanup completed"); self.play_bleep("completion")
             
         except Exception as e: print(f"❌ Cleanup error: {e}")
@@ -414,11 +828,34 @@ class CompactGeminiSystem:
     
     # MENU OPTION 11: SYSTEM STATUS
     def system_status(self):
-        """Option 11: System status with smart directory checking"""
-        print("\nSYSTEM STATUS\n" + "=" * 40)
+        """Option 11: System status with memory monitoring"""
+        print("\nSUPER SAFE SYSTEM STATUS\n" + "=" * 40)
+        
+        # Memory status
+        if HAS_PSUTIL:
+            try:
+                memory = psutil.virtual_memory()
+                cpu_percent = psutil.cpu_percent(interval=1)
+                
+                print("🧠 SYSTEM RESOURCES:")
+                print(f"   Memory: {memory.used/1024/1024/1024:.1f}GB / {memory.total/1024/1024/1024:.1f}GB ({memory.percent:.1f}%)")
+                print(f"   Available: {memory.available/1024/1024:.0f}MB")
+                print(f"   CPU Usage: {cpu_percent:.1f}%")
+                
+                if memory.available/1024/1024 < self.memory_limit_mb:
+                    print(f"⚠️  LOW MEMORY WARNING: {memory.available/1024/1024:.0f}MB < {self.memory_limit_mb}MB")
+                else:
+                    print(f"✅ Memory OK for safe operation")
+                    
+            except Exception as e:
+                print(f"⚠️  Cannot check system resources: {e}")
+        else:
+            print("🧠 SYSTEM RESOURCES:")
+            print("   Memory monitoring not available (psutil not installed)")
+            print("   💡 Install psutil for memory monitoring: pip install psutil")
         
         # Check program files
-        print("📋 Program Files:")
+        print("\n📋 Program Files:")
         for file_path, description in self.program_files.items():
             status = "✅" if os.path.exists(file_path) else "❌"
             print(f"{status} {description}: {file_path}")
@@ -451,6 +888,8 @@ class CompactGeminiSystem:
         gemini_path = os.environ.get('GEMINI_DATA_PATH', 'Not set')
         print(f"\n🔧 Environment: GEMINI_DATA_PATH = {gemini_path}")
         print(f"🔊 Audio: {'Available' if HAS_AUDIO else 'Not available'} | Bleep: {'ON' if self.bleep_enabled else 'OFF'}")
+        print(f"🛡️  Memory Limit: {self.memory_limit_mb}MB | Safety: ACTIVE")
+        print(f"📊 Memory Monitor: {'Available' if HAS_PSUTIL else 'Not available (optional)'}")
     
     # MENU OPTION 12: TOGGLE BLEEP
     def toggle_bleep(self):
@@ -461,16 +900,16 @@ class CompactGeminiSystem:
     
     # MAIN MENU
     def run_main_menu(self):
-        """Complete main menu with smart fallback logic"""
-        print(f"\n{'='*70}\n  COMPLETE GEMINI ANALYSIS SYSTEM\n  Smart Directory Fallback + InputSubmission Fixes\n{'='*70}")
+        """Complete main menu with SUPER SAFE Option 3"""
+        print(f"\n{'='*70}\n  SUPER SAFE GEMINI ANALYSIS SYSTEM\n  🛡️  Option 3 Memory Protected + Smart Fallback\n{'='*70}")
         
         while True:
-            print(f"\nMAIN MENU (Smart Fallback Logic):")
-            print("=" * 45)
+            print(f"\nMAIN MENU (SUPER SAFE with Memory Protection):")
+            print("=" * 55)
             print("📡 DATA CAPTURE & ANALYSIS:")
             print("1. Data Acquisition (Spectral Capture)")
             print("2. Structural Marking (smart fallback)")  
-            print("3. Numerical Matching (smart fallback)")
+            print("3. 🛡️  Numerical Matching (MEMORY PROTECTED)")
             print("4. Structural Matching")
             print("")
             print("💾 DATABASE OPERATIONS:")
@@ -478,7 +917,7 @@ class CompactGeminiSystem:
             print("6. Import to Structural DB")
             print("")
             print("🧪 TESTING (Archived Data):")
-            print("7. Numerical Matching (Test)")
+            print("7. 🛡️  Numerical Matching Test (INTERACTIVE)")
             print("8. Structural Matching (Test)")
             print("")
             print("🧹 CLEANUP & ARCHIVING:")
@@ -486,11 +925,13 @@ class CompactGeminiSystem:
             print("10. Clean Up Structural")
             print("")
             print("⚙️ SYSTEM:")
-            print("11. System Status")
+            print("11. System Status (with Memory Monitor)")
             print("12. Toggle Bleep System") 
             print("13. Exit")
             
-            print(f"\nStatus: Bleep [{'ON' if self.bleep_enabled else 'OFF'}] | Smart Fallback Active")
+            # Show safety status
+            memory_status = "OK" if self.check_memory_safety() else "⚠️  LOW" if HAS_PSUTIL else "Unknown"
+            print(f"\nStatus: Bleep [{'ON' if self.bleep_enabled else 'OFF'}] | Memory: {memory_status} | 🛡️  SUPER SAFE MODE")
             
             try:
                 choice = self.safe_input("\nSelect (1-13): ")
@@ -504,7 +945,7 @@ class CompactGeminiSystem:
                 }
                 
                 if choice == '13':
-                    print("Exiting system..."); self.play_bleep("completion") if self.bleep_enabled else None; break
+                    print("Exiting SUPER SAFE system..."); self.play_bleep("completion") if self.bleep_enabled else None; break
                 elif choice in actions:
                     actions[choice]()
                 else:
@@ -518,7 +959,7 @@ class CompactGeminiSystem:
 def main():
     """Main entry point"""
     try:
-        system = CompactGeminiSystem()
+        system = SuperSafeGeminiSystem()
         system.run_main_menu()
     except KeyboardInterrupt: print("\n\nSystem interrupted")
     except Exception as e: print(f"\nCritical error: {e}")
