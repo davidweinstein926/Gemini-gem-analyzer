@@ -260,4 +260,3 @@ if __name__ == "__main__":
         print("❌ Matplotlib not available - install with: pip install matplotlib")
     except Exception as e:
         print(f"❌ Error initializing plotter: {e}")
-
