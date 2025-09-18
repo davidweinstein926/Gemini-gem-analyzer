@@ -1,289 +1,564 @@
 #!/usr/bin/env python3
 """
-BATCH IMPORTER
-Handles structural data import operations
-
-Author: David  
-Version: 2024.08.06
+PRODUCTION BATCH IMPORTER - FORENSIC GEMOLOGICAL EDITION
+Complete working version with all features:
+- Forensic duplicate handling with temporal analysis preservation
+- Proper column mapping for database schema
+- Automatic archiving for Option 8 testing
+- Enhanced error handling and reporting
 """
 
-import os
-import pandas as pd
 import sqlite3
+import pandas as pd
+import os
+import re
+import shutil
+from pathlib import Path
 from datetime import datetime
-from typing import Dict, List
-from config.settings import get_config
+from typing import List, Dict, Optional, Tuple
 
-class StructuralDataImporter:
-    """Handles batch import of structural analysis files"""
+class ProductionBatchImporter:
+    """Production-grade structural data importer with forensic gemological features"""
     
-    def __init__(self, database):
-        self.db = database
-        self.config = get_config('system')
-        self.structural_dir = self.config['structural_dir']
-        print("📥 Structural data importer initialized")
+    def __init__(self):
+        self.project_root = self.find_project_root()
+        self.structural_data_dir = self.project_root / "data" / "structural_data"
+        self.archive_dir = self.project_root / "data" / "structural(archive)"
+        self.db_path = self.project_root / "database" / "structural_spectra" / "multi_structural_gem_data.db"
+        self.csv_output_path = self.project_root / "database" / "structural_spectra" / "gemini_structural_db.csv"
+        
+        # Ensure directories exist
+        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        self.archive_dir.mkdir(parents=True, exist_ok=True)
+        
+        print("Production Forensic Gemological Batch Importer")
+        print(f"Data source: {self.structural_data_dir}")
+        print(f"Archive destination: {self.archive_dir}")
+        print(f"Database: {self.db_path}")
+        print(f"CSV output: {self.csv_output_path}")
+        print("Forensic mode: Preserves temporal analysis for treatment detection")
     
-    def scan_for_structural_files(self, directory: str = None) -> Dict[str, List[Dict]]:
-        """Scan for structural analysis CSV files"""
-        if directory is None:
-            directory = self.structural_dir
+    def find_project_root(self) -> Path:
+        """Find project root by looking for key directories"""
+        current = Path(__file__).parent.absolute()
+        
+        for path in [current] + list(current.parents):
+            if (path / "database").exists() and (path / "data").exists():
+                return path
+            if (path / "main.py").exists():
+                return path
+        
+        return current.parent
+    
+    def create_database_schema(self):
+        """Create or verify database schema"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
             
-        structural_files = {'B': [], 'L': [], 'U': []}
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS structural_features (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    file TEXT NOT NULL,
+                    light_source TEXT NOT NULL,
+                    wavelength REAL NOT NULL,
+                    intensity REAL NOT NULL,
+                    feature TEXT NOT NULL DEFAULT 'unknown',
+                    feature_group TEXT NOT NULL DEFAULT 'unknown',
+                    point_type TEXT NOT NULL DEFAULT 'unknown',
+                    data_type TEXT,
+                    start_wavelength REAL,
+                    end_wavelength REAL,
+                    midpoint REAL,
+                    bottom REAL,
+                    normalization_scheme TEXT,
+                    reference_wavelength REAL,
+                    timestamp TEXT DEFAULT (datetime('now')),
+                    UNIQUE(file, light_source, wavelength, feature)
+                )
+            ''')
+            
+            cursor.execute('''
+                CREATE INDEX IF NOT EXISTS idx_features_lookup 
+                ON structural_features(light_source, file, feature_group)
+            ''')
+            
+            conn.commit()
+            conn.close()
+            print("Database schema verified")
+            return True
+            
+        except Exception as e:
+            print(f"Database schema error: {e}")
+            return False
+    
+    def parse_gem_filename(self, filename: str) -> Dict[str, str]:
+        """Parse gem filename to extract metadata"""
+        base_name = Path(filename).stem
         
-        if not os.path.exists(directory):
-            print(f"⚠️ Directory not found: {directory}")
-            directory = "."
+        # Remove timestamp if present
+        base_name = re.sub(r'_\d{8}_\d{6}$', '', base_name)
         
-        print(f"📁 Scanning directory: {directory}")
-        print("🔬 Looking for B/L/U structural files...")
+        # Handle various naming formats
+        light_source = 'Unknown'
+        
+        # Check for light source in filename
+        if '_halogen_' in filename.lower() or 'halogen' in filename.lower():
+            light_source = 'Halogen'
+        elif '_laser_' in filename.lower() or 'laser' in filename.lower():
+            light_source = 'Laser'
+        elif '_uv_' in filename.lower() or 'uv' in filename.lower():
+            light_source = 'UV'
+        else:
+            # Try standard format parsing
+            pattern = r'^(.+?)([BLU])([CP])(\d+)$'
+            match = re.match(pattern, base_name, re.IGNORECASE)
+            if match:
+                prefix, light, orientation, scan = match.groups()
+                light_mapping = {'B': 'Halogen', 'L': 'Laser', 'U': 'UV'}
+                light_source = light_mapping.get(light.upper(), 'Unknown')
+                base_name = prefix
+        
+        # Clean up base name
+        base_name = re.sub(r'_\w+_structural$', '', base_name)
+        
+        return {
+            'gem_id': base_name,
+            'light_source': light_source,
+            'orientation': 'C',
+            'scan_number': '1',
+            'full_name': base_name,
+            'original_filename': filename
+        }
+    
+    def check_for_gem_duplicates(self, csv_files: List[Path]) -> Dict[str, List[Path]]:
+        """Check for multiple versions of the same gem"""
+        print("\nChecking for gem duplicates...")
+        
+        gem_groups = {}
+        
+        for csv_file in csv_files:
+            file_info = self.parse_gem_filename(csv_file.name)
+            gem_key = f"{file_info['gem_id']}_{file_info['light_source']}"
+            
+            if gem_key not in gem_groups:
+                gem_groups[gem_key] = []
+            gem_groups[gem_key].append(csv_file)
+        
+        duplicates = {k: v for k, v in gem_groups.items() if len(v) > 1}
+        
+        if duplicates:
+            print(f"Found duplicate gems:")
+            for gem_key, files in duplicates.items():
+                print(f"   {gem_key}: {len(files)} versions")
+        else:
+            print("No duplicate gems found")
+        
+        return duplicates
+    
+    def handle_duplicates(self, duplicates: Dict[str, List[Path]]) -> List[Path]:
+        """Handle duplicate gems with forensic considerations"""
+        if not duplicates:
+            return []
+        
+        print("\nDUPLICATE HANDLING - GEMOLOGICAL CONSIDERATIONS:")
+        print("IMPORTANT: Gems may undergo treatments between analyses!")
+        print("• Heat treatment changes spectral features")
+        print("• Irradiation alters UV characteristics")
+        print("• Fracture filling affects laser response")
+        print("• Keeping both versions preserves treatment evidence")
+        print()
+        print("OPTIONS:")
+        print("1. Ask for each duplicate (recommended - preserves evidence)")
+        print("2. Keep all versions (safest for forensics)")
+        print("3. Keep latest only (risky - may lose treatment history)")
         
         try:
-            for filename in os.listdir(directory):
-                if filename.endswith('.csv') and 'features' in filename.lower():
-                    try:
-                        stone_id = filename.split('_')[0]
-                        file_path = os.path.join(directory, filename)
-                        mod_time = datetime.fromtimestamp(os.path.getmtime(file_path))
-                        
-                        # Detect light source
-                        light_source = self._detect_light_source(stone_id)
-                        
-                        file_info = {
-                            'filename': filename,
-                            'stone_id': stone_id,
-                            'full_path': file_path,
-                            'modified': mod_time.strftime('%Y-%m-%d %H:%M:%S'),
-                            'file_size': os.path.getsize(file_path),
-                            'light_source': light_source
-                        }
-                        
-                        structural_files[light_source].append(file_info)
-                        
-                    except Exception as e:
-                        print(f"⚠️ Error reading {filename}: {e}")
-                        continue
-        except Exception as e:
-            print(f"⚠️ Error scanning directory: {e}")
+            choice = input("Choose strategy (1-3): ").strip()
+        except:
+            choice = "1"
         
-        # Sort by modification time
-        for light_source in structural_files:
-            structural_files[light_source].sort(key=lambda x: x['modified'], reverse=True)
+        files_to_skip = []
         
-        total_files = sum(len(files) for files in structural_files.values())
-        print(f"\n📊 STRUCTURAL FILES FOUND:")
-        print(f"   🔬 B (Broadband): {len(structural_files['B'])} files")
-        print(f"   🔬 L (Laser): {len(structural_files['L'])} files")
-        print(f"   🔬 U (UV): {len(structural_files['U'])} files")
-        print(f"   📊 Total: {total_files} files")
+        if choice == "2":
+            print("Keeping all versions - maximum forensic preservation")
+            return []
+        elif choice == "3":
+            print("WARNING: This may destroy treatment evidence!")
+            confirm = input("Are you sure you want to keep only latest? (y/N): ").strip().lower()
+            if confirm != 'y':
+                choice = "1"
         
-        return structural_files
-    
-    def _detect_light_source(self, stone_id: str) -> str:
-        """Detect light source from stone ID"""
-        light_source = 'B'  # Default to Broadband
-        
-        for char_pos, char in enumerate(stone_id):
-            if char == 'L' and char_pos + 1 < len(stone_id) and stone_id[char_pos + 1] in ['C', 'P']:
-                light_source = 'L'
-                break
-            elif char == 'U' and char_pos + 1 < len(stone_id) and stone_id[char_pos + 1] in ['C', 'P']:
-                light_source = 'U'
-                break
-        
-        return light_source
-    
-    def enhanced_batch_import_with_duplicate_removal(self, files_by_source: Dict[str, List[Dict]]) -> int:
-        """Multi-spectral batch import with duplicate removal"""
-        print("🔄 Starting MULTI-SPECTRAL batch import...")
-        print("🔬 Processing B (Broadband), L (Laser), and U (UV) data")
-        
-        conn = sqlite3.connect(self.db.db_path)
-        cursor = conn.cursor()
-        
-        total_success = 0
-        total_errors = 0
-        total_removed = 0
-        
-        for light_source, files in files_by_source.items():
-            if not files:
-                continue
+        if choice == "1" or choice not in ["2", "3"]:
+            # Ask for each duplicate
+            for gem_key, files in duplicates.items():
+                print(f"\n{gem_key} - Multiple temporal versions found:")
+                print("GEMOLOGICAL ANALYSIS: Same gem analyzed at different times")
                 
-            print(f"\n🔬 PROCESSING {light_source}-SOURCE ({len(files)} files)")
-            print("=" * 50)
-            
-            source_success = 0
-            source_errors = 0
-            source_removed = 0
-            
-            for file_info in files:
-                try:
-                    stone_id = file_info['stone_id']
-                    print(f"  📊 Processing: {stone_id}")
-                    
-                    # Remove existing entries
-                    existing_check = pd.read_sql_query("""
-                        SELECT spectral_id FROM spectral_data WHERE full_stone_id = ?
-                    """, conn, params=[stone_id])
-                    
-                    if not existing_check.empty:
-                        for _, old_entry in existing_check.iterrows():
-                            cursor.execute("DELETE FROM structural_features WHERE spectral_id = ?", 
-                                         (old_entry['spectral_id'],))
-                        cursor.execute("DELETE FROM spectral_data WHERE full_stone_id = ?", (stone_id,))
-                        source_removed += len(existing_check)
-                    
-                    # Load new data
-                    features_df = pd.read_csv(file_info['full_path'])
-                    features = self._process_features(features_df)
-                    
-                    if features:
-                        # Parse stone ID components
-                        orientation, scan_number, base_reference = self._parse_stone_id(stone_id)
-                        file_date = datetime.fromtimestamp(os.path.getmtime(file_info['full_path']))
-                        
-                        # Insert spectral data
-                        cursor.execute('''
-                        INSERT INTO spectral_data 
-                        (stone_reference, light_source, orientation, scan_number, 
-                         full_stone_id, date_analyzed, analyst, spectrum_file)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                        ''', (base_reference, light_source, orientation, scan_number,
-                              stone_id, file_date.date(), "David", f"{stone_id}.txt"))
-                        
-                        spectral_id = cursor.lastrowid
-                        
-                        # Insert features
-                        for feature in features:
-                            cursor.execute('''
-                            INSERT INTO structural_features 
-                            (spectral_id, feature_type, start_wavelength, midpoint_wavelength,
-                             end_wavelength, crest_wavelength, max_wavelength, bottom_wavelength)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                            ''', (spectral_id, feature['feature_type'],
-                                  feature.get('start_wavelength'), feature.get('midpoint_wavelength'),
-                                  feature.get('end_wavelength'), feature.get('crest_wavelength'),
-                                  feature.get('max_wavelength'), feature.get('bottom_wavelength')))
-                        
-                        source_success += 1
-                        print(f"    ✅ Added {len(features)} features")
+                for i, file_path in enumerate(files, 1):
+                    timestamp_match = re.search(r'_(\d{8}_\d{6})', file_path.stem)
+                    if timestamp_match:
+                        timestamp_str = timestamp_match.group(1)
+                        try:
+                            dt = datetime.strptime(timestamp_str, "%Y%m%d_%H%M%S")
+                            formatted_date = dt.strftime("%B %d, %Y at %I:%M %p")
+                        except:
+                            formatted_date = timestamp_str
                     else:
-                        source_errors += 1
-                        print(f"    ❌ No valid features found")
+                        formatted_date = "unknown date"
+                    
+                    print(f"     {i}. {file_path.name}")
+                    print(f"        Analyzed: {formatted_date}")
                 
-                except Exception as e:
-                    source_errors += 1
-                    print(f"    ❌ Error: {e}")
+                print("\nTREATMENT CONSIDERATIONS:")
+                print("• If gem was treated between analyses → KEEP BOTH")
+                print("• If just re-analysis for verification → Keep latest")
+                print("• If unsure → KEEP BOTH (safer for evidence)")
+                
+                try:
+                    decision = input(f"Decision (1-{len(files)}, 'all' to keep all, 'latest' for newest): ").strip().lower()
+                    
+                    if decision == 'all':
+                        print("KEEPING ALL: Preserving complete temporal record")
+                        continue
+                    elif decision == 'latest':
+                        # Sort by timestamp and keep latest
+                        files_with_time = []
+                        for file_path in files:
+                            timestamp_match = re.search(r'_(\d{8}_\d{6})', file_path.stem)
+                            if timestamp_match:
+                                try:
+                                    timestamp = datetime.strptime(timestamp_match.group(1), "%Y%m%d_%H%M%S")
+                                except:
+                                    timestamp = datetime.min
+                            else:
+                                timestamp = datetime.min
+                            files_with_time.append((file_path, timestamp))
+                        
+                        files_with_time.sort(key=lambda x: x[1], reverse=True)
+                        latest_file = files_with_time[0][0]
+                        older_files = [f[0] for f in files_with_time[1:]]
+                        
+                        print(f"KEEPING LATEST: {latest_file.name}")
+                        files_to_skip.extend(older_files)
+                        
+                    elif decision.isdigit():
+                        choice_idx = int(decision) - 1
+                        if 0 <= choice_idx < len(files):
+                            keep_file = files[choice_idx]
+                            skip_files = [f for f in files if f != keep_file]
+                            files_to_skip.extend(skip_files)
+                            print(f"KEEPING: {keep_file.name}")
+                        else:
+                            print("Invalid choice, keeping all for safety")
+                    else:
+                        print("Invalid choice, keeping all for safety")
+                        
+                except Exception:
+                    print("Error in selection, keeping all for safety")
+        
+        elif choice == "3":
+            # Keep only latest of each duplicate set
+            for gem_key, files in duplicates.items():
+                files_with_time = []
+                for file_path in files:
+                    timestamp_match = re.search(r'_(\d{8}_\d{6})', file_path.stem)
+                    if timestamp_match:
+                        try:
+                            timestamp = datetime.strptime(timestamp_match.group(1), "%Y%m%d_%H%M%S")
+                        except:
+                            timestamp = datetime.min
+                    else:
+                        timestamp = datetime.min
+                    files_with_time.append((file_path, timestamp))
+                
+                files_with_time.sort(key=lambda x: x[1], reverse=True)
+                latest_file = files_with_time[0][0]
+                older_files = [f[0] for f in files_with_time[1:]]
+                
+                print(f"KEEPING LATEST: {latest_file.name}")
+                files_to_skip.extend(older_files)
+        
+        return files_to_skip
+    
+    def get_column_value(self, row: pd.Series, possible_names: List[str]) -> Optional[str]:
+        """Get value from row using multiple possible column names"""
+        for name in possible_names:
+            if name in row and pd.notna(row[name]):
+                return row[name]
+        return None
+    
+    def import_csv_file(self, csv_path: Path, conn: sqlite3.Connection) -> Tuple[int, int]:
+        """Import a single CSV file with proper column mapping"""
+        try:
+            df = pd.read_csv(csv_path)
+            file_info = self.parse_gem_filename(csv_path.name)
             
-            print(f"\n📊 {light_source}-SOURCE SUMMARY:")
-            print(f"   ✅ Successfully imported: {source_success}")
-            print(f"   🗑️ Old entries removed: {source_removed}")
-            print(f"   ❌ Errors: {source_errors}")
+            print(f"Processing: {csv_path.name}")
+            print(f"   Gem: {file_info['gem_id']}, Light: {file_info['light_source']}")
             
-            total_success += source_success
-            total_errors += source_errors
-            total_removed += source_removed
-        
-        conn.commit()
-        conn.close()
-        
-        print(f"\n📊 BATCH IMPORT COMPLETED:")
-        print("=" * 50)
-        print(f"   ✅ Total imported: {total_success}")
-        print(f"   🔄 Total removed: {total_removed}")
-        print(f"   ❌ Total errors: {total_errors}")
-        
-        return total_success
+            inserted = 0
+            skipped = 0
+            
+            for index, row in df.iterrows():
+                try:
+                    # Extract required fields with proper column mapping
+                    wavelength = self.get_column_value(row, ['Wavelength', 'wavelength', 'Wavelength_nm'])
+                    intensity = self.get_column_value(row, ['Intensity', 'intensity'])
+                    feature_id = self.get_column_value(row, ['Feature', 'feature'])
+                    feature_group = self.get_column_value(row, ['Feature_Group', 'feature_group'])
+                    point_type = self.get_column_value(row, ['Point_Type', 'point_type', 'Type'])
+                    
+                    # Validate required fields
+                    missing_fields = []
+                    if not wavelength: missing_fields.append("Wavelength")
+                    if not intensity: missing_fields.append("Intensity")
+                    if not feature_id: missing_fields.append("Feature")
+                    if not feature_group: missing_fields.append("Feature_Group")
+                    if not point_type: missing_fields.append("Point_Type")
+                    
+                    if missing_fields:
+                        skipped += 1
+                        continue
+                    
+                    # Optional fields
+                    data_type = self.get_column_value(row, ['data_type', 'Data_Type'])
+                    start_wl = self.get_column_value(row, ['start_wavelength', 'Start'])
+                    end_wl = self.get_column_value(row, ['end_wavelength', 'End'])
+                    midpoint = self.get_column_value(row, ['midpoint', 'Midpoint'])
+                    bottom = self.get_column_value(row, ['bottom', 'Bottom'])
+                    norm_scheme = self.get_column_value(row, ['Normalization_Scheme', 'normalization_scheme'])
+                    ref_wl = self.get_column_value(row, ['Reference_Wavelength', 'reference_wavelength'])
+                    
+                    # Insert into database
+                    cursor = conn.cursor()
+                    cursor.execute('''
+                        INSERT OR REPLACE INTO structural_features 
+                        (file, light_source, wavelength, intensity, feature, feature_group, point_type, data_type,
+                         start_wavelength, end_wavelength, midpoint, bottom, 
+                         normalization_scheme, reference_wavelength)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ''', (
+                        file_info['original_filename'],
+                        file_info['light_source'],
+                        float(wavelength),
+                        float(intensity),
+                        str(feature_id),
+                        str(feature_group),
+                        str(point_type),
+                        str(data_type) if data_type else None,
+                        float(start_wl) if start_wl is not None else None,
+                        float(end_wl) if end_wl is not None else None,
+                        float(midpoint) if midpoint is not None else None,
+                        float(bottom) if bottom is not None else None,
+                        str(norm_scheme) if norm_scheme else None,
+                        float(ref_wl) if ref_wl is not None else None
+                    ))
+                    inserted += 1
+                    
+                except Exception as row_error:
+                    skipped += 1
+                    continue
+            
+            print(f"   Inserted: {inserted}, Skipped: {skipped}")
+            return inserted, skipped
+            
+        except Exception as e:
+            print(f"File error {csv_path.name}: {e}")
+            return 0, 0
     
-    def _process_features(self, features_df: pd.DataFrame) -> List[Dict]:
-        """Process features from DataFrame"""
-        features = []
-        for _, row in features_df.iterrows():
-            feature = {
-                'feature_type': row.get('Feature'),
-                'start_wavelength': row.get('Start') if pd.notna(row.get('Start')) else None,
-                'midpoint_wavelength': row.get('Midpoint') if pd.notna(row.get('Midpoint')) else None,
-                'end_wavelength': row.get('End') if pd.notna(row.get('End')) else None,
-                'crest_wavelength': row.get('Crest') if pd.notna(row.get('Crest')) else None,
-                'max_wavelength': row.get('Max') if pd.notna(row.get('Max')) else None,
-                'bottom_wavelength': row.get('Bottom') if pd.notna(row.get('Bottom')) else None
-            }
-            if feature['feature_type']:
-                features.append(feature)
-        return features
-    
-    def _parse_stone_id(self, stone_id: str) -> tuple:
-        """Parse stone ID into components"""
-        orientation = 'C'
-        scan_number = 1
-        base_reference = stone_id
+    def archive_imported_files(self, successful_files: List[Path]) -> int:
+        """Move successfully imported files to archive for Option 8"""
+        if not successful_files:
+            return 0
         
-        for i, char in enumerate(stone_id):
-            if char in ['B', 'L', 'U']:
-                if i + 1 < len(stone_id) and stone_id[i + 1] in ['C', 'P']:
-                    orientation = stone_id[i + 1]
-                if i + 2 < len(stone_id) and stone_id[i + 2:].isdigit():
-                    scan_number = int(stone_id[i + 2:])
-                base_reference = stone_id[:i]
-                break
+        print(f"\nArchiving {len(successful_files)} imported files for Option 8...")
         
-        return orientation, scan_number, base_reference
-    
-    def batch_import_menu(self):
-        """Interactive batch import menu"""
-        print("\n🚀 MULTI-SPECTRAL BATCH IMPORT")
-        print("=" * 50)
+        archived_count = 0
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         
-        files_by_source = self.scan_for_structural_files()
-        total_files = sum(len(files) for files in files_by_source.values())
-        
-        if total_files == 0:
-            print("❌ No structural files found")
-            print(f"   💡 Check directory: {self.structural_dir}")
-            return
-        
-        print(f"\n📁 Ready to import {total_files} files:")
-        for light_source, files in files_by_source.items():
-            if files:
-                print(f"   🔬 {light_source}-source: {len(files)} files")
-        
-        print(f"\n🔬 FEATURES:")
-        print("   ✅ Automatic light source detection")
-        print("   ✅ Duplicate removal")
-        print("   ✅ Progress tracking")
-        
-        confirm = input(f"\n🔄 Import all {total_files} files? (y/n): ").strip().lower()
-        if confirm in ['y', 'yes']:
+        for file_path in successful_files:
             try:
-                success_count = self.enhanced_batch_import_with_duplicate_removal(files_by_source)
-                if success_count > 0:
-                    print("\n✅ BATCH IMPORT SUCCESS!")
-                    print("   💡 Use menu option 4 to verify results")
-                else:
-                    print("\n⚠️ No new data imported")
+                archive_name = f"{file_path.stem}_archived_{timestamp}{file_path.suffix}"
+                archive_path = self.archive_dir / archive_name
+                
+                shutil.move(str(file_path), str(archive_path))
+                archived_count += 1
+                
             except Exception as e:
-                print(f"\n❌ Batch import error: {e}")
-        else:
-            print("❌ Import cancelled")
+                print(f"Error archiving {file_path.name}: {e}")
+        
+        if archived_count > 0:
+            print(f"Successfully archived {archived_count} files")
+            print(f"Archive location: {self.archive_dir}")
+            print("Files ready for main.py Option 8 (Structural Matching Test)")
+        
+        return archived_count
     
-    def interactive_import(self):
-        """Single file import menu"""
-        print("\n📥 SINGLE FILE IMPORT")
-        print("=" * 50)
+    def export_to_csv(self):
+        """Export database contents to CSV"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            
+            query = '''
+                SELECT file, light_source, wavelength, intensity, feature, feature_group, point_type,
+                       data_type, start_wavelength, end_wavelength, midpoint, bottom,
+                       normalization_scheme, reference_wavelength, timestamp
+                FROM structural_features
+                ORDER BY file, light_source, wavelength
+            '''
+            
+            df = pd.read_sql_query(query, conn)
+            conn.close()
+            
+            df.to_csv(self.csv_output_path, index=False)
+            print(f"CSV export saved: {self.csv_output_path} ({len(df)} records)")
+            return True
+            
+        except Exception as e:
+            print(f"CSV export error: {e}")
+            return False
+    
+    def get_database_stats(self):
+        """Display database statistics"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute("SELECT COUNT(*) FROM structural_features")
+            total = cursor.fetchone()[0]
+            
+            cursor.execute("SELECT light_source, COUNT(*) FROM structural_features GROUP BY light_source")
+            by_light = cursor.fetchall()
+            
+            cursor.execute("SELECT COUNT(DISTINCT file) FROM structural_features")
+            unique_files = cursor.fetchone()[0]
+            
+            conn.close()
+            
+            print(f"\nDATABASE STATISTICS:")
+            print(f"   Total records: {total:,}")
+            print(f"   Unique files: {unique_files}")
+            print(f"   By light source:")
+            for light, count in by_light:
+                print(f"     {light}: {count:,}")
+            
+        except Exception as e:
+            print(f"Stats error: {e}")
+    
+    def run_batch_import(self):
+        """Main batch import process"""
+        print(f"\nStarting forensic gemological batch import")
+        print("=" * 60)
         
-        files_by_source = self.scan_for_structural_files()
-        total_files = sum(len(files) for files in files_by_source.values())
+        if not self.structural_data_dir.exists():
+            print(f"Source directory not found: {self.structural_data_dir}")
+            return False
         
-        if total_files == 0:
-            print("❌ No structural files found")
-            return
+        csv_files = list(self.structural_data_dir.glob("*.csv"))
+        if not csv_files:
+            print(f"No CSV files found in {self.structural_data_dir}")
+            return False
         
-        print(f"📁 Found {total_files} files")
-        print("💡 Use menu option 2 for batch import")
+        print(f"Found {len(csv_files)} CSV files to import")
+        
+        # Handle duplicates with forensic considerations
+        duplicates = self.check_for_gem_duplicates(csv_files)
+        files_to_skip = []
+        
+        if duplicates:
+            files_to_skip = self.handle_duplicates(duplicates)
+        
+        # Filter out skipped files
+        final_csv_files = [f for f in csv_files if f not in files_to_skip]
+        
+        if len(final_csv_files) < len(csv_files):
+            skipped_count = len(csv_files) - len(final_csv_files)
+            print(f"\nFinal file list:")
+            print(f"   Original files: {len(csv_files)}")
+            print(f"   Duplicate files skipped: {skipped_count}")
+            print(f"   Files to import: {len(final_csv_files)}")
+        
+        if not final_csv_files:
+            print("No files left to import")
+            return True
+        
+        # Create database schema
+        if not self.create_database_schema():
+            return False
+        
+        # Import files
+        total_inserted = 0
+        total_skipped = 0
+        successfully_imported_files = []
+        
+        try:
+            conn = sqlite3.connect(self.db_path)
+            
+            for csv_file in final_csv_files:
+                inserted, skipped = self.import_csv_file(csv_file, conn)
+                total_inserted += inserted
+                total_skipped += skipped
+                if inserted > 0:
+                    successfully_imported_files.append(csv_file)
+            
+            conn.commit()
+            conn.close()
+            
+            print(f"\nIMPORT COMPLETE")
+            print(f"   Files processed: {len(final_csv_files)}")
+            print(f"   Successful imports: {len(successfully_imported_files)}")
+            print(f"   Total records inserted: {total_inserted:,}")
+            print(f"   Total records skipped: {total_skipped:,}")
+            
+            if total_inserted > 0:
+                self.export_to_csv()
+                self.get_database_stats()
+                
+                print(f"\nFORENSIC DUPLICATE PROTECTION ACTIVE:")
+                print(f"   Temporal analysis preservation (treatment detection)")
+                print(f"   User-controlled duplicate handling (evidence protection)")
+                print(f"   Database duplicates prevented (UNIQUE constraint)")
+                
+                # Archive imported files for Option 8
+                archived_count = self.archive_imported_files(successfully_imported_files)
+                
+                if archived_count > 0:
+                    print(f"\nAUTOMATIC ARCHIVING COMPLETE")
+                    print(f"   {archived_count} files moved to structural(archive)")
+                    print(f"   Ready for main.py Option 8: Structural Matching (Test)")
+                
+                return True
+            else:
+                print("No records were imported")
+                return False
+                
+        except Exception as e:
+            print(f"Import process error: {e}")
+            return False
+
+def main():
+    """Main entry point"""
+    print("PRODUCTION FORENSIC GEMOLOGICAL BATCH IMPORTER")
+    print("=" * 70)
+    print("Features:")
+    print("• Temporal analysis preservation (before/after treatment)")
+    print("• Smart duplicate detection with forensic considerations")
+    print("• Treatment evidence protection (heat, irradiation, filling)")
+    print("• Database duplicate prevention (UNIQUE constraints)")
+    print("• Automatic archiving for Option 8 testing")
+    print("=" * 70)
+    
+    importer = ProductionBatchImporter()
+    success = importer.run_batch_import()
+    
+    if success:
+        print(f"\nForensic gemological import completed successfully!")
+        print(f"Temporal analysis data preserved for treatment detection")
+    else:
+        print(f"\nBatch import failed")
+    
+    return success
 
 if __name__ == "__main__":
-    # Test importer
-    from database.db_manager import MultiSpectralGemstoneDB
-    db = MultiSpectralGemstoneDB()
-    importer = StructuralDataImporter(db)
-    files = importer.scan_for_structural_files()
-    print(f"Found files: {sum(len(f) for f in files.values())}")
+    main()
