@@ -39,15 +39,48 @@ class ProductionBatchImporter:
         print("Forensic mode: Preserves temporal analysis for treatment detection")
     
     def find_project_root(self) -> Path:
-        """Find project root by looking for key directories"""
-        current = Path(__file__).parent.absolute()
+        """Find project root by looking for key directories - IMPROVED VERSION"""
+        print(f"🔍 Looking for project root...")
         
+        # Get the directory where batch_importer.py is located
+        current = Path(__file__).parent.absolute()
+        print(f"   Script location: {current}")
+        
+        # Try current directory first (where main.py is run from)
+        cwd = Path.cwd()
+        print(f"   Current working directory: {cwd}")
+        
+        # Check current working directory first (most likely when run from main.py)
+        if (cwd / "database").exists() and (cwd / "data").exists():
+            print(f"✅ Found project root at: {cwd}")
+            return cwd
+        
+        # Check if main.py exists in current directory
+        if (cwd / "main.py").exists():
+            print(f"✅ Found project root at: {cwd} (main.py found)")
+            return cwd
+        
+        # Check parent directories of script location
         for path in [current] + list(current.parents):
+            print(f"   Checking: {path}")
             if (path / "database").exists() and (path / "data").exists():
+                print(f"✅ Found project root at: {path}")
                 return path
             if (path / "main.py").exists():
+                print(f"✅ Found project root at: {path} (main.py found)")
                 return path
         
+        # If all else fails, try going up from current working directory
+        for path in list(cwd.parents):
+            print(f"   Checking parent: {path}")
+            if (path / "database").exists() and (path / "data").exists():
+                print(f"✅ Found project root at: {path}")
+                return path
+            if (path / "main.py").exists():
+                print(f"✅ Found project root at: {path} (main.py found)")
+                return path
+        
+        print(f"⚠️ Could not find project root, using: {current.parent}")
         return current.parent
     
     def create_database_schema(self):
@@ -85,11 +118,11 @@ class ProductionBatchImporter:
             
             conn.commit()
             conn.close()
-            print("Database schema verified")
+            print("✅ Database schema created successfully")
             return True
             
         except Exception as e:
-            print(f"Database schema error: {e}")
+            print(f"❌ Database schema error: {e}")
             return False
     
     def parse_gem_filename(self, filename: str) -> Dict[str, str]:
@@ -447,20 +480,48 @@ class ProductionBatchImporter:
             print(f"Stats error: {e}")
     
     def run_batch_import(self):
-        """Main batch import process"""
+        """Main batch import process - IMPROVED with better error reporting"""
         print(f"\nStarting forensic gemological batch import")
         print("=" * 60)
         
+        print(f"🔍 Project root: {self.project_root}")
+        print(f"🔍 Source directory: {self.structural_data_dir}")
+        print(f"🔍 Database path: {self.db_path}")
+        print(f"🔍 Archive directory: {self.archive_dir}")
+        
+        # Check if directories exist and create if needed
         if not self.structural_data_dir.exists():
-            print(f"Source directory not found: {self.structural_data_dir}")
+            print(f"❌ Source directory not found: {self.structural_data_dir}")
+            print(f"💡 Create the directory or check if you're in the correct project root")
+            return False
+        
+        # Try to create database directory
+        try:
+            self.db_path.parent.mkdir(parents=True, exist_ok=True)
+            print(f"✅ Database directory verified: {self.db_path.parent}")
+        except Exception as e:
+            print(f"❌ Cannot create database directory: {e}")
             return False
         
         csv_files = list(self.structural_data_dir.glob("*.csv"))
         if not csv_files:
-            print(f"No CSV files found in {self.structural_data_dir}")
+            print(f"❌ No CSV files found in {self.structural_data_dir}")
+            print("💡 Make sure you have CSV files from structural marking (Option 2)")
+            
+            # Show what files ARE in the directory
+            all_files = list(self.structural_data_dir.glob("*"))
+            if all_files:
+                print(f"🔍 Found {len(all_files)} non-CSV files:")
+                for f in all_files[:10]:  # Show first 10
+                    print(f"   - {f.name}")
+                if len(all_files) > 10:
+                    print(f"   ... and {len(all_files) - 10} more")
+            else:
+                print("🔍 Directory is empty")
+                
             return False
         
-        print(f"Found {len(csv_files)} CSV files to import")
+        print(f"✅ Found {len(csv_files)} CSV files to import")
         
         # Handle duplicates with forensic considerations
         duplicates = self.check_for_gem_duplicates(csv_files)
@@ -480,12 +541,16 @@ class ProductionBatchImporter:
             print(f"   Files to import: {len(final_csv_files)}")
         
         if not final_csv_files:
-            print("No files left to import")
+            print("❌ No files left to import")
             return True
         
         # Create database schema
+        print(f"🔧 Creating database schema...")
         if not self.create_database_schema():
+            print(f"❌ Failed to create database schema")
             return False
+        else:
+            print(f"✅ Database schema created successfully")
         
         # Import files
         total_inserted = 0
@@ -493,9 +558,11 @@ class ProductionBatchImporter:
         successfully_imported_files = []
         
         try:
+            print(f"📊 Connecting to database: {self.db_path}")
             conn = sqlite3.connect(self.db_path)
             
-            for csv_file in final_csv_files:
+            for i, csv_file in enumerate(final_csv_files, 1):
+                print(f"📄 Processing file {i}/{len(final_csv_files)}: {csv_file.name}")
                 inserted, skipped = self.import_csv_file(csv_file, conn)
                 total_inserted += inserted
                 total_skipped += skipped
@@ -505,7 +572,7 @@ class ProductionBatchImporter:
             conn.commit()
             conn.close()
             
-            print(f"\nIMPORT COMPLETE")
+            print(f"\n✅ IMPORT COMPLETE")
             print(f"   Files processed: {len(final_csv_files)}")
             print(f"   Successful imports: {len(successfully_imported_files)}")
             print(f"   Total records inserted: {total_inserted:,}")
@@ -524,17 +591,20 @@ class ProductionBatchImporter:
                 archived_count = self.archive_imported_files(successfully_imported_files)
                 
                 if archived_count > 0:
-                    print(f"\nAUTOMATIC ARCHIVING COMPLETE")
+                    print(f"\n✅ AUTOMATIC ARCHIVING COMPLETE")
                     print(f"   {archived_count} files moved to structural(archive)")
                     print(f"   Ready for main.py Option 8: Structural Matching (Test)")
                 
                 return True
             else:
-                print("No records were imported")
+                print("❌ No records were imported")
                 return False
                 
         except Exception as e:
-            print(f"Import process error: {e}")
+            print(f"❌ Import process error: {e}")
+            print(f"🔍 Error type: {type(e).__name__}")
+            import traceback
+            traceback.print_exc()
             return False
 
 def main():
