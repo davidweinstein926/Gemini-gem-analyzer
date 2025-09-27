@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-SUPER SAFE GEMINI ANALYSIS SYSTEM - OPTION 3 MEMORY PROTECTED
+SUPER SAFE GEMINI ANALYSIS SYSTEM - OPTION 6 ENHANCED
 ⚡ Safe subprocess calls + Memory-protected Option 3 + Smart fallback
 🛡️  Optional memory monitoring (install psutil for enhanced monitoring)
+🎯 Enhanced Option 6: Production Structural Database Import with Auto-Archive
 """
 import os, sys, subprocess, sqlite3, pandas as pd, numpy as np, threading, time, shutil, json, re
 from datetime import datetime
@@ -31,6 +32,7 @@ class SuperSafeGeminiSystem:
             'src/structural_analysis/enhanced_gem_analyzer.py': 'Structural Matching Engine',
             'txt_to_split_long_format.py': 'Numerical DB Import Tool',
             'database/batch_importer.py': 'Structural DB Import Tool',
+            'database/perfect_structural_archive_importer.py': 'Production Structural Import Tool',  # NEW
             'gem_selector.py': 'Safe Gem Analysis Tool'
         }
         self.bleep_enabled = True
@@ -422,40 +424,239 @@ class SuperSafeGeminiSystem:
             except Exception as e: print(f"❌ Error: {e}")
         else: print("❌ txt_to_split_long_format.py not found")
     
-    # MENU OPTION 6: IMPORT TO STRUCTURAL DB
+    # 🎯 MENU OPTION 6: ENHANCED PRODUCTION STRUCTURAL IMPORT
     def import_to_structural_db(self):
-        """Option 6: Import to structural database"""
-        print("\n💾 IMPORT TO STRUCTURAL DATABASE\n" + "=" * 60)
+        """Option 6: Enhanced Production Structural Database Import with Auto-Archive"""
+        print("\n🎯 PRODUCTION STRUCTURAL DATABASE IMPORT\n" + "=" * 60)
+        print("📍 Built on SuperSafeGeminiSystem architecture")
+        print("🗄️  Database: database/structural_spectra/gemini_structural.db")
+        print("📂 Source: root/data/structural_data/ (fresh structural data)")
+        print("📦 Archive: root/data/structural(archive)/ (after successful import)")
+        print("💎 Handles all light sources: Halogen (B), Laser (L), UV (U)")
+        print("🔬 Production workflow: Import → Database → Archive")
         
-        structural_files = self.check_directory_files("data/structural_data", "*.csv")
+        # Check if source directory exists
+        source_dir = Path("data/structural_data")
+        if not source_dir.exists():
+            print("❌ Source directory not found: data/structural_data")
+            print("💡 This is for importing fresh structural data from Option 2")
+            print("💡 Use Option 2 (Structural Marking) to create structural data first")
+            return
+        
+        # Count source files
+        structural_files = list(source_dir.glob("*.csv"))
         if not structural_files:
-            print("❌ No structural files found in data/structural_data/")
+            print(f"❌ No CSV files found in {source_dir}")
             print("💡 Use Option 2 to mark structural features first")
             return
         
-        print("Input: root/data/structural_data/ (halogen,laser,uv)")
-        print("Output: root/database/structural_spectra/multi_structural_gem_data.db")
-        print("        root/database/structural_spectra/gemini_structural_db.csv")
-        print(f"📁 Found {len(structural_files)} structural files")
+        print(f"📊 Found {len(structural_files)} structural files to import")
         
-        confirm = self.safe_input(f"Import {len(structural_files)} files to structural databases? (y/n): ")
-        if confirm.lower() != 'y': return
+        # Show sample of files found
+        print(f"\n📋 Sample files to import:")
+        sample_files = structural_files[:5]
+        for i, file in enumerate(sample_files, 1):
+            size_kb = file.stat().st_size / 1024
+            print(f"   {i}. {file.name} ({size_kb:.1f} KB)")
+        
+        if len(structural_files) > 5:
+            print(f"   ... and {len(structural_files) - 5} more files")
+        
+        # Safety confirmation (SuperSafe pattern)
+        print(f"\n⚠️  PRODUCTION IMPORT CONFIRMATION:")
+        print("This will:")
+        print("✅ Import fresh structural data into database")
+        print("✅ Update/create database/structural_spectra/gemini_structural.db")
+        print("✅ Archive successfully imported files to structural(archive)")
+        print("✅ Preserve existing database with automatic backup")
+        
+        confirm = self.safe_input(f"Proceed with production import of {len(structural_files)} files? (y/n): ").strip().lower()
+        if confirm != 'y':
+            print("❌ Import cancelled by user")
+            return
+        
+        # Memory safety check (SuperSafe pattern)
+        if not self.check_memory_safety():
+            print("⚠️  Memory warning detected")
+            print("Production import is memory-intensive due to comprehensive processing")
+            proceed = self.safe_input("Continue with memory caution? (y/n): ").strip().lower()
+            if proceed != 'y':
+                print("❌ Import cancelled due to memory concerns")
+                return
+        
+        print(f"\n🚀 Starting Production Structural Import...")
+        print("This may take several minutes depending on data volume...")
         
         try:
-            success_count = 0
-            # Import using batch_importer.py
-            if os.path.exists('database/batch_importer.py'):
-                result = subprocess.run([sys.executable, 'database/batch_importer.py'], capture_output=False, text=True)
-                if result.returncode == 0: success_count += 1
+            # Import the production structural importer
+            try:
+                from database.perfect_structural_archive_importer import production_structural_import
+            except ImportError:
+                print("❌ database/perfect_structural_archive_importer.py not found")
+                print("💡 Ensure the file is in your database directory")
+                print("💡 Running fallback batch import instead...")
+                
+                # Fallback to existing batch importer
+                if os.path.exists('database/batch_importer.py'):
+                    result = subprocess.run([sys.executable, 'database/batch_importer.py'], capture_output=False, text=True)
+                    if result.returncode == 0: 
+                        print("✅ Fallback import completed")
+                        self.play_bleep("completion")
+                    else:
+                        print("❌ Fallback import failed")
+                else:
+                    print("❌ No import tools available")
+                return
             
-            # Import using append_full_name_to_structuraldb.py  
-            if os.path.exists('database/append_full_name_to_structuraldb.py'):
-                result = subprocess.run([sys.executable, 'database/append_full_name_to_structuraldb.py'], capture_output=False, text=True)
-                if result.returncode == 0: success_count += 1
+            # Execute production import
+            print("📊 Launching production structural import engine...")
+            success = production_structural_import()
             
-            if success_count > 0: print("✅ Structural database import completed"); self.play_bleep("completion")
-            else: print("❌ Database import failed")
-        except Exception as e: print(f"❌ Import error: {e}")
+            if success:
+                print("\n🎉 PRODUCTION IMPORT SUCCESS!")
+                print("-" * 50)
+                print("✅ Database updated: database/structural_spectra/gemini_structural.db")
+                print("✅ All light sources unified: Halogen/Laser/UV")
+                print("✅ Fresh structural data successfully imported")
+                print("✅ Source files archived to structural(archive)")
+                print("✅ Performance optimized with indexes")
+                print("✅ Data integrity validated")
+                print("✅ Production workflow completed")
+                
+                # Play completion sound
+                self.play_bleep("completion")
+                
+                # Offer to show statistics
+                show_stats = self.safe_input("\nShow database statistics? (y/n): ").strip().lower()
+                if show_stats == 'y':
+                    self.show_structural_database_stats()
+            else:
+                print("\n❌ PRODUCTION IMPORT FAILED!")
+                print("Check error messages above for details")
+                print("Common solutions:")
+                print("• Verify source directory path: data/structural_data")
+                print("• Check file permissions and disk space")
+                print("• Ensure CSV files are properly formatted")
+                print("• Try running with administrator privileges")
+                
+        except Exception as e:
+            print(f"\n💥 Unexpected error during production import: {e}")
+            print("Error type:", type(e).__name__)
+            
+            # Offer fallback option
+            print("\n🔧 Attempting fallback to existing batch importer...")
+            try:
+                if os.path.exists('database/batch_importer.py'):
+                    result = subprocess.run([sys.executable, 'database/batch_importer.py'], capture_output=False, text=True)
+                    if result.returncode == 0: 
+                        print("✅ Fallback import completed successfully")
+                        self.play_bleep("completion")
+                    else:
+                        print("❌ Fallback also failed")
+            except Exception as fallback_error:
+                print(f"❌ Fallback error: {fallback_error}")
+
+    def show_structural_database_stats(self):
+        """Show comprehensive structural database statistics"""
+        try:
+            print("\n📊 STRUCTURAL DATABASE STATISTICS")
+            print("=" * 50)
+            
+            # Check which database exists (priority order)
+            db_paths = [
+                "database/structural_spectra/gemini_structural.db",  # NEW primary location
+                "gemini_structural.db",  # Alternative location
+                "database/structural_spectra/multi_structural_gem_data.db"  # Legacy
+            ]
+            db_path = None
+            
+            for path in db_paths:
+                if os.path.exists(path):
+                    db_path = path
+                    break
+            
+            if not db_path:
+                print("❌ No structural database found")
+                print("💡 Run Option 6 to import structural data first")
+                return
+            
+            print(f"📁 Database: {db_path}")
+            
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            
+            # Basic statistics
+            cursor.execute("SELECT COUNT(*) FROM structural_features")
+            total_records = cursor.fetchone()[0]
+            print(f"📝 Total spectral records: {total_records:,}")
+            
+            # Unique gems
+            cursor.execute("SELECT COUNT(DISTINCT COALESCE(gem_id, file)) FROM structural_features")
+            unique_gems = cursor.fetchone()[0]
+            print(f"💎 Unique gems analyzed: {unique_gems}")
+            
+            # By light source
+            cursor.execute("SELECT light_source, COUNT(*) FROM structural_features GROUP BY light_source ORDER BY COUNT(*) DESC")
+            light_sources = cursor.fetchall()
+            
+            print(f"\n💡 Records by light source:")
+            for source, count in light_sources:
+                percentage = (count / total_records) * 100 if total_records > 0 else 0
+                print(f"   {source}: {count:,} ({percentage:.1f}%)")
+            
+            # Wavelength analysis
+            cursor.execute("SELECT MIN(wavelength), MAX(wavelength), AVG(wavelength) FROM structural_features WHERE wavelength IS NOT NULL")
+            min_wl, max_wl, avg_wl = cursor.fetchone()
+            
+            if min_wl and max_wl:
+                print(f"\n🌈 Wavelength analysis:")
+                print(f"   Range: {min_wl:.1f} - {max_wl:.1f} nm")
+                print(f"   Average: {avg_wl:.1f} nm")
+            
+            # Feature analysis
+            cursor.execute("SELECT feature_group, COUNT(*) FROM structural_features WHERE feature_group IS NOT NULL GROUP BY feature_group ORDER BY COUNT(*) DESC LIMIT 8")
+            feature_groups = cursor.fetchall()
+            
+            if feature_groups:
+                print(f"\n🏷️  Top feature groups:")
+                for group, count in feature_groups:
+                    print(f"   {group}: {count:,}")
+            
+            # Recent imports
+            cursor.execute("SELECT DATE(import_timestamp), COUNT(*) FROM structural_features WHERE import_timestamp IS NOT NULL GROUP BY DATE(import_timestamp) ORDER BY DATE(import_timestamp) DESC LIMIT 5")
+            recent_imports = cursor.fetchall()
+            
+            if recent_imports:
+                print(f"\n📅 Recent import activity:")
+                for date, count in recent_imports:
+                    print(f"   {date}: {count:,} records")
+            
+            # Data quality check
+            cursor.execute("SELECT COUNT(*) FROM structural_features WHERE wavelength IS NULL OR intensity IS NULL")
+            incomplete_records = cursor.fetchone()[0]
+            
+            print(f"\n🔍 Data quality:")
+            complete_records = total_records - incomplete_records
+            completeness = (complete_records / total_records) * 100 if total_records > 0 else 0
+            print(f"   Complete records: {complete_records:,} ({completeness:.1f}%)")
+            
+            if incomplete_records > 0:
+                print(f"   ⚠️  Incomplete records: {incomplete_records:,}")
+            else:
+                print(f"   ✅ All records complete")
+            
+            # Database size
+            db_size = os.path.getsize(db_path) / (1024 * 1024)  # MB
+            print(f"\n💾 Database size: {db_size:.2f} MB")
+            
+            conn.close()
+            
+            print("\n✅ Database is ready for structural analysis!")
+            print("🎯 Use Option 4 for structural matching workflows")
+            
+        except Exception as e:
+            print(f"❌ Could not retrieve database stats: {e}")
+            print(f"🔍 Error details: {type(e).__name__}")
     
     # MENU OPTION 7: NUMERICAL MATCHING (TEST) - Interactive gem selection
     def numerical_matching_test(self):
@@ -701,7 +902,7 @@ class SuperSafeGeminiSystem:
         archive_files = self.check_directory_files("data/structural(archive)", "*.csv")
         if not archive_files:
             print("❌ No archived structural files found in data/structural(archive)/")
-            print("💡 Use Option 10 to archive structural files first")
+            print("💡 Use Option 6 to import and archive structural files first")
             return
         
         print("Input: root/data/structural(archive)/ (archived data for testing)")
@@ -797,18 +998,21 @@ class SuperSafeGeminiSystem:
         print("\n🧹 CLEAN UP STRUCTURAL\n" + "=" * 60)
         print("a) Archive: root/data/structural_data/ → root/data/structural(archive)")
         print("b) Archive: root/outputs/structural_results/ → root/results(archive)/post_analysis_structural/")
+        print("ℹ️  NOTE: Option 6 now auto-archives imported files")
         
         try:
             archived_files = 0
-            # 10a: Archive structural_data to structural(archive)
+            # 10a: Archive any remaining structural_data files (if Option 6 didn't catch them)
             structural_files = self.check_directory_files("data/structural_data", "*.csv")
             if structural_files:
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 for file in structural_files:
-                    dest_name = f"{file.stem}_{timestamp}{file.suffix}"
+                    dest_name = f"{file.stem}_manual_archive_{timestamp}{file.suffix}"
                     shutil.move(str(file), f"data/structural(archive)/{dest_name}")
                     archived_files += 1
-                print(f"✅ Archived {archived_files} structural files")
+                print(f"✅ Manually archived {archived_files} remaining structural files")
+            else:
+                print("ℹ️  No structural files found to archive (Option 6 auto-archive working)")
             
             # 10b: Archive structural results
             results_moved = 0
@@ -865,7 +1069,7 @@ class SuperSafeGeminiSystem:
         key_dirs = [
             ("data/raw_temp", "Raw temp files", "*.txt"),
             ("data/raw (archive)", "Archived raw files", "*.txt"), 
-            ("data/structural_data", "Structural marked files", "*.csv"),
+            ("data/structural_data", "Fresh structural files", "*.csv"),
             ("data/structural(archive)", "Archived structural files", "*.csv"),
             ("outputs/numerical_analysis/reports", "Numerical reports", "*"),
             ("outputs/structural_results/reports", "Structural reports", "*")
@@ -877,12 +1081,22 @@ class SuperSafeGeminiSystem:
             status = "✅" if file_count > 0 else "⚪"
             print(f"{status} {description}: {file_count} files in {dir_path}")
         
-        # Database status
-        if os.path.exists(self.db_path):
-            size_kb = os.path.getsize(self.db_path) / 1024
-            print(f"✅ Structural database: {size_kb:.1f} KB")
-        else:
-            print(f"❌ Structural database not found: {self.db_path}")
+        # Database status - Enhanced for new database locations
+        print(f"\n🗄️  Database Status:")
+        
+        # Check structural databases (priority order)
+        structural_dbs = [
+            ("database/structural_spectra/gemini_structural.db", "Production Structural DB (NEW)"),
+            ("gemini_structural.db", "Alternative Structural DB"),
+            ("database/structural_spectra/multi_structural_gem_data.db", "Legacy Structural DB")
+        ]
+        
+        for db_path, description in structural_dbs:
+            if os.path.exists(db_path):
+                size_kb = os.path.getsize(db_path) / 1024
+                print(f"✅ {description}: {size_kb:.1f} KB")
+            else:
+                print(f"⚪ {description}: Not found")
         
         # Environment check
         gemini_path = os.environ.get('GEMINI_DATA_PATH', 'Not set')
@@ -890,6 +1104,7 @@ class SuperSafeGeminiSystem:
         print(f"🔊 Audio: {'Available' if HAS_AUDIO else 'Not available'} | Bleep: {'ON' if self.bleep_enabled else 'OFF'}")
         print(f"🛡️  Memory Limit: {self.memory_limit_mb}MB | Safety: ACTIVE")
         print(f"📊 Memory Monitor: {'Available' if HAS_PSUTIL else 'Not available (optional)'}")
+        print(f"🎯 Enhanced Option 6: Production Import with Auto-Archive")
     
     # MENU OPTION 12: TOGGLE BLEEP
     def toggle_bleep(self):
@@ -900,12 +1115,12 @@ class SuperSafeGeminiSystem:
     
     # MAIN MENU
     def run_main_menu(self):
-        """Complete main menu with SUPER SAFE Option 3"""
-        print(f"\n{'='*70}\n  SUPER SAFE GEMINI ANALYSIS SYSTEM\n  🛡️  Option 3 Memory Protected + Smart Fallback\n{'='*70}")
+        """Complete main menu with ENHANCED Option 6"""
+        print(f"\n{'='*70}\n  SUPER SAFE GEMINI ANALYSIS SYSTEM\n  🎯 Enhanced Option 6: Production Import + Auto-Archive\n  🛡️  Memory Protected + Smart Fallback\n{'='*70}")
         
         while True:
-            print(f"\nMAIN MENU (SUPER SAFE with Memory Protection):")
-            print("=" * 55)
+            print(f"\nMAIN MENU (Enhanced with Production Import):")
+            print("=" * 60)
             print("📡 DATA CAPTURE & ANALYSIS:")
             print("1. Data Acquisition (Spectral Capture)")
             print("2. Structural Marking (smart fallback)")  
@@ -914,7 +1129,7 @@ class SuperSafeGeminiSystem:
             print("")
             print("💾 DATABASE OPERATIONS:")
             print("5. Import to Numerical DB")
-            print("6. Import to Structural DB")
+            print("6. 🎯 Production Structural Import (NEW: Auto-Archive)")
             print("")
             print("🧪 TESTING (Archived Data):")
             print("7. 🛡️  Numerical Matching Test (INTERACTIVE)")
@@ -925,13 +1140,13 @@ class SuperSafeGeminiSystem:
             print("10. Clean Up Structural")
             print("")
             print("⚙️ SYSTEM:")
-            print("11. System Status (with Memory Monitor)")
+            print("11. System Status (with Database Monitor)")
             print("12. Toggle Bleep System") 
             print("13. Exit")
             
             # Show safety status
             memory_status = "OK" if self.check_memory_safety() else "⚠️  LOW" if HAS_PSUTIL else "Unknown"
-            print(f"\nStatus: Bleep [{'ON' if self.bleep_enabled else 'OFF'}] | Memory: {memory_status} | 🛡️  SUPER SAFE MODE")
+            print(f"\nStatus: Bleep [{'ON' if self.bleep_enabled else 'OFF'}] | Memory: {memory_status} | 🎯 Enhanced Option 6 | 🛡️  SUPER SAFE MODE")
             
             try:
                 choice = self.safe_input("\nSelect (1-13): ")
