@@ -3,7 +3,7 @@
 ENHANCED MULTI-GEM STRUCTURAL ANALYZER - ADVANCED DATABASE MATCHING
 Incorporates sophisticated scoring algorithms and comprehensive analysis
 Input: data/structural(archive)/*.csv files
-Compares against: multi_structural_gem_data.db
+Compares against: database/structural_spectra/multi_structural_gem_data.db
 Output: outputs/structural_results/
 """
 
@@ -14,6 +14,7 @@ import re
 import sys
 import sqlite3
 import tempfile
+import shutil
 from pathlib import Path
 from datetime import datetime
 import pandas as pd
@@ -37,9 +38,9 @@ class EnhancedMultiGemStructuralAnalyzer:
         self.project_root = self.find_project_root()
         self.archive_path = self.project_root / "data" / "structural(archive)"
         
-        # Check for both databases
-        self.sqlite_db_path = self.project_root / "multi_structural_gem_data.db"
-        self.csv_db_path = self.project_root / "gemini_structural_db.csv"
+        # Check for both databases - UPDATED PATHS
+        self.sqlite_db_path = self.project_root / "database" / "structural_spectra" / "multi_structural_gem_data.db"
+        self.csv_db_path = self.project_root / "database" / "structural_spectra" / "gemini_structural_db.csv"
         self.database_type = None
         self.database_path = None
         
@@ -78,6 +79,50 @@ class EnhancedMultiGemStructuralAnalyzer:
         self.check_databases()
         self.scan_archive_directory()
     
+    def find_project_root(self):
+        """Find the project root directory by walking up from script location"""
+        # Start from the script's directory
+        # Script is in: .../gemini_gemological_analysis/src/structural_analysis/
+        # Project root is: .../gemini_gemological_analysis/
+        
+        current_path = Path(__file__).parent  # src/structural_analysis/
+        
+        # Go up directories looking for project root indicators
+        project_indicators = [
+            'database/structural_spectra',  # Database location
+            'data',                         # Data folder
+            'src',                         # Source code location
+            'outputs'                      # Output folder
+        ]
+        
+        # Check up to 5 levels up
+        for level in range(5):
+            print(f"Checking for project root at: {current_path}")
+            
+            # Check if this directory contains project indicators
+            indicator_count = 0
+            for indicator in project_indicators:
+                if (current_path / indicator).exists():
+                    indicator_count += 1
+                    print(f"  Found: {indicator}")
+            
+            # If we find at least 2 indicators, this is likely the project root
+            if indicator_count >= 2:
+                print(f"Project root found at: {current_path}")
+                return current_path
+            
+            # Move up one directory
+            parent = current_path.parent
+            if parent == current_path:  # Reached filesystem root
+                break
+            current_path = parent
+        
+        # Fallback: assume project root is 2 levels up from script
+        # src/structural_analysis/ -> src/ -> project_root/
+        fallback_path = Path(__file__).parent.parent.parent
+        print(f"Using fallback project root: {fallback_path}")
+        return fallback_path
+    
     def check_databases(self):
         """Check for both SQLite and CSV databases"""
         available_dbs = []
@@ -91,9 +136,9 @@ class EnhancedMultiGemStructuralAnalyzer:
             messagebox.showerror("Database Error", 
                 f"No structural databases found!\n\n"
                 f"Expected files:\n"
-                f"- multi_structural_gem_data.db\n"
-                f"- gemini_structural_db.csv\n\n"
-                f"Please ensure at least one exists in the project root.")
+                f"- database/structural_spectra/multi_structural_gem_data.db\n"
+                f"- database/structural_spectra/gemini_structural_db.csv\n\n"
+                f"Please ensure at least one exists in the project.")
             return False
         
         # If both exist, ask user to choose
@@ -364,7 +409,8 @@ class EnhancedMultiGemStructuralAnalyzer:
         
         # Info label
         info_label = ttk.Label(main_frame, 
-                              text="Advanced structural analysis with feature weighting and multi-point scoring", 
+                              text="Advanced structural analysis with feature weighting and multi-point scoring\n" +
+                              "Previous results automatically archived before each analysis", 
                               font=('Arial', 10), foreground='blue')
         info_label.pack(pady=(0, 10))
         
@@ -402,6 +448,7 @@ class EnhancedMultiGemStructuralAnalyzer:
         
         ttk.Button(button_frame, text="Clear All", command=self.clear_all).pack(side='left', padx=(0, 10))
         ttk.Button(button_frame, text="Refresh", command=self.scan_archive_directory).pack(side='left', padx=(0, 10))
+        ttk.Button(button_frame, text="View Archive", command=self.show_archive_info).pack(side='left', padx=(0, 10))
         ttk.Button(button_frame, text="Start Enhanced Analysis", command=self.start_analysis, 
                   style='Accent.TButton').pack(side='right', padx=(10, 0))
         ttk.Button(button_frame, text="Close", command=self.root.quit).pack(side='right')
@@ -652,18 +699,19 @@ class EnhancedMultiGemStructuralAnalyzer:
             messagebox.showwarning("No Selection", "Please select at least one gem for enhanced analysis.")
             return
         
-        if not self.check_database():
+        if not self.check_databases():
             return
         
         # Enhanced confirmation
         gem_count = len(self.selected_gems)
         if not messagebox.askyesno("Start Enhanced Analysis", 
                                   f"Start enhanced structural analysis for {gem_count} gems?\n\n"
-                                  f"This will use:\n"
-                                  f"• Advanced feature weighting\n"
-                                  f"• Multi-point scoring algorithms\n"
-                                  f"• Spectral normalization\n"
-                                  f"• Comprehensive database matching\n\n"
+                                  f"This will:\n"
+                                  f"• Archive any existing results\n"
+                                  f"• Use advanced feature weighting\n"
+                                  f"• Apply multi-point scoring algorithms\n"
+                                  f"• Apply spectral normalization\n"
+                                  f"• Perform comprehensive database matching\n\n"
                                   f"Analysis may take several minutes."):
             return
         
@@ -673,17 +721,30 @@ class EnhancedMultiGemStructuralAnalyzer:
             self.run_enhanced_analysis()
             messagebox.showinfo("Analysis Complete", 
                               f"Enhanced analysis completed for {gem_count} gems!\n\n"
-                              f"Results saved to outputs/structural_results/\n"
-                              f"Check reports for detailed scoring breakdown.")
+                              f"Results saved to:\n"
+                              f"• Reports: outputs/structural_results/reports/\n"
+                              f"• Graphs: outputs/structural_results/graphs/\n\n"
+                              f"Previous results archived to:\n"
+                              f"• results(archive)/post_analysis_structural/\n\n"
+                              f"Check reports folder for detailed scoring breakdown.")
         except Exception as e:
             print(f"❌ Enhanced analysis error: {e}")
             messagebox.showerror("Analysis Error", f"Enhanced analysis failed:\n{e}")
     
     def run_enhanced_analysis(self):
         """Run the enhanced structural database matching analysis"""
-        # Create output directories
+        # Archive existing results before creating new ones
+        self.archive_previous_results()
+        
+        # Create output directories with proper structure
         results_dir = self.project_root / "outputs" / "structural_results"
+        reports_dir = results_dir / "reports"
+        graphs_dir = results_dir / "graphs"
+        
+        # Create all directories
         results_dir.mkdir(parents=True, exist_ok=True)
+        reports_dir.mkdir(parents=True, exist_ok=True)
+        graphs_dir.mkdir(parents=True, exist_ok=True)
         
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         
@@ -797,10 +858,12 @@ class EnhancedMultiGemStructuralAnalyzer:
         conn.close()
         
         # Save enhanced results
-        self.save_enhanced_results(all_results, results_dir, timestamp)
+        self.save_enhanced_results(all_results, results_dir, reports_dir, graphs_dir, timestamp)
         
         print(f"\n🎉 Enhanced analysis completed!")
-        print(f"📊 Results saved to: {results_dir}")
+        print(f"📊 Results saved to:")
+        print(f"   Reports: {reports_dir}")
+        print(f"   Graphs:  {graphs_dir}")
     
     def extract_enhanced_features(self, df, light_source, options):
         """Extract enhanced structural features with weighting"""
@@ -1166,7 +1229,7 @@ class EnhancedMultiGemStructuralAnalyzer:
         
         return combined_scores
     
-    def save_enhanced_results(self, all_results, results_dir, timestamp):
+    def save_enhanced_results(self, all_results, results_dir, reports_dir, graphs_dir, timestamp):
         """Save enhanced analysis results with detailed breakdown"""
         # Create enhanced summary report
         summary_data = []
@@ -1224,26 +1287,26 @@ class EnhancedMultiGemStructuralAnalyzer:
                     }
                     detailed_data.append(detailed_row)
         
-        # Save enhanced summary report
+        # Save enhanced summary report to reports directory
         summary_df = pd.DataFrame(summary_data)
-        summary_file = results_dir / f"enhanced_structural_matching_summary_{timestamp}.csv"
+        summary_file = reports_dir / f"enhanced_structural_matching_summary_{timestamp}.csv"
         summary_df.to_csv(summary_file, index=False)
-        print(f"📄 Enhanced summary saved: {summary_file.name}")
+        print(f"📄 Enhanced summary saved: reports/{summary_file.name}")
         
-        # Save enhanced detailed report
+        # Save enhanced detailed report to reports directory
         detailed_df = pd.DataFrame(detailed_data)
-        detailed_file = results_dir / f"enhanced_structural_matching_detailed_{timestamp}.csv"
+        detailed_file = reports_dir / f"enhanced_structural_matching_detailed_{timestamp}.csv"
         detailed_df.to_csv(detailed_file, index=False)
-        print(f"📄 Enhanced detailed results saved: {detailed_file.name}")
+        print(f"📄 Enhanced detailed results saved: reports/{detailed_file.name}")
         
-        # Save full enhanced results as JSON
-        json_file = results_dir / f"enhanced_structural_matching_full_{timestamp}.json"
+        # Save full enhanced results as JSON to reports directory
+        json_file = reports_dir / f"enhanced_structural_matching_full_{timestamp}.json"
         with open(json_file, 'w') as f:
             json.dump(all_results, f, indent=2, default=str)
-        print(f"📄 Enhanced full results saved: {json_file.name}")
+        print(f"📄 Enhanced full results saved: reports/{json_file.name}")
         
-        # Save analysis configuration
-        config_file = results_dir / f"enhanced_analysis_config_{timestamp}.json"
+        # Save analysis configuration to reports directory
+        config_file = reports_dir / f"enhanced_analysis_config_{timestamp}.json"
         config_data = {
             'feature_weights': self.feature_weights,
             'light_weights': self.light_weights,
@@ -1253,7 +1316,116 @@ class EnhancedMultiGemStructuralAnalyzer:
         }
         with open(config_file, 'w') as f:
             json.dump(config_data, f, indent=2)
-        print(f"📄 Analysis configuration saved: {config_file.name}")
+        print(f"📄 Analysis configuration saved: reports/{config_file.name}")
+        
+        # Note about graphs directory
+        print(f"📊 Graphs directory ready: {graphs_dir}")
+        print(f"   (Future feature: Analysis graphs will be saved here)")
+    
+    def archive_previous_results(self):
+        """Archive existing results before running new analysis"""
+        # Define paths
+        current_reports = self.project_root / "outputs" / "structural_results" / "reports"
+        current_graphs = self.project_root / "outputs" / "structural_results" / "graphs"
+        
+        # Check if there are existing results to archive
+        existing_reports = []
+        existing_graphs = []
+        
+        if current_reports.exists():
+            existing_reports = list(current_reports.glob("*"))
+        if current_graphs.exists():
+            existing_graphs = list(current_graphs.glob("*"))
+        
+        if not existing_reports and not existing_graphs:
+            print("📁 No previous results to archive")
+            return
+        
+        # Create archive directories
+        archive_base = self.project_root / "results(archive)" / "post_analysis_structural"
+        archive_reports = archive_base / "reports"
+        archive_graphs = archive_base / "graphs"
+        
+        archive_reports.mkdir(parents=True, exist_ok=True)
+        archive_graphs.mkdir(parents=True, exist_ok=True)
+        
+        # Create timestamped archive folder
+        archive_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamped_reports = archive_reports / f"archived_{archive_timestamp}"
+        timestamped_graphs = archive_graphs / f"archived_{archive_timestamp}"
+        
+        timestamped_reports.mkdir(exist_ok=True)
+        timestamped_graphs.mkdir(exist_ok=True)
+        
+        # Archive existing reports
+        archived_count = 0
+        if existing_reports:
+            print(f"📦 Archiving {len(existing_reports)} previous reports...")
+            for file_path in existing_reports:
+                if file_path.is_file():
+                    try:
+                        shutil.move(str(file_path), str(timestamped_reports / file_path.name))
+                        archived_count += 1
+                    except Exception as e:
+                        print(f"   ⚠️ Error archiving {file_path.name}: {e}")
+        
+        # Archive existing graphs
+        if existing_graphs:
+            print(f"📦 Archiving {len(existing_graphs)} previous graphs...")
+            for file_path in existing_graphs:
+                if file_path.is_file():
+                    try:
+                        shutil.move(str(file_path), str(timestamped_graphs / file_path.name))
+                        archived_count += 1
+                    except Exception as e:
+                        print(f"   ⚠️ Error archiving {file_path.name}: {e}")
+        
+        if archived_count > 0:
+            print(f"✅ Archived {archived_count} files to: results(archive)/post_analysis_structural/")
+            print(f"   Reports: {timestamped_reports.name}")
+            print(f"   Graphs:  {timestamped_graphs.name}")
+        else:
+            print("📁 No files needed archiving")
+    
+    def show_archive_info(self):
+        """Show information about archived results"""
+        archive_base = self.project_root / "results(archive)" / "post_analysis_structural"
+        
+        if not archive_base.exists():
+            messagebox.showinfo("Archive Information", 
+                              "No archived results found.\n\n"
+                              "Archive location:\n"
+                              f"{archive_base}\n\n"
+                              "Archives are created automatically when running new analysis.")
+            return
+        
+        # Count archived batches
+        reports_archives = list((archive_base / "reports").glob("archived_*")) if (archive_base / "reports").exists() else []
+        graphs_archives = list((archive_base / "graphs").glob("archived_*")) if (archive_base / "graphs").exists() else []
+        
+        archive_info = f"Archive Location:\n{archive_base}\n\n"
+        
+        if reports_archives:
+            archive_info += f"Archived Report Batches: {len(reports_archives)}\n"
+            # Show most recent 5
+            recent_reports = sorted(reports_archives, reverse=True)[:5]
+            for archive in recent_reports:
+                file_count = len(list(archive.glob("*")))
+                archive_info += f"  • {archive.name} ({file_count} files)\n"
+        
+        if graphs_archives:
+            archive_info += f"\nArchived Graph Batches: {len(graphs_archives)}\n"
+            recent_graphs = sorted(graphs_archives, reverse=True)[:5]
+            for archive in recent_graphs:
+                file_count = len(list(archive.glob("*")))
+                archive_info += f"  • {archive.name} ({file_count} files)\n"
+        
+        if not reports_archives and not graphs_archives:
+            archive_info += "No archived batches found yet.\n"
+            archive_info += "Archives are created automatically before each new analysis."
+        
+        messagebox.showinfo("Archived Results", archive_info)
+
     
     def run(self):
         """Start the application"""
