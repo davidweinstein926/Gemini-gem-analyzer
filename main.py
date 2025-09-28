@@ -4,6 +4,7 @@ SUPER SAFE GEMINI ANALYSIS SYSTEM - OPTION 6 ENHANCED
 ⚡ Safe subprocess calls + Memory-protected Option 3 + Smart fallback
 🛡️  Optional memory monitoring (install psutil for enhanced monitoring)
 🎯 Enhanced Option 6: Production Structural Database Import with Auto-Archive
+🚀 UPDATED: Options 4 & 8 now use Ultimate Multi-Gem Structural Analyzer
 """
 import os, sys, subprocess, sqlite3, pandas as pd, numpy as np, threading, time, shutil, json, re
 from datetime import datetime
@@ -29,7 +30,7 @@ class SuperSafeGeminiSystem:
             'data_acquisition/main_menu.py': 'Data Acquisition System',
             'src/structural_analysis/gemini_launcher.py': 'Structural Marking System',
             'src/numerical_analysis/gemini1.py': 'Numerical Analysis Engine',
-            'src/structural_analysis/enhanced_gem_analyzer.py': 'Structural Matching Engine',
+            'src/structural_analysis/multi_gem_structural_analyzer.py': 'Ultimate Structural Analysis Engine',
             'txt_to_split_long_format.py': 'Numerical DB Import Tool',
             'database/batch_importer.py': 'Structural DB Import Tool',
             'database/perfect_structural_archive_importer.py': 'Production Structural Import Tool',  # NEW
@@ -347,46 +348,148 @@ class SuperSafeGeminiSystem:
         
         print(f"\n🎉 Unknown gem analysis completed!")
     
-    # MENU OPTION 4: STRUCTURAL MATCHING
+    # 🚀 MENU OPTION 4: ULTIMATE STRUCTURAL MATCHING (CURRENT WORK)
     def structural_matching(self):
-        """Option 4: Structural matching - match structural data vs database"""
-        print("\n🔬 STRUCTURAL MATCHING (UNKNOWN GEMS)\n" + "=" * 60)
+        """Option 4: Ultimate structural matching - analyze current work files using ultimate analyzer"""
+        print("\n🚀 ULTIMATE STRUCTURAL MATCHING (CURRENT WORK)\n" + "=" * 60)
+        print("🎯 Using Ultimate Multi-Gem Structural Analyzer")
+        print("📁 Input: root/data/structural_data/ (current work files)")
+        print("🗄️  Database: Modern databases (gemini_structural.db/csv)")
+        print("📊 Features: Advanced scoring + Feature weighting + Visualizations")
+        print("🔬 Output: root/outputs/structural_results/reports;graphs")
         
-        # Check for structural files
+        # Check for current structural files
         structural_files = self.check_directory_files("data/structural_data", "*.csv")
         if not structural_files:
             print("❌ No structural files found in data/structural_data/")
             print("💡 Use Option 2 to mark structural features first")
             return
         
-        print("Input: root/data/structural_data/ (halogen,laser,uv)")
-        print("Output: root/outputs/structural_results/reports;graphs")
-        print(f"📁 Found {len(structural_files)} structural files for matching")
+        print(f"📁 Found {len(structural_files)} current structural files for ultimate analysis")
         
-        if os.path.exists('src/structural_analysis/enhanced_gem_analyzer.py'):
-            try:
-                # Copy structural files to analyzer's expected location for unknown analysis
-                unknown_dir = Path("data/unknown/structural")
-                unknown_dir.mkdir(parents=True, exist_ok=True)
+        # Confirm with user
+        proceed = self.safe_input(f"Start ultimate analysis of {len(structural_files)} current work files? (y/n): ").strip().lower()
+        if proceed != 'y':
+            print("Ultimate analysis cancelled")
+            return
+        
+        # Check if ultimate analyzer exists
+        ultimate_analyzer_path = 'src/structural_analysis/multi_gem_structural_analyzer.py'
+        if not os.path.exists(ultimate_analyzer_path):
+            print(f"❌ Ultimate analyzer not found: {ultimate_analyzer_path}")
+            print("💡 Ensure the ultimate multi-gem structural analyzer is available")
+            return
+        
+        try:
+            print(f"\n🚀 Launching Ultimate Multi-Gem Structural Analyzer...")
+            print("🎯 Mode: Automatic analysis of current work")
+            print("📊 Using advanced feature weighting and modern databases")
+            
+            # Run ultimate analyzer in automatic mode for current work
+            result = subprocess.run([
+                sys.executable, 
+                ultimate_analyzer_path,
+                '--mode', 'auto',
+                '--input-source', 'current',
+                '--auto-complete'
+            ], capture_output=False, text=True, timeout=900)  # 15 min timeout
+            
+            if result.returncode == 0:
+                print("✅ Ultimate structural analysis completed successfully")
+                print("📊 Results saved to:")
+                print("   📄 Reports: outputs/structural_results/reports/")
+                print("   📈 Graphs: outputs/structural_results/graphs/")
+                print("📦 Previous results archived automatically")
+                self.play_bleep("completion")
+            else:
+                print("❌ Ultimate structural analysis failed")
+                print("💡 Check the ultimate analyzer for detailed error messages")
                 
-                # Copy files from structural_data to unknown location
-                for file in structural_files:
-                    if 'structural' in file.name.lower():
-                        shutil.copy2(file, unknown_dir / file.name)
+        except subprocess.TimeoutExpired:
+            print("⚠️  Ultimate analysis timed out after 15 minutes - killed for safety")
+        except Exception as e:
+            print(f"❌ Error launching ultimate analyzer: {e}")
+            
+            # Fallback information
+            print(f"\n🔧 TROUBLESHOOTING:")
+            print(f"• Ensure {ultimate_analyzer_path} exists")
+            print(f"• Check that data/structural_data/ has CSV files")
+            print(f"• Verify modern databases exist (gemini_structural.db/csv)")
+            print(f"• Install required packages: pip install matplotlib scipy pandas")
+    
+    # 🚀 MENU OPTION 8: ULTIMATE STRUCTURAL MATCHING (ARCHIVE TEST)
+    def structural_matching_test(self):
+        """Option 8: Ultimate structural matching test - analyze archived files using ultimate analyzer"""
+        print("\n🚀 ULTIMATE STRUCTURAL MATCHING (ARCHIVE TEST)\n" + "=" * 60)
+        print("🎯 Using Ultimate Multi-Gem Structural Analyzer")
+        print("📁 Input: root/data/structural(archive)/ (archived files for testing)")
+        print("🗄️  Database: Modern databases (gemini_structural.db/csv)")
+        print("📊 Features: Advanced scoring + Feature weighting + Visualizations")
+        print("🔬 Output: root/outputs/structural_results/reports;graphs")
+        
+        # Check for archived structural files
+        archive_files = self.check_directory_files("data/structural(archive)", "*.csv")
+        if not archive_files:
+            print("❌ No archived structural files found in data/structural(archive)/")
+            print("💡 Use Option 6 to import and archive structural files first")
+            return
+        
+        print(f"📁 Found {len(archive_files)} archived structural files for ultimate testing")
+        
+        # Confirm with user
+        proceed = self.safe_input(f"Start ultimate test analysis of {len(archive_files)} archived files? (y/n): ").strip().lower()
+        if proceed != 'y':
+            print("Ultimate test analysis cancelled")
+            return
+        
+        # Check if ultimate analyzer exists
+        ultimate_analyzer_path = 'src/structural_analysis/multi_gem_structural_analyzer.py'
+        if not os.path.exists(ultimate_analyzer_path):
+            print(f"❌ Ultimate analyzer not found: {ultimate_analyzer_path}")
+            print("💡 Ensure the ultimate multi-gem structural analyzer is available")
+            return
+        
+        try:
+            print(f"\n🚀 Launching Ultimate Multi-Gem Structural Analyzer...")
+            print("🎯 Mode: Automatic test analysis of archived files")
+            print("📊 Using advanced feature weighting and modern databases")
+            print("🧪 Testing against archived data for validation")
+            
+            # Run ultimate analyzer in automatic mode for archive testing
+            result = subprocess.run([
+                sys.executable, 
+                ultimate_analyzer_path,
+                '--mode', 'auto',
+                '--input-source', 'archive',
+                '--auto-complete'
+            ], capture_output=False, text=True, timeout=900)  # 15 min timeout
+            
+            if result.returncode == 0:
+                print("✅ Ultimate test analysis completed successfully")
+                print("📊 Results saved to:")
+                print("   📄 Reports: outputs/structural_results/reports/")
+                print("   📈 Graphs: outputs/structural_results/graphs/")
+                print("📦 Previous results archived automatically")
+                print("🧪 Archive testing validates system performance")
+                self.play_bleep("completion")
+            else:
+                print("❌ Ultimate test analysis failed")
+                print("💡 Check the ultimate analyzer for detailed error messages")
                 
-                result = subprocess.run([sys.executable, 'src/structural_analysis/enhanced_gem_analyzer.py'], capture_output=False, text=True)
-                if result.returncode == 0: 
-                    print("✅ Structural matching completed"); 
-                    # Move results to proper output location
-                    self.move_structural_results_to_outputs()
-                    self.play_bleep("completion")
-            except Exception as e: 
-                print(f"❌ Error: {e}")
-        else: 
-            print("❌ src/structural_analysis/enhanced_gem_analyzer.py not found")
+        except subprocess.TimeoutExpired:
+            print("⚠️  Ultimate test analysis timed out after 15 minutes - killed for safety")
+        except Exception as e:
+            print(f"❌ Error launching ultimate analyzer: {e}")
+            
+            # Fallback information
+            print(f"\n🔧 TROUBLESHOOTING:")
+            print(f"• Ensure {ultimate_analyzer_path} exists")
+            print(f"• Check that data/structural(archive)/ has CSV files")
+            print(f"• Verify modern databases exist (gemini_structural.db/csv)")
+            print(f"• Install required packages: pip install matplotlib scipy pandas")
     
     def move_structural_results_to_outputs(self):
-        """Move structural results to proper output location"""
+        """Move structural results to proper output location (legacy support)"""
         try:
             # Move from results/structural/ to outputs/structural_results/
             if Path("results/structural").exists():
@@ -651,8 +754,8 @@ class SuperSafeGeminiSystem:
             
             conn.close()
             
-            print("\n✅ Database is ready for structural analysis!")
-            print("🎯 Use Option 4 for structural matching workflows")
+            print("\n✅ Database is ready for ultimate structural analysis!")
+            print("🎯 Use Option 4 (current work) or Option 8 (archive test) for ultimate matching")
             
         except Exception as e:
             print(f"❌ Could not retrieve database stats: {e}")
@@ -894,41 +997,6 @@ class SuperSafeGeminiSystem:
         
         print(f"\n🎉 Analysis of Gem {base_id} completed!")
     
-    # MENU OPTION 8: STRUCTURAL MATCHING (TEST)
-    def structural_matching_test(self):
-        """Option 8: Structural matching test - use archived structural data"""
-        print("\n🔬 STRUCTURAL MATCHING (TEST)\n" + "=" * 60)
-        
-        archive_files = self.check_directory_files("data/structural(archive)", "*.csv")
-        if not archive_files:
-            print("❌ No archived structural files found in data/structural(archive)/")
-            print("💡 Use Option 6 to import and archive structural files first")
-            return
-        
-        print("Input: root/data/structural(archive)/ (archived data for testing)")
-        print("Output: root/outputs/structural_results/reports;graphs")
-        print(f"📁 Found {len(archive_files)} archived structural files for testing")
-        
-        if os.path.exists('src/structural_analysis/enhanced_gem_analyzer.py'):
-            try:
-                # Copy archived files to unknown location for testing
-                unknown_dir = Path("data/unknown/structural")
-                unknown_dir.mkdir(parents=True, exist_ok=True)
-                
-                # Copy sample of archived files for testing
-                test_files = archive_files[:10]  # Test with first 10 files
-                for file in test_files:
-                    shutil.copy2(file, unknown_dir / file.name)
-                
-                print(f"🧪 Testing with {len(test_files)} archived files")
-                result = subprocess.run([sys.executable, 'src/structural_analysis/enhanced_gem_analyzer.py'], capture_output=False, text=True)
-                if result.returncode == 0: 
-                    print("✅ Structural test completed"); 
-                    self.move_structural_results_to_outputs()
-                    self.play_bleep("completion")
-            except Exception as e: print(f"❌ Error: {e}")
-        else: print("❌ src/structural_analysis/enhanced_gem_analyzer.py not found")
-    
     # MENU OPTION 9: CLEAN UP NUMERICAL
     def cleanup_numerical(self):
         """Option 9: Clean up numerical - archive data and results"""
@@ -999,6 +1067,7 @@ class SuperSafeGeminiSystem:
         print("a) Archive: root/data/structural_data/ → root/data/structural(archive)")
         print("b) Archive: root/outputs/structural_results/ → root/results(archive)/post_analysis_structural/")
         print("ℹ️  NOTE: Option 6 now auto-archives imported files")
+        print("ℹ️  NOTE: Ultimate analyzer (Options 4 & 8) auto-archives results")
         
         try:
             archived_files = 0
@@ -1012,7 +1081,7 @@ class SuperSafeGeminiSystem:
                     archived_files += 1
                 print(f"✅ Manually archived {archived_files} remaining structural files")
             else:
-                print("ℹ️  No structural files found to archive (Option 6 auto-archive working)")
+                print("ℹ️  No structural files found to archive (Auto-archive working)")
             
             # 10b: Archive structural results
             results_moved = 0
@@ -1025,7 +1094,11 @@ class SuperSafeGeminiSystem:
                     shutil.move(str(file), f"results(archive)/post_analysis_structural/graphs/{file.name}")
                     results_moved += 1
             
-            if results_moved > 0: print(f"✅ Archived {results_moved} result files")
+            if results_moved > 0: 
+                print(f"✅ Archived {results_moved} result files")
+            else:
+                print("ℹ️  No structural results found to archive (Ultimate analyzer auto-archives)")
+                
             print("✅ Structural cleanup completed"); self.play_bleep("completion")
             
         except Exception as e: print(f"❌ Cleanup error: {e}")
@@ -1071,7 +1144,7 @@ class SuperSafeGeminiSystem:
             ("data/raw (archive)", "Archived raw files", "*.txt"), 
             ("data/structural_data", "Fresh structural files", "*.csv"),
             ("data/structural(archive)", "Archived structural files", "*.csv"),
-            ("outputs/numerical_analysis/reports", "Numerical reports", "*"),
+            ("outputs/numerical_results/reports", "Numerical reports", "*"),
             ("outputs/structural_results/reports", "Structural reports", "*")
         ]
         
@@ -1086,7 +1159,8 @@ class SuperSafeGeminiSystem:
         
         # Check structural databases (priority order)
         structural_dbs = [
-            ("database/structural_spectra/gemini_structural.db", "Production Structural DB (NEW)"),
+            ("database/structural_spectra/gemini_structural.db", "Modern Structural DB (PRIMARY)"),
+            ("database/structural_spectra/gemini_structural_unified.csv", "Modern Structural CSV"),
             ("gemini_structural.db", "Alternative Structural DB"),
             ("database/structural_spectra/multi_structural_gem_data.db", "Legacy Structural DB")
         ]
@@ -1105,6 +1179,7 @@ class SuperSafeGeminiSystem:
         print(f"🛡️  Memory Limit: {self.memory_limit_mb}MB | Safety: ACTIVE")
         print(f"📊 Memory Monitor: {'Available' if HAS_PSUTIL else 'Not available (optional)'}")
         print(f"🎯 Enhanced Option 6: Production Import with Auto-Archive")
+        print(f"🚀 Ultimate Options 4 & 8: Advanced structural analysis with modern databases")
     
     # MENU OPTION 12: TOGGLE BLEEP
     def toggle_bleep(self):
@@ -1115,25 +1190,25 @@ class SuperSafeGeminiSystem:
     
     # MAIN MENU
     def run_main_menu(self):
-        """Complete main menu with ENHANCED Option 6"""
-        print(f"\n{'='*70}\n  SUPER SAFE GEMINI ANALYSIS SYSTEM\n  🎯 Enhanced Option 6: Production Import + Auto-Archive\n  🛡️  Memory Protected + Smart Fallback\n{'='*70}")
+        """Complete main menu with ULTIMATE Options 4 & 8"""
+        print(f"\n{'='*70}\n  SUPER SAFE GEMINI ANALYSIS SYSTEM\n  🚀 ULTIMATE Options 4 & 8: Advanced Structural Analysis\n  🎯 Enhanced Option 6: Production Import + Auto-Archive\n  🛡️  Memory Protected + Smart Fallback\n{'='*70}")
         
         while True:
-            print(f"\nMAIN MENU (Enhanced with Production Import):")
+            print(f"\nMAIN MENU (Ultimate Enhanced):")
             print("=" * 60)
             print("📡 DATA CAPTURE & ANALYSIS:")
             print("1. Data Acquisition (Spectral Capture)")
             print("2. Structural Marking (smart fallback)")  
             print("3. 🛡️  Numerical Matching (MEMORY PROTECTED)")
-            print("4. Structural Matching")
+            print("4. 🚀 Ultimate Structural Matching (Current Work)")
             print("")
             print("💾 DATABASE OPERATIONS:")
             print("5. Import to Numerical DB")
-            print("6. 🎯 Production Structural Import (NEW: Auto-Archive)")
+            print("6. 🎯 Production Structural Import (Auto-Archive)")
             print("")
-            print("🧪 TESTING (Archived Data):")
+            print("🧪 TESTING (Advanced & Legacy):")
             print("7. 🛡️  Numerical Matching Test (INTERACTIVE)")
-            print("8. Structural Matching (Test)")
+            print("8. 🚀 Ultimate Structural Test (Archive)")
             print("")
             print("🧹 CLEANUP & ARCHIVING:")
             print("9. Clean Up Numerical")
@@ -1146,7 +1221,7 @@ class SuperSafeGeminiSystem:
             
             # Show safety status
             memory_status = "OK" if self.check_memory_safety() else "⚠️  LOW" if HAS_PSUTIL else "Unknown"
-            print(f"\nStatus: Bleep [{'ON' if self.bleep_enabled else 'OFF'}] | Memory: {memory_status} | 🎯 Enhanced Option 6 | 🛡️  SUPER SAFE MODE")
+            print(f"\nStatus: Bleep [{'ON' if self.bleep_enabled else 'OFF'}] | Memory: {memory_status} | 🎯 Enhanced Option 6 | 🚀 Ultimate 4&8 | 🛡️  SUPER SAFE")
             
             try:
                 choice = self.safe_input("\nSelect (1-13): ")
