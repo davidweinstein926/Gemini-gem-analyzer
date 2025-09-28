@@ -1,0 +1,871 @@
+
+======================================================================
+  SUPER SAFE GEMINI ANALYSIS SYSTEM
+  🚀 ULTIMATE Options 4 & 8: Advanced Structural Analysis
+  🎯 Enhanced Option 6: Production Import + Auto-Archive
+  🛡️  Memory Protected + Smart Fallback
+======================================================================
+
+MAIN MENU (Ultimate Enhanced):
+============================================================
+📡 DATA CAPTURE & ANALYSIS:
+1. Data Acquisition (Spectral Capture)
+2. Structural Marking (smart fallback)
+3. 🛡️  Numerical Matching (MEMORY PROTECTED)
+4. 🚀 Ultimate Structural Matching (Current Work)
+
+💾 DATABASE OPERATIONS:
+5. Import to Numerical DB
+6. 🎯 Production Structural Import (Auto-Archive)
+
+🧪 TESTING (Advanced & Legacy):
+7. 🛡️  Numerical Matching Test (INTERACTIVE)
+8. 🚀 Ultimate Structural Test (Archive)
+
+🧹 CLEANUP & ARCHIVING:
+9. Clean Up Numerical
+10. Clean Up Structural
+
+⚙️ SYSTEM:
+11. System Status (with Database Monitor)
+12. Toggle Bleep System
+13. Exit
+🧠 Memory check: psutil not available (install with: pip install psutil)
+✅ Assuming memory OK - proceeding with caution
+
+Status: Bleep [ON] | Memory: OK | 🎯 Enhanced Option 6 | 🚀 Ultimate 4&8 | 🛡️  SUPER SAFE
+
+Select (1-13): 4
+
+🚀 ULTIMATE STRUCTURAL MATCHING (CURRENT WORK)
+============================================================
+🎯 Using Ultimate Multi-Gem Structural Analyzer
+📁 Input: root/data/structural_data/ (current work files)
+🗄️  Database: Modern databases (gemini_structural.db/csv)
+📊 Features: Advanced scoring + Feature weighting + Visualizations
+🔬 Output: root/outputs/structural_results/reports;graphs
+📁 Found 3 current structural files for ultimate analysis
+Start ultimate analysis of 3 current work files? (y/n): y
+
+🚀 Launching Ultimate Multi-Gem Structural Analyzer...
+🎯 Mode: Automatic analysis of current work
+📊 Using advanced feature weighting and modern databases
+✅ Matplotlib available - visualizations enabled
+⚠️ Seaborn not available - using basic matplotlib styling
+✅ SciPy available - advanced algorithms enabled
+🚀 Starting Ultimate Multi-Gem Structural Analyzer (FIXED)...
+   Mode: auto
+   Input Source: current
+🔬 Ultimate Analyzer initialized in auto mode
+📁 Input source: current
+🎯 Project root found: C:\Users\David\OneDrive\Desktop\gemini_gemological_analysis
+✅ Using SQLITE database: gemini_structural.db
+📊 Database schema detected:
+   Table: structural_features
+   File column: gem_id
+   Columns: id, gem_id, file_source, import_timestamp, light_source...
+✅ Database validated: 74 records
+📁 Scanning current directory: C:\Users\David\OneDrive\Desktop\gemini_gemological_analysis\data\structural_data
+📄 Found 3 CSV files
+💎 Found 1 unique gems (1 complete with B+L+U)
+🤖 Running automatic ultimate analysis...
+📁 Input source: current
+✅ Auto-selected 1 complete gems
+📊 Loading ultimate structural database...
+📊 Using adaptive query: ORDER BY gem_id, wavelength
+✅ Database loaded successfully: 74 records
+
+🎯 Ultimate Analysis: Gem 197 (1/1)...
+   📄 Processing B: 197BC3_halogen_structural_20250925_210557.csv
+      📊 Loaded 6 structural points
+      🔍 Found 36 database records for B light source
+      🔧 Database columns: file=gem_id, wavelength=wavelength, intensity=intensity
+      🔧 Unknown data columns: ['Feature', 'File', 'Light_Source', 'Wavelength', 'Intensity', 'Point_Type', 'Feature_Group', 'Processing', 'SNR', 'Feature_Key', 'Storage_Structure', 'Baseline_Used', 'Norm_Factor', 'Normalization_Method', 'Reference_Wavelength_Used', 'Symmetry_Ratio', 'Skew_Description', 'Width_nm', 'Normalization_Scheme', 'Reference_Wavelength', 'Intensity_Range_Min', 'Intensity_Range_Max', 'Output_Location']
+      ✅ Found wavelength column: Wavelength
+      ✅ Found intensity column: Intensity
+      ✅ Found intensity column: Point_Type
+      ✅ Found wavelength column: Reference_Wavelength_Used
+      ✅ Found wavelength column: Reference_Wavelength
+      ✅ Found intensity column: Intensity_Range_Min
+      ✅ Found intensity column: Intensity_Range_Max
+      📊 Unknown data: 6 valid points, range 655.0-655.0 nm
+      🔍 Processing 36 database gems...
+         🔍 Processing gem 140BP2_halogen_structural with 1 database points...
+         📊 Gem 140BP2_halogen_structural: wavelength range 703.1-703.1 nm
+         🔧 Calling similarity calculation for gem 140BP2_halogen_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 655.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 140BP2_halogen_structural: similarity score = 2.0
+         ✅ Gem 140BP2_halogen_structural: added to results with score 2.000
+         🔍 Processing gem 189BC2_halogen_structural with 1 database points...
+         📊 Gem 189BC2_halogen_structural: wavelength range 652.0-652.0 nm
+         🔧 Calling similarity calculation for gem 189BC2_halogen_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ✅ Feature at 655.0nm: 1 db points, score=0.007
+         📊 Feature matching: 1/1 matched, final_score=0.006
+         📊 Gem 189BC2_halogen_structural: similarity score = 0.005878912000000062
+         ✅ Gem 189BC2_halogen_structural: added to results with score 0.006
+         🔍 Processing gem 189BP1_halogen_structural with 1 database points...
+         📊 Gem 189BP1_halogen_structural: wavelength range 654.6-654.6 nm
+         🔧 Calling similarity calculation for gem 189BP1_halogen_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ✅ Feature at 655.0nm: 1 db points, score=0.004
+         📊 Feature matching: 1/1 matched, final_score=0.003
+         📊 Gem 189BP1_halogen_structural: similarity score = 0.0034797600000000418
+         ✅ Gem 189BP1_halogen_structural: added to results with score 0.003
+         🔍 Processing gem 189BP2_halogen_structural with 1 database points...
+         📊 Gem 189BP2_halogen_structural: wavelength range 660.7-660.7 nm
+         🔧 Calling similarity calculation for gem 189BP2_halogen_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ✅ Feature at 655.0nm: 1 db points, score=0.002
+         📊 Feature matching: 1/1 matched, final_score=0.002
+         📊 Gem 189BP2_halogen_structural: similarity score = 0.0017779839999999868
+         ✅ Gem 189BP2_halogen_structural: added to results with score 0.002
+         🔍 Processing gem 190BC1_halogen_structural with 1 database points...
+         📊 Gem 190BC1_halogen_structural: wavelength range 752.5-752.5 nm
+         🔧 Calling similarity calculation for gem 190BC1_halogen_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 655.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 190BC1_halogen_structural: similarity score = 2.0
+         ✅ Gem 190BC1_halogen_structural: added to results with score 2.000
+         🔍 Processing gem 190BC2_halogen_structural with 1 database points...
+         📊 Gem 190BC2_halogen_structural: wavelength range 750.8-750.8 nm
+         🔧 Calling similarity calculation for gem 190BC2_halogen_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 655.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 190BC2_halogen_structural: similarity score = 2.0
+         ✅ Gem 190BC2_halogen_structural: added to results with score 2.000
+         🔍 Processing gem 190BP1_halogen_structural with 1 database points...
+         📊 Gem 190BP1_halogen_structural: wavelength range 749.0-749.0 nm
+         🔧 Calling similarity calculation for gem 190BP1_halogen_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 655.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 190BP1_halogen_structural: similarity score = 2.0
+         ✅ Gem 190BP1_halogen_structural: added to results with score 2.000
+         🔍 Processing gem 190BP2_halogen_structural with 1 database points...
+         📊 Gem 190BP2_halogen_structural: wavelength range 751.6-751.6 nm
+         🔧 Calling similarity calculation for gem 190BP2_halogen_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 655.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 190BP2_halogen_structural: similarity score = 2.0
+         ✅ Gem 190BP2_halogen_structural: added to results with score 2.000
+         🔍 Processing gem 193BC1_halogen_structural with 1 database points...
+         📊 Gem 193BC1_halogen_structural: wavelength range 688.4-688.4 nm
+         🔧 Calling similarity calculation for gem 193BC1_halogen_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 655.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 193BC1_halogen_structural: similarity score = 2.0
+         ✅ Gem 193BC1_halogen_structural: added to results with score 2.000
+         🔍 Processing gem 193BC2_halogen_structural with 1 database points...
+         📊 Gem 193BC2_halogen_structural: wavelength range 678.0-678.0 nm
+         🔧 Calling similarity calculation for gem 193BC2_halogen_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 655.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 193BC2_halogen_structural: similarity score = 2.0
+         ✅ Gem 193BC2_halogen_structural: added to results with score 2.000
+         🔍 Processing gem 193BP1_halogen_structural with 1 database points...
+         📊 Gem 193BP1_halogen_structural: wavelength range 717.9-717.9 nm
+         🔧 Calling similarity calculation for gem 193BP1_halogen_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 655.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 193BP1_halogen_structural: similarity score = 2.0
+         ✅ Gem 193BP1_halogen_structural: added to results with score 2.000
+         🔍 Processing gem 193BP2_halogen_structural with 1 database points...
+         📊 Gem 193BP2_halogen_structural: wavelength range 711.8-711.8 nm
+         🔧 Calling similarity calculation for gem 193BP2_halogen_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 655.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 193BP2_halogen_structural: similarity score = 2.0
+         ✅ Gem 193BP2_halogen_structural: added to results with score 2.000
+         🔍 Processing gem 194BC3_halogen_structural with 1 database points...
+         📊 Gem 194BC3_halogen_structural: wavelength range 417.7-417.7 nm
+         🔧 Calling similarity calculation for gem 194BC3_halogen_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 655.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 194BC3_halogen_structural: similarity score = 2.0
+         ✅ Gem 194BC3_halogen_structural: added to results with score 2.000
+         🔍 Processing gem 195BC1_halogen_structural with 1 database points...
+         📊 Gem 195BC1_halogen_structural: wavelength range 666.7-666.7 nm
+         🔧 Calling similarity calculation for gem 195BC1_halogen_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 655.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 195BC1_halogen_structural: similarity score = 2.0
+         ✅ Gem 195BC1_halogen_structural: added to results with score 2.000
+         🔍 Processing gem 196BC3_halogen_structural with 1 database points...
+         📊 Gem 196BC3_halogen_structural: wavelength range 417.1-417.1 nm
+         🔧 Calling similarity calculation for gem 196BC3_halogen_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 655.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 196BC3_halogen_structural: similarity score = 2.0
+         ✅ Gem 196BC3_halogen_structural: added to results with score 2.000
+         🔍 Processing gem 196BC4_halogen_structural with 1 database points...
+         📊 Gem 196BC4_halogen_structural: wavelength range 417.1-417.1 nm
+         🔧 Calling similarity calculation for gem 196BC4_halogen_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 655.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 196BC4_halogen_structural: similarity score = 2.0
+         ✅ Gem 196BC4_halogen_structural: added to results with score 2.000
+         🔍 Processing gem 197BC3_halogen_structural_structural with 1 database points...
+         📊 Gem 197BC3_halogen_structural_structural: wavelength range 948.3-948.3 nm
+         🔧 Calling similarity calculation for gem 197BC3_halogen_structural_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 655.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 197BC3_halogen_structural_structural: similarity score = 2.0
+         ✅ Gem 197BC3_halogen_structural_structural: added to results with score 2.000
+         🔍 Processing gem 197BC4_halogen_structural_structural with 1 database points...
+         📊 Gem 197BC4_halogen_structural_structural: wavelength range 943.9-943.9 nm
+         🔧 Calling similarity calculation for gem 197BC4_halogen_structural_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 655.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 197BC4_halogen_structural_structural: similarity score = 2.0
+         ✅ Gem 197BC4_halogen_structural_structural: added to results with score 2.000
+         🔍 Processing gem 199BC3_halogen_structural with 1 database points...
+         📊 Gem 199BC3_halogen_structural: wavelength range 656.4-656.4 nm
+         🔧 Calling similarity calculation for gem 199BC3_halogen_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ✅ Feature at 655.0nm: 1 db points, score=0.003
+         📊 Feature matching: 1/1 matched, final_score=0.002
+         📊 Gem 199BC3_halogen_structural: similarity score = 0.0024091199999999413
+         ✅ Gem 199BC3_halogen_structural: added to results with score 0.002
+         🔍 Processing gem 199BC4_halogen_structural with 1 database points...
+         📊 Gem 199BC4_halogen_structural: wavelength range 657.2-657.2 nm
+         🔧 Calling similarity calculation for gem 199BC4_halogen_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ✅ Feature at 655.0nm: 1 db points, score=0.007
+         📊 Feature matching: 1/1 matched, final_score=0.005
+         📊 Gem 199BC4_halogen_structural: similarity score = 0.005259119999999913
+         ✅ Gem 199BC4_halogen_structural: added to results with score 0.005
+         🔍 Processing gem 214BC1_halogen_structural with 1 database points...
+         📊 Gem 214BC1_halogen_structural: wavelength range 688.4-688.4 nm
+         🔧 Calling similarity calculation for gem 214BC1_halogen_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 655.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 214BC1_halogen_structural: similarity score = 2.0
+         ✅ Gem 214BC1_halogen_structural: added to results with score 2.000
+         🔍 Processing gem 214BC2_halogen_structural with 1 database points...
+         📊 Gem 214BC2_halogen_structural: wavelength range 660.7-660.7 nm
+         🔧 Calling similarity calculation for gem 214BC2_halogen_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ✅ Feature at 655.0nm: 1 db points, score=0.006
+         📊 Feature matching: 1/1 matched, final_score=0.005
+         📊 Gem 214BC2_halogen_structural: similarity score = 0.004513343999999978
+         ✅ Gem 214BC2_halogen_structural: added to results with score 0.005
+         🔍 Processing gem 214BC3_halogen_structural with 1 database points...
+         📊 Gem 214BC3_halogen_structural: wavelength range 666.7-666.7 nm
+         🔧 Calling similarity calculation for gem 214BC3_halogen_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 655.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 214BC3_halogen_structural: similarity score = 2.0
+         ✅ Gem 214BC3_halogen_structural: added to results with score 2.000
+         🔍 Processing gem 214BC4_halogen_structural with 1 database points...
+         📊 Gem 214BC4_halogen_structural: wavelength range 671.1-671.1 nm
+         🔧 Calling similarity calculation for gem 214BC4_halogen_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 655.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 214BC4_halogen_structural: similarity score = 2.0
+         ✅ Gem 214BC4_halogen_structural: added to results with score 2.000
+         🔍 Processing gem 214BP1_halogen_structural with 1 database points...
+         📊 Gem 214BP1_halogen_structural: wavelength range 694.5-694.5 nm
+         🔧 Calling similarity calculation for gem 214BP1_halogen_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 655.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 214BP1_halogen_structural: similarity score = 2.0
+         ✅ Gem 214BP1_halogen_structural: added to results with score 2.000
+         🔍 Processing gem 214BP2_halogen_structural with 1 database points...
+         📊 Gem 214BP2_halogen_structural: wavelength range 680.6-680.6 nm
+         🔧 Calling similarity calculation for gem 214BP2_halogen_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 655.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 214BP2_halogen_structural: similarity score = 2.0
+         ✅ Gem 214BP2_halogen_structural: added to results with score 2.000
+         🔍 Processing gem 214BP3_halogen_structural with 1 database points...
+         📊 Gem 214BP3_halogen_structural: wavelength range 671.1-671.1 nm
+         🔧 Calling similarity calculation for gem 214BP3_halogen_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 655.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 214BP3_halogen_structural: similarity score = 2.0
+         ✅ Gem 214BP3_halogen_structural: added to results with score 2.000
+         🔍 Processing gem 214BP4_halogen_structural with 1 database points...
+         📊 Gem 214BP4_halogen_structural: wavelength range 671.9-671.9 nm
+         🔧 Calling similarity calculation for gem 214BP4_halogen_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 655.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 214BP4_halogen_structural: similarity score = 2.0
+         ✅ Gem 214BP4_halogen_structural: added to results with score 2.000
+         🔍 Processing gem 224BC3_halogen_structural with 1 database points...
+         📊 Gem 224BC3_halogen_structural: wavelength range 744.9-744.9 nm
+         🔧 Calling similarity calculation for gem 224BC3_halogen_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 655.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 224BC3_halogen_structural: similarity score = 2.0
+         ✅ Gem 224BC3_halogen_structural: added to results with score 2.000
+         🔍 Processing gem 224BC4_halogen_structural with 1 database points...
+         📊 Gem 224BC4_halogen_structural: wavelength range 744.6-744.6 nm
+         🔧 Calling similarity calculation for gem 224BC4_halogen_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 655.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 224BC4_halogen_structural: similarity score = 2.0
+         ✅ Gem 224BC4_halogen_structural: added to results with score 2.000
+         🔍 Processing gem 224BC5_halogen_structural with 1 database points...
+         📊 Gem 224BC5_halogen_structural: wavelength range 744.5-744.5 nm
+         🔧 Calling similarity calculation for gem 224BC5_halogen_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 655.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 224BC5_halogen_structural: similarity score = 2.0
+         ✅ Gem 224BC5_halogen_structural: added to results with score 2.000
+         🔍 Processing gem 224BP3_halogen_structural with 1 database points...
+         📊 Gem 224BP3_halogen_structural: wavelength range 745.2-745.2 nm
+         🔧 Calling similarity calculation for gem 224BP3_halogen_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 655.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 224BP3_halogen_structural: similarity score = 2.0
+         ✅ Gem 224BP3_halogen_structural: added to results with score 2.000
+         🔍 Processing gem 224BP4_halogen_structural with 1 database points...
+         📊 Gem 224BP4_halogen_structural: wavelength range 744.0-744.0 nm
+         🔧 Calling similarity calculation for gem 224BP4_halogen_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 655.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 224BP4_halogen_structural: similarity score = 2.0
+         ✅ Gem 224BP4_halogen_structural: added to results with score 2.000
+         🔍 Processing gem 51BC1_halogen_structural with 1 database points...
+         📊 Gem 51BC1_halogen_structural: wavelength range 635.6-635.6 nm
+         🔧 Calling similarity calculation for gem 51BC1_halogen_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 655.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 51BC1_halogen_structural: similarity score = 2.0
+         ✅ Gem 51BC1_halogen_structural: added to results with score 2.000
+         🔍 Processing gem 52BP1_halogen_structural with 1 database points...
+         📊 Gem 52BP1_halogen_structural: wavelength range 634.7-634.7 nm
+         🔧 Calling similarity calculation for gem 52BP1_halogen_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 655.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 52BP1_halogen_structural: similarity score = 2.0
+         ✅ Gem 52BP1_halogen_structural: added to results with score 2.000
+         🔍 Processing gem 92BC1_halogen_structural with 1 database points...
+         📊 Gem 92BC1_halogen_structural: wavelength range 694.3-694.3 nm
+         🔧 Calling similarity calculation for gem 92BC1_halogen_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 655.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 92BC1_halogen_structural: similarity score = 2.0
+         ✅ Gem 92BC1_halogen_structural: added to results with score 2.000
+      📊 Successfully calculated scores for 36 gems
+      ✅ Best score: 0.002 for gem 189BP2_halogen_structural
+      ✅ Best match: 189BP2_halogen_structural (score: 0.00)
+   📄 Processing L: 197LC3_laser_structural_20250925_210900.csv
+      📊 Loaded 6 structural points
+      🔍 Found 18 database records for L light source
+      🔧 Database columns: file=gem_id, wavelength=wavelength, intensity=intensity
+      🔧 Unknown data columns: ['Feature', 'File', 'Light_Source', 'Wavelength', 'Intensity', 'Point_Type', 'Feature_Group', 'Processing', 'SNR', 'Feature_Key', 'Storage_Structure', 'Baseline_Used', 'Norm_Factor', 'Normalization_Method', 'Reference_Wavelength_Used', 'Normalization_Scheme', 'Reference_Wavelength', 'Intensity_Range_Min', 'Intensity_Range_Max', 'Output_Location']
+      ✅ Found wavelength column: Wavelength
+      ✅ Found intensity column: Intensity
+      ✅ Found intensity column: Point_Type
+      ✅ Found wavelength column: Reference_Wavelength_Used
+      ✅ Found wavelength column: Reference_Wavelength
+      ✅ Found intensity column: Intensity_Range_Min
+      ✅ Found intensity column: Intensity_Range_Max
+      📊 Unknown data: 6 valid points, range 452.5-452.5 nm
+      🔍 Processing 18 database gems...
+         🔍 Processing gem 140LC2_laser_structural with 1 database points...
+         📊 Gem 140LC2_laser_structural: wavelength range 683.2-683.2 nm
+         🔧 Calling similarity calculation for gem 140LC2_laser_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 452.5nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 140LC2_laser_structural: similarity score = 2.0
+         ✅ Gem 140LC2_laser_structural: added to results with score 2.000
+         🔍 Processing gem 140LP1_laser_structural with 1 database points...
+         📊 Gem 140LP1_laser_structural: wavelength range 684.9-684.9 nm
+         🔧 Calling similarity calculation for gem 140LP1_laser_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 452.5nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 140LP1_laser_structural: similarity score = 2.0
+         ✅ Gem 140LP1_laser_structural: added to results with score 2.000
+         🔍 Processing gem 140LP2_laser_structural with 1 database points...
+         📊 Gem 140LP2_laser_structural: wavelength range 684.9-684.9 nm
+         🔧 Calling similarity calculation for gem 140LP2_laser_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 452.5nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 140LP2_laser_structural: similarity score = 2.0
+         ✅ Gem 140LP2_laser_structural: added to results with score 2.000
+         🔍 Processing gem 189LC3_laser_structural with 1 database points...
+         📊 Gem 189LC3_laser_structural: wavelength range 737.8-737.8 nm
+         🔧 Calling similarity calculation for gem 189LC3_laser_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 452.5nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 189LC3_laser_structural: similarity score = 2.0
+         ✅ Gem 189LC3_laser_structural: added to results with score 2.000
+         🔍 Processing gem 189LC4_laser_structural with 1 database points...
+         📊 Gem 189LC4_laser_structural: wavelength range 738.8-738.8 nm
+         🔧 Calling similarity calculation for gem 189LC4_laser_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 452.5nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 189LC4_laser_structural: similarity score = 2.0
+         ✅ Gem 189LC4_laser_structural: added to results with score 2.000
+         🔍 Processing gem 189LP1_laser_structural with 1 database points...
+         📊 Gem 189LP1_laser_structural: wavelength range 738.0-738.0 nm
+         🔧 Calling similarity calculation for gem 189LP1_laser_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 452.5nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 189LP1_laser_structural: similarity score = 2.0
+         ✅ Gem 189LP1_laser_structural: added to results with score 2.000
+         🔍 Processing gem 189LP2_laser_structural with 1 database points...
+         📊 Gem 189LP2_laser_structural: wavelength range 738.1-738.1 nm
+         🔧 Calling similarity calculation for gem 189LP2_laser_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 452.5nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 189LP2_laser_structural: similarity score = 2.0
+         ✅ Gem 189LP2_laser_structural: added to results with score 2.000
+         🔍 Processing gem 189LP4_laser_structural with 1 database points...
+         📊 Gem 189LP4_laser_structural: wavelength range 738.6-738.6 nm
+         🔧 Calling similarity calculation for gem 189LP4_laser_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 452.5nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 189LP4_laser_structural: similarity score = 2.0
+         ✅ Gem 189LP4_laser_structural: added to results with score 2.000
+         🔍 Processing gem 194LC1_laser_structural with 1 database points...
+         📊 Gem 194LC1_laser_structural: wavelength range 443.5-443.5 nm
+         🔧 Calling similarity calculation for gem 194LC1_laser_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ✅ Feature at 452.5nm: 1 db points, score=0.012
+         📊 Feature matching: 1/1 matched, final_score=0.010
+         📊 Gem 194LC1_laser_structural: similarity score = 0.009597408000000189
+         ✅ Gem 194LC1_laser_structural: added to results with score 0.010
+         🔍 Processing gem 194LC2_laser_structural with 1 database points...
+         📊 Gem 194LC2_laser_structural: wavelength range 443.9-443.9 nm
+         🔧 Calling similarity calculation for gem 194LC2_laser_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ✅ Feature at 452.5nm: 1 db points, score=0.016
+         📊 Feature matching: 1/1 matched, final_score=0.012
+         📊 Gem 194LC2_laser_structural: similarity score = 0.012492144000000226
+         ✅ Gem 194LC2_laser_structural: added to results with score 0.012
+         🔍 Processing gem 195LC1_laser_structural with 1 database points...
+         📊 Gem 195LC1_laser_structural: wavelength range 444.4-444.4 nm
+         🔧 Calling similarity calculation for gem 195LC1_laser_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ✅ Feature at 452.5nm: 1 db points, score=0.126
+         📊 Feature matching: 1/1 matched, final_score=0.101
+         📊 Gem 195LC1_laser_structural: similarity score = 0.10109545600000136
+         ✅ Gem 195LC1_laser_structural: added to results with score 0.101
+         🔍 Processing gem 196LC1_laser_structural with 1 database points...
+         📊 Gem 196LC1_laser_structural: wavelength range 443.7-443.7 nm
+         🔧 Calling similarity calculation for gem 196LC1_laser_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ✅ Feature at 452.5nm: 1 db points, score=0.012
+         📊 Feature matching: 1/1 matched, final_score=0.009
+         📊 Gem 196LC1_laser_structural: similarity score = 0.00921782400000013
+         ✅ Gem 196LC1_laser_structural: added to results with score 0.009
+         🔍 Processing gem 196LC2_laser_structural with 1 database points...
+         📊 Gem 196LC2_laser_structural: wavelength range 443.6-443.6 nm
+         🔧 Calling similarity calculation for gem 196LC2_laser_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ✅ Feature at 452.5nm: 1 db points, score=0.008
+         📊 Feature matching: 1/1 matched, final_score=0.007
+         📊 Gem 196LC2_laser_structural: similarity score = 0.006633791999999937
+         ✅ Gem 196LC2_laser_structural: added to results with score 0.007
+         🔍 Processing gem 197LC3_laser_structural_structural with 1 database points...
+         📊 Gem 197LC3_laser_structural_structural: wavelength range 576.5-576.5 nm
+         🔧 Calling similarity calculation for gem 197LC3_laser_structural_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 452.5nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 197LC3_laser_structural_structural: similarity score = 2.0
+         ✅ Gem 197LC3_laser_structural_structural: added to results with score 2.000
+         🔍 Processing gem 197LC4_laser_structural_structural with 1 database points...
+         📊 Gem 197LC4_laser_structural_structural: wavelength range 529.0-529.0 nm
+         🔧 Calling similarity calculation for gem 197LC4_laser_structural_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 452.5nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 197LC4_laser_structural_structural: similarity score = 2.0
+         ✅ Gem 197LC4_laser_structural_structural: added to results with score 2.000
+         🔍 Processing gem 197LP3_laser_structural with 1 database points...
+         📊 Gem 197LP3_laser_structural: wavelength range 576.5-576.5 nm
+         🔧 Calling similarity calculation for gem 197LP3_laser_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 452.5nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 197LP3_laser_structural: similarity score = 2.0
+         ✅ Gem 197LP3_laser_structural: added to results with score 2.000
+         🔍 Processing gem 199LC1_laser_structural with 1 database points...
+         📊 Gem 199LC1_laser_structural: wavelength range 443.6-443.6 nm
+         🔧 Calling similarity calculation for gem 199LC1_laser_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ✅ Feature at 452.5nm: 1 db points, score=0.012
+         📊 Feature matching: 1/1 matched, final_score=0.010
+         📊 Gem 199LC1_laser_structural: similarity score = 0.009570527999999898
+         ✅ Gem 199LC1_laser_structural: added to results with score 0.010
+         🔍 Processing gem 60LC1_laser_structural with 1 database points...
+         📊 Gem 60LC1_laser_structural: wavelength range 694.1-694.1 nm
+         🔧 Calling similarity calculation for gem 60LC1_laser_structural...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 452.5nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 60LC1_laser_structural: similarity score = 2.0
+         ✅ Gem 60LC1_laser_structural: added to results with score 2.000
+      📊 Successfully calculated scores for 18 gems
+      ✅ Best score: 0.007 for gem 196LC2_laser_structural
+      ✅ Best match: 196LC2_laser_structural (score: 0.01)
+   📄 Processing U: 197UC1_uv_structural_auto_20250925_125023.csv
+      📊 Loaded 33 structural points
+      🔍 Found 20 database records for U light source
+      🔧 Database columns: file=gem_id, wavelength=wavelength, intensity=intensity
+      🔧 Unknown data columns: ['Peak_Number', 'Wavelength_nm', 'Intensity', 'Prominence', 'Category', 'Normalization_Scheme', 'Reference_Wavelength', 'Light_Source', 'Directory_Structure', 'Output_Location', 'Detection_Method']
+      ✅ Found wavelength column: Wavelength_nm
+      ✅ Found intensity column: Intensity
+      ✅ Found wavelength column: Reference_Wavelength
+      📊 Unknown data: 33 valid points, range 811.0-811.0 nm
+      🔍 Processing 20 database gems...
+         🔍 Processing gem 140UC1_uv_structural_auto with 1 database points...
+         📊 Gem 140UC1_uv_structural_auto: wavelength range 922.7-922.7 nm
+         🔧 Calling similarity calculation for gem 140UC1_uv_structural_auto...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 811.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 140UC1_uv_structural_auto: similarity score = 2.0
+         ✅ Gem 140UC1_uv_structural_auto: added to results with score 2.000
+         🔍 Processing gem 140UC2_uv_structural_auto with 1 database points...
+         📊 Gem 140UC2_uv_structural_auto: wavelength range 912.1-912.1 nm
+         🔧 Calling similarity calculation for gem 140UC2_uv_structural_auto...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 811.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 140UC2_uv_structural_auto: similarity score = 2.0
+         ✅ Gem 140UC2_uv_structural_auto: added to results with score 2.000
+         🔍 Processing gem 140UP1_uv_structural_auto with 1 database points...
+         📊 Gem 140UP1_uv_structural_auto: wavelength range 912.1-912.1 nm
+         🔧 Calling similarity calculation for gem 140UP1_uv_structural_auto...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 811.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 140UP1_uv_structural_auto: similarity score = 2.0
+         ✅ Gem 140UP1_uv_structural_auto: added to results with score 2.000
+         🔍 Processing gem 140UP2_uv_structural_auto with 1 database points...
+         📊 Gem 140UP2_uv_structural_auto: wavelength range 851.1-851.1 nm
+         🔧 Calling similarity calculation for gem 140UP2_uv_structural_auto...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 811.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 140UP2_uv_structural_auto: similarity score = 2.0
+         ✅ Gem 140UP2_uv_structural_auto: added to results with score 2.000
+         🔍 Processing gem 193UC1_uv_structural_auto with 1 database points...
+         📊 Gem 193UC1_uv_structural_auto: wavelength range 448.5-448.5 nm
+         🔧 Calling similarity calculation for gem 193UC1_uv_structural_auto...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 811.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 193UC1_uv_structural_auto: similarity score = 2.0
+         ✅ Gem 193UC1_uv_structural_auto: added to results with score 2.000
+         🔍 Processing gem 193UC2_uv_structural_auto with 1 database points...
+         📊 Gem 193UC2_uv_structural_auto: wavelength range 922.7-922.7 nm
+         🔧 Calling similarity calculation for gem 193UC2_uv_structural_auto...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 811.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 193UC2_uv_structural_auto: similarity score = 2.0
+         ✅ Gem 193UC2_uv_structural_auto: added to results with score 2.000
+         🔍 Processing gem 193UP1_uv_structural_auto with 1 database points...
+         📊 Gem 193UP1_uv_structural_auto: wavelength range 922.7-922.7 nm
+         🔧 Calling similarity calculation for gem 193UP1_uv_structural_auto...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 811.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 193UP1_uv_structural_auto: similarity score = 2.0
+         ✅ Gem 193UP1_uv_structural_auto: added to results with score 2.000
+         🔍 Processing gem 194UC1_uv_structural_auto with 1 database points...
+         📊 Gem 194UC1_uv_structural_auto: wavelength range 993.5-993.5 nm
+         🔧 Calling similarity calculation for gem 194UC1_uv_structural_auto...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 811.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 194UC1_uv_structural_auto: similarity score = 2.0
+         ✅ Gem 194UC1_uv_structural_auto: added to results with score 2.000
+         🔍 Processing gem 195UC1_uv_structural_auto with 1 database points...
+         📊 Gem 195UC1_uv_structural_auto: wavelength range 847.2-847.2 nm
+         🔧 Calling similarity calculation for gem 195UC1_uv_structural_auto...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 811.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 195UC1_uv_structural_auto: similarity score = 2.0
+         ✅ Gem 195UC1_uv_structural_auto: added to results with score 2.000
+         🔍 Processing gem 196UC1_uv_structural_auto with 1 database points...
+         📊 Gem 196UC1_uv_structural_auto: wavelength range 313.2-313.2 nm
+         🔧 Calling similarity calculation for gem 196UC1_uv_structural_auto...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 811.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 196UC1_uv_structural_auto: similarity score = 2.0
+         ✅ Gem 196UC1_uv_structural_auto: added to results with score 2.000
+         🔍 Processing gem 196UC2_uv_structural_auto with 1 database points...
+         📊 Gem 196UC2_uv_structural_auto: wavelength range 313.2-313.2 nm
+         🔧 Calling similarity calculation for gem 196UC2_uv_structural_auto...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 811.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 196UC2_uv_structural_auto: similarity score = 2.0
+         ✅ Gem 196UC2_uv_structural_auto: added to results with score 2.000
+         🔍 Processing gem 196UP1_uv_structural_auto with 1 database points...
+         📊 Gem 196UP1_uv_structural_auto: wavelength range 313.2-313.2 nm
+         🔧 Calling similarity calculation for gem 196UP1_uv_structural_auto...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 811.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 196UP1_uv_structural_auto: similarity score = 2.0
+         ✅ Gem 196UP1_uv_structural_auto: added to results with score 2.000
+         🔍 Processing gem 196UP2_uv_structural_auto with 1 database points...
+         📊 Gem 196UP2_uv_structural_auto: wavelength range 334.0-334.0 nm
+         🔧 Calling similarity calculation for gem 196UP2_uv_structural_auto...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 811.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 196UP2_uv_structural_auto: similarity score = 2.0
+         ✅ Gem 196UP2_uv_structural_auto: added to results with score 2.000
+         🔍 Processing gem 197UC1_uv_structural_auto with 1 database points...
+         📊 Gem 197UC1_uv_structural_auto: wavelength range 922.7-922.7 nm
+         🔧 Calling similarity calculation for gem 197UC1_uv_structural_auto...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 811.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 197UC1_uv_structural_auto: similarity score = 2.0
+         ✅ Gem 197UC1_uv_structural_auto: added to results with score 2.000
+         🔍 Processing gem 197UC2_uv_structural_auto with 1 database points...
+         📊 Gem 197UC2_uv_structural_auto: wavelength range 922.5-922.5 nm
+         🔧 Calling similarity calculation for gem 197UC2_uv_structural_auto...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 811.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 197UC2_uv_structural_auto: similarity score = 2.0
+         ✅ Gem 197UC2_uv_structural_auto: added to results with score 2.000
+         🔍 Processing gem 197UP1_uv_structural_auto with 1 database points...
+         📊 Gem 197UP1_uv_structural_auto: wavelength range 922.7-922.7 nm
+         🔧 Calling similarity calculation for gem 197UP1_uv_structural_auto...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 811.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 197UP1_uv_structural_auto: similarity score = 2.0
+         ✅ Gem 197UP1_uv_structural_auto: added to results with score 2.000
+         🔍 Processing gem 199UC1_uv_structural_auto with 1 database points...
+         📊 Gem 199UC1_uv_structural_auto: wavelength range 922.7-922.7 nm
+         🔧 Calling similarity calculation for gem 199UC1_uv_structural_auto...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 811.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 199UC1_uv_structural_auto: similarity score = 2.0
+         ✅ Gem 199UC1_uv_structural_auto: added to results with score 2.000
+         🔍 Processing gem 199UP2_uv_structural_auto with 1 database points...
+         📊 Gem 199UP2_uv_structural_auto: wavelength range 922.7-922.7 nm
+         🔧 Calling similarity calculation for gem 199UP2_uv_structural_auto...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 811.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 199UP2_uv_structural_auto: similarity score = 2.0
+         ✅ Gem 199UP2_uv_structural_auto: added to results with score 2.000
+         🔍 Processing gem 51UC1_uv_structural_auto with 1 database points...
+         📊 Gem 51UC1_uv_structural_auto: wavelength range 922.5-922.5 nm
+         🔧 Calling similarity calculation for gem 51UC1_uv_structural_auto...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 811.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 51UC1_uv_structural_auto: similarity score = 2.0
+         ✅ Gem 51UC1_uv_structural_auto: added to results with score 2.000
+         🔍 Processing gem 51UP1_uv_structural_auto with 1 database points...
+         📊 Gem 51UP1_uv_structural_auto: wavelength range 851.5-851.5 nm
+         🔧 Calling similarity calculation for gem 51UP1_uv_structural_auto...
+         📊 Wavelength ranges: unknown=0.0nm, db=0.0nm
+         🎯 Using discrete feature matching (range=0.0nm)
+         🔍 Matching 1 unique features against 1 database points
+         ❌ Feature at 811.0nm: no nearby database points (penalty=2.0)
+         📊 Feature matching: 0/1 matched, final_score=2.000
+         📊 Gem 51UP1_uv_structural_auto: similarity score = 2.0
+         ✅ Gem 51UP1_uv_structural_auto: added to results with score 2.000
+      📊 Successfully calculated scores for 20 gems
+      ✅ Best score: 2.000 for gem 140UC1_uv_structural_auto
+      ✅ Best match: 140UC1_uv_structural_auto (score: 2.00)
+   🏆 Ultimate best match: 189BP2_halogen_structural (score: 31.48)
+   ✅ Gem 197 analysis completed successfully
+📄 Ultimate analysis summary saved: ultimate_structural_analysis_20250928_083159.csv
+📄 Ultimate full results saved: ultimate_structural_analysis_full_20250928_083159.json
+📈 Generating ultimate analysis visualizations...
+📈 Summary visualization saved: ultimate_analysis_summary_20250928_083159.png
