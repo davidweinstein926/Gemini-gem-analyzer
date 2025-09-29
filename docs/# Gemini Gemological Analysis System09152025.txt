@@ -299,9 +299,9 @@ PNG Visualizations: match_rank_[N]_gem_[ID].png
 
 ### Hardware Integration
 - **SP10 Spectrometer:** Native integration via libspectr.dll
-- **Wavelength Range:** Typically 400-1000nm
+- **Wavelength Range:** Typically 295-1000nm
 - **Resolution:** High-resolution (thousands of data points per spectrum)
-- **Light Sources:** Halogen (broadband), Laser (635nm), UV (365nm)
+- **Light Sources:** Halogen (broadband), Laser (405nm), UV (295-980nm)
 
 ## 🎯 Advanced Features
 
