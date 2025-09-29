@@ -8,7 +8,7 @@ The Gemini Gemological Analysis System is a **production-ready, professional-gra
 - **Multi-light spectral analysis** (Halogen/B, Laser/L, UV/U)
 - **Advanced numerical matching** with self-validation algorithms
 - **Professional GUI interfaces** for both manual and automated analysis
-- **Industrial-scale databases** (33.6MB+ reference spectra, 880KB+ structural features)
+- **Industrial-scale databases** (33.6MB+ reference spectra, ~880KB+ structural features)
 - **600+ organized spectral files** with proper naming conventions
 - **Sophisticated normalization** and data processing pipelines
 - **Automated visualization generation** with publication-quality plots
@@ -18,9 +18,9 @@ The Gemini Gemological Analysis System is a **production-ready, professional-gra
 
 ```
 gemini_gemological_analysis/
-├── main.py                          ⭐ ADVANCED SYSTEM HUB (Option 2 works)
+├── main.py                          ⭐ ADVANCED SYSTEM HUB  
 ├── gem_selector.py                  ⭐ Intelligent bypass for input validation
-├── multi_structural_gem_data.db    ⭐ SQLite structural database (576KB)
+├── multi_structural_gem_data.db    ⭐ SQLite structural database (576KB) Legacy
 │
 ├── src/                             ⭐ CORE ENGINE MODULES
 │   ├── numerical_analysis/
@@ -33,18 +33,18 @@ gemini_gemological_analysis/
 │   │   ├── manual_analyzers/       ⭐ Interactive point-click analysis
 │   │   │   ├── gemini_halogen_analyzer.py    (38.7KB)
 │   │   │   ├── gemini_laser_analyzer.py      (33.9KB)
-│   │   │   ├── gemini_uv_analyzer.py         (36.7KB)
-│   │   │   └── enhanced_gem_analyzer.py      (47.6KB)
+│   │   │   ├── gemini_uv_analyzer.py         (36.7KB) not used
+│   │   │   └── enhanced_gem_analyzer.py      (47.6KB) not used
 │   │   │
 │   │   └── auto_analysis/          ⭐ Automated detection algorithms
-│   │       ├── gemini_peak_detector.py       (40.4KB)
-│   │       ├── b_spectra_auto_detector.py    (20.2KB)
-│   │       └── l_spectra_auto_detector.py    (31.7KB)
+│   │       ├── gemini_peak_detector.py       (40.4KB) use to auto mark on uv
+│   │       ├── b_spectra_auto_detector.py    (20.2KB) not used
+│   │       └── l_spectra_auto_detector.py    (31.7KB) not used
 │   │
 │   └── visualization/              ⭐ Advanced plotting and reporting
 │       ├── plotter.py              (11.3KB)
-│       ├── result_visualizer.py    (22.3KB)
-│       └── spectral_curves.py      (15.8KB)
+│       ├── result_visualizer.py    (22.3KB)  not working well
+│       └── spectral_curves.py      (15.8KB)  not working well
 │
 ├── data/                           ⭐ INDUSTRIAL DATA ORGANIZATION
 │   ├── raw/                        ⭐ 600+ spectral files (59MB total)
@@ -54,14 +54,14 @@ gemini_gemological_analysis/
 │   │
 │   ├── unknown/                    ⭐ Analysis staging area
 │   │   ├── numerical/              → unkgemB.csv, unkgemL.csv, unkgemU.csv
-│   │   └── structural/             → Structural analysis inputs
+│   │   └── structural/             → Structural analysis inputs ??
 │   │
-│   ├── structural/                 ⭐ Processed structural features
-│   │   └── [Timestamped CSV files with detected features]
+│   ├── structural(archive)        ⭐ Processed structural features archived
+│   ├── structural_data             → Structural analysis inputs ex. 58BC1_halogen_structural_TS; 58UC1_uv_structural_auto_TS
 │   │
-│   ├── txt_to_unkgem.py           ⭐ CORRECTED spectrum conversion
+│   ├── txt_to_unkgem.py            ⭐ CORRECTED spectrum conversion; copies 58BC1.txt from root/raw_txt converts to unkgemB.csv saves in data/unknows/numerical
 │   ├── txt_to_split_long_format.py ⭐ Database building utility
-│   └── structural features output to gemini structural db.py
+│   └── structural features output to gemini structural db.py  (not sure this is still the .py)
 │
 ├── database/                       ⭐ INDUSTRIAL-SCALE DATABASES
 │   ├── reference_spectra/          ⭐ Multi-gigabyte reference libraries
@@ -70,11 +70,11 @@ gemini_gemological_analysis/
 │   │   └── gemini_db_long_U.csv   (28.5 MB) - UV reference spectra
 │   │
 │   ├── structural_spectra/         ⭐ SQLite structural feature database
-│   │   ├── multi_structural_gem_data.db (880KB)
-│   │   └── spectrum_data.json     (189.8KB)
-│   │
+│   │   ├── multi_structural_gem_data.db (880KB) legacy
+│   │   ├── gemini_structural.db (600KB)  current structural database
+│   │   ├── gemini_structural_unified.csv  not sure how usefull
 │   └── gem_library/               ⭐ Gemstone information library
-│       └── gemlib_structural_ready.csv (43.6KB)
+│       └── gemlib_structural_ready.csv (43.6KB)  contains the gemstone gemological information
 │
 ├── data_acquisition/              ⭐ HARDWARE INTERFACE
 │   ├── main_menu.py              ⭐ Professional GUI for data capture
@@ -84,18 +84,31 @@ gemini_gemological_analysis/
 │   ├── whitelight_capture.py     → White light reference
 │   └── [SP10 spectrometer integration libraries]
 │
-├── output/                        ⭐ ANALYSIS RESULTS
-│   └── numerical_analysis/
-│       ├── match_rank_1_gem_140.png     → Publication-quality plots
-│       ├── numerical_test_gem_140_*.csv → Detailed analysis results
-│       └── top_3_matches_summary.png   → Comparison visualizations
-│
-├── results/                       ⭐ ORGANIZED ANALYSIS OUTPUTS
+├── outputs/                        ⭐ ANALYSIS RESULTS
+│   └── numerical_results/
+│   │    ├── graphs
+│   │    └── reports
+│   |
+│   └── structrual_results/
+│       ├── graphs
+│       └── reports
+│   
+│  
+├── results                        
 │   ├── post analysis numerical/
-│   │   ├── graph/                 → Enhanced spectral analysis plots
-│   │   └── reports/               → Analysis summary reports
+│   │   ├── graphs/                 
+│   │   └── reports/               
 │   └── post analysis structural/
-│
+│       ├── graphs/                  
+│       └── reports/                         
+├── results(archive)
+│   └── post analysis numerical/
+│   │   ├── graphs/                 
+│   │   └── reports/                
+│   └── post analysis structural/
+│       ├── graphs/                  
+│       └── reports/          
+│               
 └── docs/                          ⭐ COMPREHENSIVE DOCUMENTATION
     ├── [Project summaries and technical guides]
     └── gemini_directory_tree_*.txt → System snapshots
@@ -132,7 +145,7 @@ gemini_gemological_analysis/
   - Industrial database loading with flexible column detection
 
 **Gem Naming Convention:**
-```
+``  orginal data file
 Format: [prefix]base_id + light_source + orientation + scan_number
 Examples:
 - 58BC1     → Base: 58, Light: B, Orientation: C, Scan: 1
@@ -185,7 +198,7 @@ Examples:
 
 ## 💾 Database Architecture
 
-### Reference Spectra Databases
+### Reference Spectra Databases numerical only
 **Industrial-scale CSV databases:**
 - `gemini_db_long_B.csv` (33.6 MB) - Halogen spectra
 - `gemini_db_long_L.csv` (31.1 MB) - Laser spectra  
@@ -194,8 +207,8 @@ Examples:
 **Structure:** Each contains wavelength, intensity, and gem_id columns with hundreds of gem spectra properly normalized.
 
 ### Structural Features Database
-**SQLite database:** `multi_structural_gem_data.db` (880KB)
-```sql
+**SQLite database:** `gemini_structural.db` (600KB)
+```sql  not sure this is still accurate
 CREATE TABLE structural_features (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     feature TEXT NOT NULL,
@@ -393,5 +406,6 @@ PNG Visualizations: match_rank_[N]_gem_[ID].png
 4. **Complete hardware integration** for SP10 spectrometer data acquisition
 5. **Robust data processing** with corrected normalization and intelligent error handling
 6. **Publication-quality visualization** with automated plot generation
+
 
 **Key insight:** This system significantly exceeds typical research software in sophistication and is ready for professional gemological identification work. The codebase represents substantial development effort with research-grade algorithms and industrial-scale data management.
