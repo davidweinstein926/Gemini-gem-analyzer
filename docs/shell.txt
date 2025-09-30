@@ -1,0 +1,459 @@
+======================================================================
+  SUPER SAFE GEMINI ANALYSIS SYSTEM
+  🚀 ULTIMATE Options 4 & 8: Advanced Structural Analysis
+  🎯 Enhanced Option 6: Production Import + Auto-Archive
+  🛡️  Memory Protected + Smart Fallback
+======================================================================
+
+MAIN MENU (Ultimate Enhanced):
+============================================================
+📡 DATA CAPTURE & ANALYSIS:
+1. Data Acquisition (Spectral Capture)
+2. Structural Marking (smart fallback)
+3. 🛡️  Numerical Matching (MEMORY PROTECTED)
+4. 🚀 Ultimate Structural Matching (Current Work)
+
+💾 DATABASE OPERATIONS:
+5. Import to Numerical DB
+6. 🎯 Production Structural Import (Auto-Archive)
+
+🧪 TESTING (Advanced & Legacy):
+7. 🛡️  Numerical Matching Test (INTERACTIVE)
+8. 🚀 Ultimate Structural Test (Archive)
+
+🧹 CLEANUP & ARCHIVING:
+9. Clean Up Numerical
+10. Clean Up Structural
+
+⚙️ SYSTEM:
+11. System Status (with Database Monitor)
+12. Toggle Bleep System
+13. Exit
+🧠 Memory check: 466MB available
+⚠️  WARNING: Low memory (466MB available, 1500MB recommended)
+
+Status: Bleep [ON] | Memory: ⚠️  LOW | 🎯 Enhanced Option 6 | 🚀 Ultimate 4&8 | 🛡️  SUPER SAFE
+
+Select (1-13): 6
+
+🎯 PRODUCTION STRUCTURAL DATABASE IMPORT
+============================================================
+📍 Built on SuperSafeGeminiSystem architecture
+🗄️  Database: database/structural_spectra/gemini_structural.db
+📂 Source: root/data/structural_data/ (fresh structural data)
+📦 Archive: root/data/structural(archive)/ (after successful import)
+💎 Handles all light sources: Halogen (B), Laser (L), UV (U)
+🔬 Production workflow: Import → Database → Archive
+📊 Found 21 structural files to import
+
+📋 Sample files to import:
+   1. 140UC1_uv_structural_auto_20250925_233339.csv (5.2 KB)
+   2. 140UC2_uv_structural_auto_20250925_233512.csv (4.4 KB)
+   3. 140UP1_uv_structural_auto_20250925_233553.csv (4.2 KB)
+   4. 140UP2_uv_structural_auto_20250925_233704.csv (4.4 KB)
+   5. 193UC1_uv_structural_auto_20250915_133018.csv (10.4 KB)
+   ... and 16 more files
+
+⚠️  PRODUCTION IMPORT CONFIRMATION:
+This will:
+✅ Import fresh structural data into database
+✅ Update/create database/structural_spectra/gemini_structural.db
+✅ Archive successfully imported files to structural(archive)
+✅ Preserve existing database with automatic backup
+Proceed with production import of 21 files? (y/n): y
+🧠 Memory check: 479MB available
+⚠️  WARNING: Low memory (479MB available, 1500MB recommended)
+⚠️  Memory warning detected
+Production import is memory-intensive due to comprehensive processing
+Continue with memory caution? (y/n): y
+
+🚀 Starting Production Structural Import...
+This may take several minutes depending on data volume...
+📊 Launching production structural import engine...
+🎯 PRODUCTION STRUCTURAL DATABASE IMPORT - DEBUG MODE
+Built on SuperSafeGeminiSystem architecture
+============================================================
+DEBUG: Creating importer instance...
+🔍 Locating project root...
+✅ Project root: C:\Users\David\OneDrive\Desktop\gemini_gemological_analysis
+🎯 PRODUCTION STRUCTURAL DATABASE IMPORTER
+============================================================
+📍 Built on SuperSafeGeminiSystem architecture
+📂 Source: C:\Users\David\OneDrive\Desktop\gemini_gemological_analysis\data\structural_data
+🗄️  Database: C:\Users\David\OneDrive\Desktop\gemini_gemological_analysis\database\structural_spectra\gemini_structural.db
+📦 Archive: C:\Users\David\OneDrive\Desktop\gemini_gemological_analysis\data\structural(archive)
+🔬 Production workflow: Import → Archive
+DEBUG: About to call run_production_import()...
+🚀 STARTING PRODUCTION STRUCTURAL IMPORT
+==================================================
+📊 Found 21 structural files to import
+💾 Backed up existing database: gemini_structural_backup_20250930_085252.db
+✅ Existing database schema verified
+
+📋 Processing 21 files...
+
+📄 File 1/21: 140UC1_uv_structural_auto_20250925_233339.csv
+   Gem: 140UC1_uv_structural_auto
+   Light: UV
+   Date: 2025-09-25
+   Format: uv_auto
+   📊 UV Auto Detection format (24 peaks)
+   ✅ Inserted: 24, Skipped: 0
+
+📄 File 2/21: 140UC2_uv_structural_auto_20250925_233512.csv
+   Gem: 140UC2_uv_structural_auto
+   Light: UV
+   Date: 2025-09-25
+   Format: uv_auto
+   📊 UV Auto Detection format (20 peaks)
+   ✅ Inserted: 20, Skipped: 0
+
+📄 File 3/21: 140UP1_uv_structural_auto_20250925_233553.csv
+   Gem: 140UP1_uv_structural_auto
+   Light: UV
+   Date: 2025-09-25
+   Format: uv_auto
+   📊 UV Auto Detection format (19 peaks)
+   ✅ Inserted: 19, Skipped: 0
+
+📄 File 4/21: 140UP2_uv_structural_auto_20250925_233704.csv
+   Gem: 140UP2_uv_structural_auto
+   Light: UV
+   Date: 2025-09-25
+   Format: uv_auto
+   📊 UV Auto Detection format (20 peaks)
+   ✅ Inserted: 20, Skipped: 0
+
+📄 File 5/21: 193UC1_uv_structural_auto_20250915_133018.csv
+   Gem: 193UC1_uv_structural_auto
+   Light: UV
+   Date: 2025-09-15
+   Format: uv_auto
+   📊 UV Auto Detection format (50 peaks)
+   ✅ Inserted: 50, Skipped: 0
+
+📄 File 6/21: 193UC2_uv_structural_auto_20250915_133324.csv
+   Gem: 193UC2_uv_structural_auto
+   Light: UV
+   Date: 2025-09-15
+   Format: uv_auto
+   📊 UV Auto Detection format (35 peaks)
+   ✅ Inserted: 35, Skipped: 0
+
+📄 File 7/21: 193UP1_uv_structural_auto_20250915_133408.csv
+   Gem: 193UP1_uv_structural_auto
+   Light: UV
+   Date: 2025-09-15
+   Format: uv_auto
+   📊 UV Auto Detection format (28 peaks)
+   ✅ Inserted: 28, Skipped: 0
+
+📄 File 8/21: 194UC1_uv_structural_auto_20250915_183313.csv
+   Gem: 194UC1_uv_structural_auto
+   Light: UV
+   Date: 2025-09-15
+   Format: uv_auto
+   📊 UV Auto Detection format (41 peaks)
+   ✅ Inserted: 41, Skipped: 0
+
+📄 File 9/21: 195UC1_uv_structural_auto_20250916_124525.csv
+   Gem: 195UC1_uv_structural_auto
+   Light: UV
+   Date: 2025-09-16
+   Format: uv_auto
+   📊 UV Auto Detection format (25 peaks)
+   ✅ Inserted: 25, Skipped: 0
+
+📄 File 10/21: 196UC1_uv_structural_auto_20250917_192316.csv
+   Gem: 196UC1_uv_structural_auto
+   Light: UV
+   Date: 2025-09-17
+   Format: uv_auto
+   📊 UV Auto Detection format (26 peaks)
+   ✅ Inserted: 26, Skipped: 0
+
+📄 File 11/21: 196UC2_uv_structural_auto_20250917_211335.csv
+   Gem: 196UC2_uv_structural_auto
+   Light: UV
+   Date: 2025-09-17
+   Format: uv_auto
+   📊 UV Auto Detection format (26 peaks)
+   ✅ Inserted: 26, Skipped: 0
+
+📄 File 12/21: 196UP1_uv_structural_auto_20250917_210941.csv
+   Gem: 196UP1_uv_structural_auto
+   Light: UV
+   Date: 2025-09-17
+   Format: uv_auto
+   📊 UV Auto Detection format (26 peaks)
+   ✅ Inserted: 26, Skipped: 0
+
+📄 File 13/21: 196UP2_uv_structural_auto_20250917_213729.csv
+   Gem: 196UP2_uv_structural_auto
+   Light: UV
+   Date: 2025-09-17
+   Format: uv_auto
+   📊 UV Auto Detection format (27 peaks)
+   ✅ Inserted: 27, Skipped: 0
+
+📄 File 14/21: 197UC1_uv_structural_auto_20250925_210353.csv
+   Gem: 197UC1_uv_structural_auto
+   Light: UV
+   Date: 2025-09-25
+   Format: uv_auto
+   📊 UV Auto Detection format (33 peaks)
+   ✅ Inserted: 33, Skipped: 0
+
+📄 File 15/21: 197UC2_uv_structural_auto_20250925_212823.csv
+   Gem: 197UC2_uv_structural_auto
+   Light: UV
+   Date: 2025-09-25
+   Format: uv_auto
+   📊 UV Auto Detection format (30 peaks)
+   ✅ Inserted: 30, Skipped: 0
+
+📄 File 16/21: 197UP1_uv_structural_auto_20250925_215848.csv
+   Gem: 197UP1_uv_structural_auto
+   Light: UV
+   Date: 2025-09-25
+   Format: uv_auto
+   📊 UV Auto Detection format (29 peaks)
+   ✅ Inserted: 29, Skipped: 0
+
+📄 File 17/21: 199UC1_uv_structural_auto_20250925_234746.csv
+   Gem: 199UC1_uv_structural_auto
+   Light: UV
+   Date: 2025-09-25
+   Format: uv_auto
+   📊 UV Auto Detection format (26 peaks)
+   ✅ Inserted: 26, Skipped: 0
+
+📄 File 18/21: 199UC1_uv_structural_auto_20250926_051400.csv
+   Gem: 199UC1_uv_structural_auto
+   Light: UV
+   Date: 2025-09-26
+   Format: uv_auto
+   📊 UV Auto Detection format (35 peaks)
+   ✅ Inserted: 35, Skipped: 0
+
+📄 File 19/21: 199UP2_uv_structural_auto_20250926_093915.csv
+   Gem: 199UP2_uv_structural_auto
+   Light: UV
+   Date: 2025-09-26
+   Format: uv_auto
+   📊 UV Auto Detection format (29 peaks)
+   ✅ Inserted: 29, Skipped: 0
+
+📄 File 20/21: 51UC1_uv_structural_auto_20250911_144623.csv
+   Gem: 51UC1_uv_structural_auto
+   Light: UV
+   Date: 2025-09-11
+   Format: uv_auto
+   📊 UV Auto Detection format (31 peaks)
+   ✅ Inserted: 31, Skipped: 0
+
+📄 File 21/21: 51UP1_uv_structural_auto_20250921_211536.csv
+   Gem: 51UP1_uv_structural_auto
+   Light: UV
+   Date: 2025-09-21
+   Format: uv_auto
+   📊 UV Auto Detection format (28 peaks)
+   ✅ Inserted: 28, Skipped: 0
+
+📦 Archiving 21 imported files...
+   📦 Archived: 140UC1_uv_structural_auto_20250925_233339.csv → 140UC1_uv_structural_auto_20250925_233339_archived_20250930_085252.csv
+   📦 Archived: 140UC2_uv_structural_auto_20250925_233512.csv → 140UC2_uv_structural_auto_20250925_233512_archived_20250930_085252.csv
+   📦 Archived: 140UP1_uv_structural_auto_20250925_233553.csv → 140UP1_uv_structural_auto_20250925_233553_archived_20250930_085252.csv
+   📦 Archived: 140UP2_uv_structural_auto_20250925_233704.csv → 140UP2_uv_structural_auto_20250925_233704_archived_20250930_085252.csv
+   📦 Archived: 193UC1_uv_structural_auto_20250915_133018.csv → 193UC1_uv_structural_auto_20250915_133018_archived_20250930_085252.csv
+   📦 Archived: 193UC2_uv_structural_auto_20250915_133324.csv → 193UC2_uv_structural_auto_20250915_133324_archived_20250930_085252.csv
+   📦 Archived: 193UP1_uv_structural_auto_20250915_133408.csv → 193UP1_uv_structural_auto_20250915_133408_archived_20250930_085252.csv
+   📦 Archived: 194UC1_uv_structural_auto_20250915_183313.csv → 194UC1_uv_structural_auto_20250915_183313_archived_20250930_085252.csv
+   📦 Archived: 195UC1_uv_structural_auto_20250916_124525.csv → 195UC1_uv_structural_auto_20250916_124525_archived_20250930_085252.csv
+   📦 Archived: 196UC1_uv_structural_auto_20250917_192316.csv → 196UC1_uv_structural_auto_20250917_192316_archived_20250930_085252.csv
+   📦 Archived: 196UC2_uv_structural_auto_20250917_211335.csv → 196UC2_uv_structural_auto_20250917_211335_archived_20250930_085252.csv
+   📦 Archived: 196UP1_uv_structural_auto_20250917_210941.csv → 196UP1_uv_structural_auto_20250917_210941_archived_20250930_085252.csv
+   📦 Archived: 196UP2_uv_structural_auto_20250917_213729.csv → 196UP2_uv_structural_auto_20250917_213729_archived_20250930_085252.csv
+   📦 Archived: 197UC1_uv_structural_auto_20250925_210353.csv → 197UC1_uv_structural_auto_20250925_210353_archived_20250930_085252.csv
+   📦 Archived: 197UC2_uv_structural_auto_20250925_212823.csv → 197UC2_uv_structural_auto_20250925_212823_archived_20250930_085252.csv
+   📦 Archived: 197UP1_uv_structural_auto_20250925_215848.csv → 197UP1_uv_structural_auto_20250925_215848_archived_20250930_085252.csv
+   📦 Archived: 199UC1_uv_structural_auto_20250925_234746.csv → 199UC1_uv_structural_auto_20250925_234746_archived_20250930_085252.csv
+   📦 Archived: 199UC1_uv_structural_auto_20250926_051400.csv → 199UC1_uv_structural_auto_20250926_051400_archived_20250930_085252.csv
+   📦 Archived: 199UP2_uv_structural_auto_20250926_093915.csv → 199UP2_uv_structural_auto_20250926_093915_archived_20250930_085252.csv
+   📦 Archived: 51UC1_uv_structural_auto_20250911_144623.csv → 51UC1_uv_structural_auto_20250911_144623_archived_20250930_085252.csv
+   📦 Archived: 51UP1_uv_structural_auto_20250921_211536.csv → 51UP1_uv_structural_auto_20250921_211536_archived_20250930_085252.csv
+✅ Successfully archived 21 files
+📁 Archive location: C:\Users\David\OneDrive\Desktop\gemini_gemological_analysis\data\structural(archive)
+
+🎉 PRODUCTION IMPORT COMPLETED!
+============================================================
+📊 IMPORT STATISTICS:
+   Files found: 21
+   Files processed: 21
+   Files archived: 21
+   Records inserted: 608
+   Records skipped: 0
+   Unique gems: 20
+
+💡 BY LIGHT SOURCE:
+   UV: 608 records
+
+🗄️  FINAL DATABASE STATUS:
+   Total records: 73
+   Unique gems: 73
+   Light sources: 3
+   Database: C:\Users\David\OneDrive\Desktop\gemini_gemological_analysis\database\structural_spectra\gemini_structural.db
+📄 CSV export: C:\Users\David\OneDrive\Desktop\gemini_gemological_analysis\database\structural_spectra\gemini_structural_unified.csv
+   Records: 73
+
+✅ PRODUCTION WORKFLOW COMPLETE!
+🔄 Fresh data imported → Database updated → Files archived
+DEBUG: Import result = True
+
+🎉 SUCCESS! Production import completed!
+🗄️  database/structural_spectra/gemini_structural.db updated
+📦 Fresh data files archived to structural(archive)
+💎 All light sources (Halogen/Laser/UV) unified
+⚡ Ready for structural analysis workflows
+
+🎉 PRODUCTION IMPORT SUCCESS!
+--------------------------------------------------
+✅ Database updated: database/structural_spectra/gemini_structural.db
+✅ All light sources unified: Halogen/Laser/UV
+✅ Fresh structural data successfully imported
+✅ Source files archived to structural(archive)
+✅ Performance optimized with indexes
+✅ Data integrity validated
+✅ Production workflow completed
+
+Show database statistics? (y/n): y
+
+📊 STRUCTURAL DATABASE STATISTICS
+==================================================
+📁 Database: database/structural_spectra/gemini_structural.db
+📝 Total spectral records: 73
+❌ Could not retrieve database stats: no such column: file
+🔍 Error details: OperationalError
+
+Press Enter to continue...
+
+MAIN MENU (Ultimate Enhanced):
+============================================================
+📡 DATA CAPTURE & ANALYSIS:
+1. Data Acquisition (Spectral Capture)
+2. Structural Marking (smart fallback)
+3. 🛡️  Numerical Matching (MEMORY PROTECTED)
+4. 🚀 Ultimate Structural Matching (Current Work)
+
+💾 DATABASE OPERATIONS:
+5. Import to Numerical DB
+6. 🎯 Production Structural Import (Auto-Archive)
+
+🧪 TESTING (Advanced & Legacy):
+7. 🛡️  Numerical Matching Test (INTERACTIVE)
+8. 🚀 Ultimate Structural Test (Archive)
+
+🧹 CLEANUP & ARCHIVING:
+9. Clean Up Numerical
+10. Clean Up Structural
+
+⚙️ SYSTEM:
+11. System Status (with Database Monitor)
+12. Toggle Bleep System
+13. Exit
+🧠 Memory check: 705MB available
+⚠️  WARNING: Low memory (705MB available, 1500MB recommended)
+
+Status: Bleep [ON] | Memory: ⚠️  LOW | 🎯 Enhanced Option 6 | 🚀 Ultimate 4&8 | 🛡️  SUPER SAFE
+
+Select (1-13): 4
+
+🚀 ULTIMATE STRUCTURAL MATCHING (CURRENT WORK)
+============================================================
+🎯 Using Ultimate Multi-Gem Structural Analyzer
+📁 Input: root/data/structural_data/ (current work files)
+🗄️  Database: Modern databases (gemini_structural.db/csv)
+📊 Features: Advanced scoring + Feature weighting + Visualizations
+🔬 Output: root/outputs/structural_results/reports;graphs
+📁 Found 3 current structural files for ultimate analysis
+Start ultimate analysis of 3 current work files? (y/n): y
+
+🚀 Launching Ultimate Multi-Gem Structural Analyzer...
+🎯 Mode: Automatic analysis of current work
+📊 Using advanced feature weighting and modern databases
+🚀 Multi-Gem Structural Analyzer with Timestamp Support
+   Mode: auto, Source: current
+   Features: Timestamp-Aware Scoring, Same-Date Combination, Perfect Self-Match
+🔬 Analyzer initialized: auto mode, current source
+✅ Loaded 736 gem descriptions
+✅ Database schema detected: sqlite
+🔍 DEBUG: Parsing 'unkBC4_halogen_structural_20250926_094055.csv' → stem: 'unkBC4_halogen_structural_20250926_094055'
+✅ Found timestamp date: 20250926
+✅ Found light 'B' at position 3
+✅ Parsed: {'base_id': 'unk', 'light_source': 'B', 'filename': 'unkBC4_halogen_structural_20250926_094055.csv', 'ts': '20250926'}
+🔍 DEBUG: Parsing 'unkLC1_laser_structural_20250926_094305.csv' → stem: 'unkLC1_laser_structural_20250926_094305'
+✅ Found timestamp date: 20250926
+✅ Found light 'L' at position 3
+✅ Parsed: {'base_id': 'unk', 'light_source': 'L', 'filename': 'unkLC1_laser_structural_20250926_094305.csv', 'ts': '20250926'}
+🔍 DEBUG: Parsing 'unkUC1_uv_structural_auto_20250926_051400.csv' → stem: 'unkUC1_uv_structural_auto_20250926_051400'
+✅ Found timestamp date: 20250926
+✅ Found light 'U' at position 3
+✅ Parsed: {'base_id': 'unk', 'light_source': 'U', 'filename': 'unkUC1_uv_structural_auto_20250926_051400.csv', 'ts': '20250926'}
+📁 Found 1 gems (1 complete)
+🤖 Auto analysis: current source
+✅ Auto-selected 1 complete gems
+
+🚀 Starting timestamp-aware analysis of 1 gems...
+✅ Database loaded: 73 records
+🔍 GOI light sources: ['B', 'L', 'U']
+🔍 Finding gems with: ['B', 'L', 'U']
+✅ Using analysis_date column: 'analysis_date'
+❌ Invalid gem 140 (20250909): missing ['L', 'U']
+❌ Invalid gem 140 (20250821): missing ['B', 'U']
+❌ Invalid gem 140 (20250925): missing ['B', 'L']
+❌ Invalid gem 189 (20250821): missing ['U']
+❌ Invalid gem 190 (20250821): missing ['L', 'U']
+❌ Invalid gem 193 (20250915): missing ['L']
+✅ Valid gem 194 (20250915): ['B', 'L', 'U']
+❌ Invalid gem 194 (20250921): missing ['B', 'U']
+✅ Valid gem 195 (20250916): ['B', 'L', 'U']
+✅ Valid gem 196 (20250917): ['B', 'L', 'U']
+✅ Valid gem 197 (20250925): ['B', 'L', 'U']
+❌ Invalid gem 199 (20250925): missing ['L', 'U']
+❌ Invalid gem 199 (20250926): missing ['L']
+❌ Invalid gem 214 (20250822): missing ['L', 'U']
+❌ Invalid gem 224 (20250822): missing ['L', 'U']
+❌ Invalid gem 51 (20250912): missing ['L', 'U']
+❌ Invalid gem 51 (20250911): missing ['B', 'L']
+❌ Invalid gem 51 (20250921): missing ['B', 'L']
+❌ Invalid gem 52 (20250921): missing ['L', 'U']
+❌ Invalid gem 60 (20250921): missing ['B', 'U']
+❌ Invalid gem 92 (20250901): missing ['L', 'U']
+📊 Valid gems: ['194_20250915', '195_20250916', '196_20250917', '197_20250925'] (22 records)
+
+🎯 Analyzing Gem unk (1/1)...
+📄 Processing B: unkBC4_halogen_structural_20250926_094055.csv
+✅ Best: 194BC3_halogen_structural_20250915_183155.csv (score: 2.400000)
+📄 Processing L: unkLC1_laser_structural_20250926_094305.csv
+✅ Best: 196LC2_laser_structural_20250917_202649.csv (score: 0.008292)
+📄 Processing U: unkUC1_uv_structural_auto_20250926_051400.csv
+✅ Best: 194UC1_uv_structural_auto_20250915_183313.csv (score: 2.400000)
+🔄 Combined score for 194 (20250915): 2.7376 (31.6%)
+🔄 Combined score for 195 (20250916): 3.1037 (22.4%)
+🔄 Combined score for 196 (20250917): 2.7358 (31.6%)
+🔄 Combined score for 197 (20250925): 3.9971 (0.1%)
+🏆 Best combined: 196 (20250917) (score: 2.7358)
+📊 Total valid gems scored: 4
+📄 Comprehensive results saved: structural_analysis_comprehensive_unk_20250930_085520.csv
+📄 Summary saved: structural_analysis_summary_unk_20250930_085520.csv
+📄 Full results saved: structural_analysis_full_20250930_085520.json
+📈 Plot saved: match_scores_ts_aware_20250930_085520.png
+
+🎉 Analysis complete! Results in: C:\Users\David\OneDrive\Desktop\gemini_gemological_analysis\outputs\structural_results
+✅ Ultimate structural analysis completed successfully
+📊 Results saved to:
+   📄 Reports: outputs/structural_results/reports/
+   📈 Graphs: outputs/structural_results/graphs/
+📦 Previous results archived automatically
+
+Press Enter to continue...
