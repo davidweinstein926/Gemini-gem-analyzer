@@ -1,0 +1,197 @@
+All 72 records were skipped. The UNIQUE constraint is blocking them, but we only see 1 Halogen record in the database. The constraint is (gem_id, light_source, wavelength, feature, point_type) - notice it does NOT include analysis_date.
+This means records from a DIFFERENT date are blocking the inserts. Check for ALL gem_id='199' records regardless of date:
+pythonimport sqlite3
+conn = sqlite3.connect('database/structural_spectra/gemini_structural.db')
+cursor = conn.cursor()
+
+# Check ALL gem_id='199' records, ANY date
+cursor.execute("""
+    SELECT analysis_date, light_source, file_source, COUNT(*) 
+    FROM structural_features 
+    WHERE gem_id = '199'
+    GROUP BY analysis_date, light_source, file_source
+    ORDER BY analysis_date, light_source
+""")
+print("ALL gem_id='199' records (any date):")
+for row in cursor.fetchall():
+    print(f"  Date: {row[0]}, Light: {row[1]}, Count: {row[3]}")
+
+conn.close()
+If this shows 199 Laser/UV records from date 2025-09-25 (or any other date), those are blocking the 2025-09-26 inserts because they likely have the same wavelengths!
+The UNIQUE constraint needs to include analysis_date to allow the same gem measured on different days. This is a database schema issue that needs fixing.RetryDW%Run 'delete me.py'
+ALL gem_id='199' records (any date):
+  Date: 2025-09-26, Light: Halogen, Count: 1EditInvestigated database record collision and potential import issue.The user is showing me that there's only 1 record with gem_id='199' in the database (for date 2025-09-26, Halogen). Yet when trying to import 72 records (8 Laser + 35 UV + 29 UV), they're all being skipped by INSERT OR IGNORE.
+The UNIQUE constraint is: (gem_id, light_source, wavelength, feature, point_type)
+If there's only 1 Halogen record, why are Laser and UV records being skipped?
+Wait - let me think about this more carefully. The CSV files were fixed to set negative intensities to 0. But when I check, the import is still skipping all records.
+Could there be records with DIFFERENT gem_ids that have the same wavelengths? Let me think...
+Actually, the UNIQUE constraint doesn't include gem_id by itself - it includes gem_id AND light_source AND wavelength AND feature AND point_type. So for a collision to occur, you'd need:
+
+Same gem_id = '199'
+Same light_source = 'Laser' (for example)
+Same wavelength = 431.2
+Same feature = 'Peak_Max'
+Same point_type = 'Peak'
+
+The only way INSERT OR IGNORE would skip these is if there ARE records with gem_id='199' and light_source='Laser' or 'UV' somewhere in the database. But the query shows only 1 Halogen record exists.
+Unless... maybe the query is wrong? Or there's a bug in how I'm grouping?
+Let me ask them to check more carefully - look at the actual raw count of records with gem_id='199'.Only 1 Halogen record exists with gem_id='199', yet 72 records are being skipped. This doesn't make sense unless there's something wrong with how we're querying.
+Check the raw count more carefully:
+pythonimport sqlite3
+conn = sqlite3.connect('database/structural_spectra/gemini_structural.db')
+cursor = conn.cursor()
+
+# Get TOTAL count with gem_id='199'
+cursor.execute("SELECT COUNT(*) FROM structural_features WHERE gem_id = '199'")
+print(f"Total records with gem_id='199': {cursor.fetchone()[0]}")
+
+# Check each light source separately
+for light in ['Halogen', 'Laser', 'UV']:
+    cursor.execute("SELECT COUNT(*) FROM structural_features WHERE gem_id = '199' AND light_source = ?", (light,))
+    count = cursor.fetchone()[0]
+    print(f"  {light}: {count} records")
+
+# Check if there are records with similar wavelengths blocking the inserts
+cursor.execute("""
+    SELECT light_source, COUNT(DISTINCT wavelength) 
+    FROM structural_features 
+    WHERE gem_id = '199'
+    GROUP BY light_source
+""")
+print("\nUnique wavelengths per light source:")
+for row in cursor.fetchall():
+    print(f"  {row[0]}: {row[1]} wavelengths")
+
+conn.close()
+If this still only shows 1 Halogen record, then the issue must be something else - perhaps the CSV files weren't actually fixed, or there's a different validation error. Can you run this and share the output?RetryDWyou need to tell me each time where to save these little .pyEditPondered script storage locations for clear user guidance.The user is asking me to tell them where to save each Python script. That's a reasonable request - I've been giving them code snippets without being clear about where to save them. They're working in the database/structural_spectra directory based on their earlier error messages, so I should tell them to either:
+
+Save in the project root and run from there
+Or save in database/structural_spectra but use correct relative paths
+
+Let me be clear about this going forward.You're right - I should specify. Save it in your project root:
+C:\Users\David\OneDrive\Desktop\gemini_gemological_analysis\check_db.py
+Then run it from the project root directory (not from database/structural_spectra).
+Here's the script again:
+pythonimport sqlite3
+conn = sqlite3.connect('database/structural_spectra/gemini_structural.db')
+cursor = conn.cursor()
+
+# Get TOTAL count with gem_id='199'
+cursor.execute("SELECT COUNT(*) FROM structural_features WHERE gem_id = '199'")
+print(f"Total records with gem_id='199': {cursor.fetchone()[0]}")
+
+# Check each light source separately
+for light in ['Halogen', 'Laser', 'UV']:
+    cursor.execute("SELECT COUNT(*) FROM structural_features WHERE gem_id = '199' AND light_source = ?", (light,))
+    count = cursor.fetchone()[0]
+    print(f"  {light}: {count} records")
+
+# Check if there are records with similar wavelengths blocking the inserts
+cursor.execute("""
+    SELECT light_source, COUNT(DISTINCT wavelength) 
+    FROM structural_features 
+    WHERE gem_id = '199'
+    GROUP BY light_source
+""")
+print("\nUnique wavelengths per light source:")
+for row in cursor.fetchall():
+    print(f"  {row[0]}: {row[1]} wavelengths")
+
+conn.close()
+Save as check_db.py in project root, then run it.RetryDW%Run 'delete me.py'
+Traceback (most recent call last):
+  File "C:\Users\David\OneDrive\Desktop\gemini_gemological_analysis\delete me.py", line 1
+    pythonimport sqlite3
+                 ^^^^^^^
+SyntaxError: invalid syntaEditDiagnosed syntax error and proposed clean code fix.The user got a syntax error. They have "pythonimport sqlite3" all on one line - looks like they accidentally copied "python" before the code. I should just give them the clean code without the "python" prefix.Remove "python" from the first line. The file should start directly with:
+pythonimport sqlite3
+conn = sqlite3.connect('database/structural_spectra/gemini_structural.db')
+cursor = conn.cursor()
+
+# Get TOTAL count with gem_id='199'
+cursor.execute("SELECT COUNT(*) FROM structural_features WHERE gem_id = '199'")
+print(f"Total records with gem_id='199': {cursor.fetchone()[0]}")
+
+# Check each light source separately
+for light in ['Halogen', 'Laser', 'UV']:
+    cursor.execute("SELECT COUNT(*) FROM structural_features WHERE gem_id = '199' AND light_source = ?", (light,))
+    count = cursor.fetchone()[0]
+    print(f"  {light}: {count} records")
+
+# Check if there are records with similar wavelengths blocking the inserts
+cursor.execute("""
+    SELECT light_source, COUNT(DISTINCT wavelength) 
+    FROM structural_features 
+    WHERE gem_id = '199'
+    GROUP BY light_source
+""")
+print("\nUnique wavelengths per light source:")
+for row in cursor.fetchall():
+    print(f"  {row[0]}: {row[1]} wavelengths")
+
+conn.close()
+Save this in project root as check_db.py and run it.RetryDW%Run 'delete me.py'
+Total records with gem_id='199': 1
+  Halogen: 1 records
+  Laser: 0 records
+  UV: 0 records
+Unique wavelengths per light source:
+  Halogen: 1 wavelengthsEditInvestigated data import anomaly and potential file verification issue.The user has only 1 Halogen record with gem_id='199' in the database, yet the import is skipping 72 records (8 Laser + 35 UV + 29 UV = 72).
+This is very strange. If there are no existing Laser or UV records with gem_id='199', why would they be skipped?
+The UNIQUE constraint is: (gem_id, light_source, wavelength, feature, point_type)
+Let me think about what could cause this:
+
+The records don't actually have gem_id='199' when being inserted - but the import log shows "Gem: 199"
+There's a different validation error (but we fixed the negative intensities)
+The UNIQUE constraint is matching against records with DIFFERENT gem_ids somehow (not possible)
+The CSV files still have negative intensities (we fixed them, but maybe not properly saved?)
+
+Wait - let me think about this more carefully. The user said they fixed the CSV files in the archive, then copied them to structural_data. But did they actually verify the fixed files were copied?
+Let me ask them to verify the files in structural_data actually have the fixes applied.Only 1 Halogen record exists, yet 72 records are being skipped. This suggests the CSV files in data/structural_data/ still have negative intensities blocking the inserts.
+Verify the files in structural_data were actually fixed:
+pythonimport pandas as pd
+import os
+
+os.chdir('C:/Users/David/OneDrive/Desktop/gemini_gemological_analysis')
+
+# Check files in structural_data (not archive)
+files = [
+    'data/structural_data/199LC1_laser_structural_20250926_094305.csv',
+    'data/structural_data/199UC1_uv_structural_auto_20250926_051400.csv',
+    'data/structural_data/199UP2_uv_structural_auto_20250926_093915.csv'
+]
+
+for file_path in files:
+    if os.path.exists(file_path):
+        df = pd.read_csv(file_path)
+        neg_count = (df['Intensity'] < 0).sum()
+        print(f"{file_path.split('/')[-1]}: {neg_count} negative intensities")
+    else:
+        print(f"{file_path.split('/')[-1]}: FILE NOT FOUND")
+Save as check_fixes.py in project root and run it.
+If it shows negative intensities, the files weren't fixed. You fixed the archive copies but need to copy the fixed versions to structural_data.RetryDWthe 199LC1 does have neg intenstiyEditDevised solution to fix negative intensity file issue.The user is saying that 199LC1 still has negative intensity values. We need to fix that file in structural_data, not just the archive. They need to run the fix script on the files in structural_data, or copy the fixed archive files to structural_data.
+Let me provide a clear solution without emojis since the reminder says not to use them unless the user does.The files in data/structural_data/ still have the negative values. You fixed the archive copies but didn't copy them over.
+Fix the files that are actually in structural_data:
+pythonimport pandas as pd
+
+# Fix files IN structural_data (where the importer reads from)
+files = [
+    'data/structural_data/199BC4_halogen_structural_20250926_094055.csv',
+    'data/structural_data/199LC1_laser_structural_20250926_094305.csv',
+    'data/structural_data/199UC1_uv_structural_auto_20250926_051400.csv',
+    'data/structural_data/199UP2_uv_structural_auto_20250926_093915.csv'
+]
+
+for file_path in files:
+    df = pd.read_csv(file_path)
+    neg_count = (df['Intensity'] < 0).sum()
+    if neg_count > 0:
+        print(f"Fixing {file_path.split('/')[-1]}: {neg_count} negative values -> 0")
+        df.loc[df['Intensity'] < 0, 'Intensity'] = 0
+        df.to_csv(file_path, index=False)
+        print(f"  Fixed and saved")
+    else:
+        print(f"{file_path.split('/')[-1]}: Already clean")
+
+print("\nAll files fixed. Run Option 6 now.")
+Save as fix_structural_data.py in project root and run it. Then run Option 6 again.
