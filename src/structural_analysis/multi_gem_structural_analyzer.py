@@ -19,6 +19,10 @@ try:
     HAS_MATPLOTLIB = True
 except ImportError:
     HAS_MATPLOTLIB = False
+    # NEW IMPORTS - Feature-aware system
+from feature_extractor import FeatureExtractor, extract_features_from_dataframe
+from feature_matcher import FeatureMatcher
+from feature_scorer import FeatureScorer, ScoringResult
 
 class MultiGemStructuralAnalyzer:
     """Enhanced analyzer with YYYYMMDD timestamp support"""
@@ -43,7 +47,9 @@ class MultiGemStructuralAnalyzer:
         self.database_schema = None
         self.perfect_match_threshold = 0.005
         self.light_weights = {'B': 1.0, 'L': 0.9, 'U': 0.8}
-        
+        # NEW: Feature-aware components
+        self.feature_matcher = FeatureMatcher()
+        self.feature_scorer = FeatureScorer()
         if self.mode == "gui":
             self.setup_gui()
         
@@ -736,160 +742,104 @@ class MultiGemStructuralAnalyzer:
         return matches
     
     def calculate_similarity_scores(self, unknown_df, db_matches, light_source, file_path):
-        """Calculate similarity scores - reads timestamp from analysis_date or file_source"""
-        scores = []
-        file_col = self.database_schema['file_column']
-        wl_col = self.database_schema['wavelength_column']
-        int_col = self.database_schema['intensity_column']
-        date_col = self.database_schema.get('analysis_date_column')
+     """
+     Calculate feature-aware similarity scores using new matching system.
+    
+     Args:
+        unknown_df: GOI (Gem of Interest) structural data
+        db_matches: Database records to compare against
+        light_source: Light source code ('B', 'L', 'U')
+        file_path: Path to GOI file
         
-        # Detect data columns
-        unknown_wl_col = unknown_int_col = None
-        for col in unknown_df.columns:
-            col_lower = col.lower()
-            if 'wavelength' in col_lower or col_lower == 'wl':
-                unknown_wl_col = col
-            elif 'intensity' in col_lower or 'value' in col_lower:
-                unknown_int_col = col
+     Returns:
+        List of score dictionaries with feature-aware results
+    """
+     scores = []
+     file_col = self.database_schema['file_column']
+    
+    # Extract GOI features
+    try:
+        goi_features = extract_features_from_dataframe(unknown_df, light_source)
         
-        if not unknown_wl_col or not unknown_int_col:
+        if not goi_features:
+            print(f"   ⚠️  No features extracted from GOI")
             return scores
         
-        try:
-            unknown_wl = unknown_df[unknown_wl_col].values
-            unknown_int = unknown_df[unknown_int_col].values
-            
-            # Remove NaN
-            valid = ~(np.isnan(unknown_wl) | np.isnan(unknown_int))
-            unknown_wl = unknown_wl[valid]
-            unknown_int = unknown_int[valid]
-            
-            if len(unknown_wl) < 3:
-                return scores
-        except:
-            return scores
+        print(f"   📊 GOI features: {len(goi_features)} (types: {set(f.feature_type for f in goi_features)})")
         
-        # Extract GOI timestamp from filename
-        goi_base_id, goi_ts = self.extract_base_id_and_ts(file_path.name)
-        
-        # Score each database gem
-        for file_id, gem_data in db_matches.groupby(file_col):
-            try:
-                # Extract base_id and timestamp from database file_source
-                db_base_id, db_ts_from_file = self.extract_base_id_and_ts(str(file_id))
-                
-                # Get timestamp from analysis_date column if available
-                if date_col and date_col in db_matches.columns:
-                    date_values = gem_data[date_col].dropna().unique()
-                    if len(date_values) > 0:
-                        date_str = str(date_values[0])
-                        if '-' in date_str:
-                            db_ts = date_str.replace('-', '')[:8]
-                        else:
-                            db_ts = date_str[:8] if len(date_str) >= 8 else date_str
-                    else:
-                        db_ts = db_ts_from_file
-                else:
-                    db_ts = db_ts_from_file
-                
-                db_wl = gem_data[wl_col].values
-                db_int = gem_data[int_col].values
-                
-                # Remove NaN
-                db_valid = ~(np.isnan(db_wl) | np.isnan(db_int))
-                db_wl = db_wl[db_valid]
-                db_int = db_int[db_valid]
-                
-                if len(db_wl) < 1:
-                    continue
-                
-                # Check for self-match (same base_id AND same timestamp)
-                if (goi_base_id and db_base_id and goi_base_id == db_base_id and 
-                    goi_ts == db_ts):
-                    score = self.compute_perfect_match_score(unknown_wl, unknown_int, 
-                                                            db_wl, db_int)
-                    if score is not None:
-                        ts_info = f" ({goi_ts})" if goi_ts else ""
-                        print(f"🎯 SELF-MATCH: {file_path.name} ↔ {file_id} (score: {score:.6f})")
-                        scores.append({'db_gem_id': file_id, 'score': score, 'is_perfect': True, 'db_ts': db_ts})
-                        continue
-                
-                # Normal similarity
-                score = self.compute_similarity(unknown_wl, unknown_int, db_wl, db_int)
-                if score is not None and not math.isnan(score):
-                    scores.append({'db_gem_id': file_id, 'score': score, 'is_perfect': False, 'db_ts': db_ts})
-            
-            except Exception:
-                continue
-        
+    except Exception as e:
+        print(f"   ❌ Error extracting GOI features: {e}")
         return scores
     
-    def compute_perfect_match_score(self, unknown_wl, unknown_int, db_wl, db_int):
-        """Compute perfect match score"""
-        try:
-            size_ratio = min(len(unknown_wl), len(db_wl)) / max(len(unknown_wl), len(db_wl))
-            if size_ratio < 0.7:
-                return None
-            
-            # Sample comparison
-            sample_size = min(10, len(unknown_wl), len(db_wl))
-            unknown_idx = np.linspace(0, len(unknown_wl)-1, sample_size, dtype=int)
-            db_idx = np.linspace(0, len(db_wl)-1, sample_size, dtype=int)
-            
-            total_diff = 0.0
-            for u_i, d_i in zip(unknown_idx, db_idx):
-                wl_diff = abs(unknown_wl[u_i] - db_wl[d_i])
-                max_int = max(unknown_int[u_i], db_int[d_i])
-                int_diff = abs(unknown_int[u_i] - db_int[d_i]) / max_int if max_int > 0 else 0
-                total_diff += (wl_diff * 0.01 + int_diff)
-            
-            avg_diff = total_diff / sample_size
-            
-            if avg_diff < 0.4 and size_ratio > 0.8:
-                return 0.001 + avg_diff * 0.01
-            
-            return None
-        except:
-            return None
+    # Extract GOI timestamp for self-match detection
+    goi_base_id, goi_ts = self.extract_base_id_and_ts(file_path.name)
     
-    def compute_similarity(self, unknown_wl, unknown_int, db_wl, db_int):
-        """Compute similarity score"""
+    # Score each database gem
+    for file_id, gem_data in db_matches.groupby(file_col):
         try:
-            total_score = 0.0
-            matched = 0
-            tolerance = 10.0
+            # Extract database gem timestamp
+            db_base_id, db_ts_from_file = self.extract_base_id_and_ts(str(file_id))
             
-            unique_wl = np.unique(unknown_wl)
-            
-            for u_wl in unique_wl:
-                distances = np.abs(db_wl - u_wl)
-                nearby = distances <= tolerance
-                
-                if np.any(nearby):
-                    u_int = unknown_int[np.abs(unknown_wl - u_wl) < 0.1]
-                    d_int = db_int[nearby]
-                    
-                    if len(u_int) > 0 and len(d_int) > 0:
-                        u_avg = np.mean(u_int)
-                        d_avg = np.mean(d_int)
-                        
-                        if max(u_avg, d_avg) > 0:
-                            diff = abs(u_avg - d_avg) / max(u_avg, d_avg)
-                            weight = 1.0 - (np.min(distances[nearby]) / tolerance)
-                            total_score += diff * weight
-                            matched += 1
+            # Get timestamp from analysis_date column if available
+            date_col = self.database_schema.get('analysis_date_column')
+            if date_col and date_col in db_matches.columns:
+                date_values = gem_data[date_col].dropna().unique()
+                if len(date_values) > 0:
+                    date_str = str(date_values[0])
+                    if '-' in date_str:
+                        db_ts = date_str.replace('-', '')[:8]
+                    else:
+                        db_ts = date_str[:8] if len(date_str) >= 8 else date_str
                 else:
-                    total_score += 2.0
+                    db_ts = db_ts_from_file
+            else:
+                db_ts = db_ts_from_file
             
-            if len(unique_wl) > 0:
-                avg_score = total_score / len(unique_wl)
-                match_rate = matched / len(unique_wl)
-                return avg_score * (1.2 - match_rate * 0.2)
+            # Extract database features
+            db_features = extract_features_from_dataframe(gem_data, light_source)
             
-            return None
-        except:
-            return None
+            if not db_features:
+                continue
+            
+            # Check for self-match (same base_id AND same timestamp)
+            is_self_match = (
+                goi_base_id and db_base_id and 
+                goi_base_id == db_base_id and 
+                goi_ts == db_ts
+            )
+            
+            # Score using feature-aware system
+            result, matches = self.feature_scorer.score_light_source_comparison(
+                goi_features, 
+                db_features,
+                light_source
+            )
+            
+            # Log self-match detection
+            if is_self_match:
+                print(f"   🎯 SELF-MATCH: {file_path.name} ↔ {file_id} (score: {result.final_score:.6f})")
+            
+            # Store result
+            scores.append({
+                'db_gem_id': file_id,
+                'score': result.final_score,
+                'percentage': result.percentage,
+                'is_perfect': result.is_perfect_match or is_self_match,
+                'db_ts': db_ts,
+                'match_stats': result.match_statistics,
+                'penalties': result.weighted_penalties,
+                'feature_count': len(goi_features)
+            })
+            
+        except Exception as e:
+            print(f"   ⚠️  Error scoring {file_id}: {e}")
+            continue
     
+    # Sort by score (lower = better)
+    scores.sort(key=lambda x: x['score'])
+    
+    return scores
+     
     def score_to_percentage(self, score):
         """Convert score to percentage"""
         if score is None:
@@ -1078,3 +1028,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
