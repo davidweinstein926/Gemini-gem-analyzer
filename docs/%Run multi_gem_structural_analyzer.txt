@@ -1,0 +1,666 @@
+>>> %Run multi_gem_structural_analyzer.py
+🚀 Multi-Gem Structural Analyzer with Timestamp Support
+   Mode: gui, Source: archive
+   Features: Timestamp-Aware Scoring, Same-Date Combination, Perfect Self-Match
+✅ Loaded 736 gem descriptions
+✅ Database schema detected: sqlite
+🔍 DEBUG: Parsing '140BP2_halogen_structural_20250909_100304.csv' → stem: '140BP2_halogen_structural_20250909_100304'
+✅ Found timestamp date: 20250909
+✅ Found light 'B' at position 3
+✅ Parsed: {'base_id': '140', 'light_source': 'B', 'filename': '140BP2_halogen_structural_20250909_100304.csv', 'ts': '20250909'}
+🔍 DEBUG: Parsing '140LC2_laser_structural_20250821_172719.csv' → stem: '140LC2_laser_structural_20250821_172719'
+✅ Found timestamp date: 20250821
+✅ Found light 'L' at position 3
+✅ Parsed: {'base_id': '140', 'light_source': 'L', 'filename': '140LC2_laser_structural_20250821_172719.csv', 'ts': '20250821'}
+🔍 DEBUG: Parsing '140LP1_laser_structural_20250821_173011.csv' → stem: '140LP1_laser_structural_20250821_173011'
+✅ Found timestamp date: 20250821
+✅ Found light 'L' at position 3
+✅ Parsed: {'base_id': '140', 'light_source': 'L', 'filename': '140LP1_laser_structural_20250821_173011.csv', 'ts': '20250821'}
+🔍 DEBUG: Parsing '140LP2_laser_structural_20250821_173257.csv' → stem: '140LP2_laser_structural_20250821_173257'
+✅ Found timestamp date: 20250821
+✅ Found light 'L' at position 3
+✅ Parsed: {'base_id': '140', 'light_source': 'L', 'filename': '140LP2_laser_structural_20250821_173257.csv', 'ts': '20250821'}
+🔍 DEBUG: Parsing '140UC1_uv_structural_auto_20250925_233339.csv' → stem: '140UC1_uv_structural_auto_20250925_233339'
+✅ Found timestamp date: 20250925
+✅ Found light 'U' at position 3
+✅ Parsed: {'base_id': '140', 'light_source': 'U', 'filename': '140UC1_uv_structural_auto_20250925_233339.csv', 'ts': '20250925'}
+🔍 DEBUG: Parsing '140UC2_uv_structural_auto_20250925_233512.csv' → stem: '140UC2_uv_structural_auto_20250925_233512'
+✅ Found timestamp date: 20250925
+✅ Found light 'U' at position 3
+✅ Parsed: {'base_id': '140', 'light_source': 'U', 'filename': '140UC2_uv_structural_auto_20250925_233512.csv', 'ts': '20250925'}
+🔍 DEBUG: Parsing '140UP1_uv_structural_auto_20250925_233553.csv' → stem: '140UP1_uv_structural_auto_20250925_233553'
+✅ Found timestamp date: 20250925
+✅ Found light 'U' at position 3
+✅ Parsed: {'base_id': '140', 'light_source': 'U', 'filename': '140UP1_uv_structural_auto_20250925_233553.csv', 'ts': '20250925'}
+🔍 DEBUG: Parsing '140UP2_uv_structural_auto_20250925_233704.csv' → stem: '140UP2_uv_structural_auto_20250925_233704'
+✅ Found timestamp date: 20250925
+✅ Found light 'U' at position 3
+✅ Parsed: {'base_id': '140', 'light_source': 'U', 'filename': '140UP2_uv_structural_auto_20250925_233704.csv', 'ts': '20250925'}
+🔍 DEBUG: Parsing '189BC2_halogen_structural_20250821_184019.csv' → stem: '189BC2_halogen_structural_20250821_184019'
+✅ Found timestamp date: 20250821
+✅ Found light 'B' at position 3
+✅ Parsed: {'base_id': '189', 'light_source': 'B', 'filename': '189BC2_halogen_structural_20250821_184019.csv', 'ts': '20250821'}
+🔍 DEBUG: Parsing '189BP1_halogen_structural_20250821_184106.csv' → stem: '189BP1_halogen_structural_20250821_184106'
+✅ Found timestamp date: 20250821
+✅ Found light 'B' at position 3
+✅ Parsed: {'base_id': '189', 'light_source': 'B', 'filename': '189BP1_halogen_structural_20250821_184106.csv', 'ts': '20250821'}
+🔍 DEBUG: Parsing '189BP2_halogen_structural_20250821_184207.csv' → stem: '189BP2_halogen_structural_20250821_184207'
+✅ Found timestamp date: 20250821
+✅ Found light 'B' at position 3
+✅ Parsed: {'base_id': '189', 'light_source': 'B', 'filename': '189BP2_halogen_structural_20250821_184207.csv', 'ts': '20250821'}
+🔍 DEBUG: Parsing '189LC3_laser_structural_20250821_185607.csv' → stem: '189LC3_laser_structural_20250821_185607'
+✅ Found timestamp date: 20250821
+✅ Found light 'L' at position 3
+✅ Parsed: {'base_id': '189', 'light_source': 'L', 'filename': '189LC3_laser_structural_20250821_185607.csv', 'ts': '20250821'}
+🔍 DEBUG: Parsing '189LC4_laser_structural_20250821_185855.csv' → stem: '189LC4_laser_structural_20250821_185855'
+✅ Found timestamp date: 20250821
+✅ Found light 'L' at position 3
+✅ Parsed: {'base_id': '189', 'light_source': 'L', 'filename': '189LC4_laser_structural_20250821_185855.csv', 'ts': '20250821'}
+🔍 DEBUG: Parsing '189LP1_laser_structural_20250821_190123.csv' → stem: '189LP1_laser_structural_20250821_190123'
+✅ Found timestamp date: 20250821
+✅ Found light 'L' at position 3
+✅ Parsed: {'base_id': '189', 'light_source': 'L', 'filename': '189LP1_laser_structural_20250821_190123.csv', 'ts': '20250821'}
+🔍 DEBUG: Parsing '189LP2_laser_structural_20250821_190314.csv' → stem: '189LP2_laser_structural_20250821_190314'
+✅ Found timestamp date: 20250821
+✅ Found light 'L' at position 3
+✅ Parsed: {'base_id': '189', 'light_source': 'L', 'filename': '189LP2_laser_structural_20250821_190314.csv', 'ts': '20250821'}
+🔍 DEBUG: Parsing '189LP4_laser_structural_20250821_190441.csv' → stem: '189LP4_laser_structural_20250821_190441'
+✅ Found timestamp date: 20250821
+✅ Found light 'L' at position 3
+✅ Parsed: {'base_id': '189', 'light_source': 'L', 'filename': '189LP4_laser_structural_20250821_190441.csv', 'ts': '20250821'}
+🔍 DEBUG: Parsing '190BC1_halogen_structural_20250821_184330.csv' → stem: '190BC1_halogen_structural_20250821_184330'
+✅ Found timestamp date: 20250821
+✅ Found light 'B' at position 3
+✅ Parsed: {'base_id': '190', 'light_source': 'B', 'filename': '190BC1_halogen_structural_20250821_184330.csv', 'ts': '20250821'}
+🔍 DEBUG: Parsing '190BC2_halogen_structural_20250821_184442.csv' → stem: '190BC2_halogen_structural_20250821_184442'
+✅ Found timestamp date: 20250821
+✅ Found light 'B' at position 3
+✅ Parsed: {'base_id': '190', 'light_source': 'B', 'filename': '190BC2_halogen_structural_20250821_184442.csv', 'ts': '20250821'}
+🔍 DEBUG: Parsing '190BP1_halogen_structural_20250821_184553.csv' → stem: '190BP1_halogen_structural_20250821_184553'
+✅ Found timestamp date: 20250821
+✅ Found light 'B' at position 3
+✅ Parsed: {'base_id': '190', 'light_source': 'B', 'filename': '190BP1_halogen_structural_20250821_184553.csv', 'ts': '20250821'}
+🔍 DEBUG: Parsing '190BP2_halogen_structural_20250821_184700.csv' → stem: '190BP2_halogen_structural_20250821_184700'
+✅ Found timestamp date: 20250821
+✅ Found light 'B' at position 3
+✅ Parsed: {'base_id': '190', 'light_source': 'B', 'filename': '190BP2_halogen_structural_20250821_184700.csv', 'ts': '20250821'}
+🔍 DEBUG: Parsing '193BC1_halogen_structural_20250915_132103.csv' → stem: '193BC1_halogen_structural_20250915_132103'
+✅ Found timestamp date: 20250915
+✅ Found light 'B' at position 3
+✅ Parsed: {'base_id': '193', 'light_source': 'B', 'filename': '193BC1_halogen_structural_20250915_132103.csv', 'ts': '20250915'}
+🔍 DEBUG: Parsing '193BC2_halogen_structural_20250915_132019.csv' → stem: '193BC2_halogen_structural_20250915_132019'
+✅ Found timestamp date: 20250915
+✅ Found light 'B' at position 3
+✅ Parsed: {'base_id': '193', 'light_source': 'B', 'filename': '193BC2_halogen_structural_20250915_132019.csv', 'ts': '20250915'}
+🔍 DEBUG: Parsing '193BP1_halogen_structural_20250915_132207.csv' → stem: '193BP1_halogen_structural_20250915_132207'
+✅ Found timestamp date: 20250915
+✅ Found light 'B' at position 3
+✅ Parsed: {'base_id': '193', 'light_source': 'B', 'filename': '193BP1_halogen_structural_20250915_132207.csv', 'ts': '20250915'}
+🔍 DEBUG: Parsing '193BP2_halogen_structural_20250915_132258.csv' → stem: '193BP2_halogen_structural_20250915_132258'
+✅ Found timestamp date: 20250915
+✅ Found light 'B' at position 3
+✅ Parsed: {'base_id': '193', 'light_source': 'B', 'filename': '193BP2_halogen_structural_20250915_132258.csv', 'ts': '20250915'}
+🔍 DEBUG: Parsing '193UC1_uv_structural_auto_20250915_133018.csv' → stem: '193UC1_uv_structural_auto_20250915_133018'
+✅ Found timestamp date: 20250915
+✅ Found light 'U' at position 3
+✅ Parsed: {'base_id': '193', 'light_source': 'U', 'filename': '193UC1_uv_structural_auto_20250915_133018.csv', 'ts': '20250915'}
+🔍 DEBUG: Parsing '193UC2_uv_structural_auto_20250915_133324.csv' → stem: '193UC2_uv_structural_auto_20250915_133324'
+✅ Found timestamp date: 20250915
+✅ Found light 'U' at position 3
+✅ Parsed: {'base_id': '193', 'light_source': 'U', 'filename': '193UC2_uv_structural_auto_20250915_133324.csv', 'ts': '20250915'}
+🔍 DEBUG: Parsing '193UP1_uv_structural_auto_20250915_133408.csv' → stem: '193UP1_uv_structural_auto_20250915_133408'
+✅ Found timestamp date: 20250915
+✅ Found light 'U' at position 3
+✅ Parsed: {'base_id': '193', 'light_source': 'U', 'filename': '193UP1_uv_structural_auto_20250915_133408.csv', 'ts': '20250915'}
+🔍 DEBUG: Parsing '194BC3_halogen_structural_20250915_183155.csv' → stem: '194BC3_halogen_structural_20250915_183155'
+✅ Found timestamp date: 20250915
+✅ Found light 'B' at position 3
+✅ Parsed: {'base_id': '194', 'light_source': 'B', 'filename': '194BC3_halogen_structural_20250915_183155.csv', 'ts': '20250915'}
+🔍 DEBUG: Parsing '194LC1_laser_structural_20250915_182951.csv' → stem: '194LC1_laser_structural_20250915_182951'
+✅ Found timestamp date: 20250915
+✅ Found light 'L' at position 3
+✅ Parsed: {'base_id': '194', 'light_source': 'L', 'filename': '194LC1_laser_structural_20250915_182951.csv', 'ts': '20250915'}
+🔍 DEBUG: Parsing '194LC2_laser_structural_20250921_211158.csv' → stem: '194LC2_laser_structural_20250921_211158'
+✅ Found timestamp date: 20250921
+✅ Found light 'L' at position 3
+✅ Parsed: {'base_id': '194', 'light_source': 'L', 'filename': '194LC2_laser_structural_20250921_211158.csv', 'ts': '20250921'}
+🔍 DEBUG: Parsing '194UC1_uv_structural_auto_20250915_183313.csv' → stem: '194UC1_uv_structural_auto_20250915_183313'
+✅ Found timestamp date: 20250915
+✅ Found light 'U' at position 3
+✅ Parsed: {'base_id': '194', 'light_source': 'U', 'filename': '194UC1_uv_structural_auto_20250915_183313.csv', 'ts': '20250915'}
+🔍 DEBUG: Parsing '195BC1_halogen_structural_20250916_123934.csv' → stem: '195BC1_halogen_structural_20250916_123934'
+✅ Found timestamp date: 20250916
+✅ Found light 'B' at position 3
+✅ Parsed: {'base_id': '195', 'light_source': 'B', 'filename': '195BC1_halogen_structural_20250916_123934.csv', 'ts': '20250916'}
+🔍 DEBUG: Parsing '195LC1_laser_structural_20250916_124200.csv' → stem: '195LC1_laser_structural_20250916_124200'
+✅ Found timestamp date: 20250916
+✅ Found light 'L' at position 3
+✅ Parsed: {'base_id': '195', 'light_source': 'L', 'filename': '195LC1_laser_structural_20250916_124200.csv', 'ts': '20250916'}
+🔍 DEBUG: Parsing '195UC1_uv_structural_auto_20250916_124525.csv' → stem: '195UC1_uv_structural_auto_20250916_124525'
+✅ Found timestamp date: 20250916
+✅ Found light 'U' at position 3
+✅ Parsed: {'base_id': '195', 'light_source': 'U', 'filename': '195UC1_uv_structural_auto_20250916_124525.csv', 'ts': '20250916'}
+🔍 DEBUG: Parsing '196BC3_halogen_structural_20250917_191709.csv' → stem: '196BC3_halogen_structural_20250917_191709'
+✅ Found timestamp date: 20250917
+✅ Found light 'B' at position 3
+✅ Parsed: {'base_id': '196', 'light_source': 'B', 'filename': '196BC3_halogen_structural_20250917_191709.csv', 'ts': '20250917'}
+🔍 DEBUG: Parsing '196BC4_halogen_structural_20250917_202514.csv' → stem: '196BC4_halogen_structural_20250917_202514'
+✅ Found timestamp date: 20250917
+✅ Found light 'B' at position 3
+✅ Parsed: {'base_id': '196', 'light_source': 'B', 'filename': '196BC4_halogen_structural_20250917_202514.csv', 'ts': '20250917'}
+🔍 DEBUG: Parsing '196LC1_laser_structural_20250917_192041.csv' → stem: '196LC1_laser_structural_20250917_192041'
+✅ Found timestamp date: 20250917
+✅ Found light 'L' at position 3
+✅ Parsed: {'base_id': '196', 'light_source': 'L', 'filename': '196LC1_laser_structural_20250917_192041.csv', 'ts': '20250917'}
+🔍 DEBUG: Parsing '196LC2_laser_structural_20250917_202649.csv' → stem: '196LC2_laser_structural_20250917_202649'
+✅ Found timestamp date: 20250917
+✅ Found light 'L' at position 3
+✅ Parsed: {'base_id': '196', 'light_source': 'L', 'filename': '196LC2_laser_structural_20250917_202649.csv', 'ts': '20250917'}
+🔍 DEBUG: Parsing '196UC1_uv_structural_auto_20250917_192316.csv' → stem: '196UC1_uv_structural_auto_20250917_192316'
+✅ Found timestamp date: 20250917
+✅ Found light 'U' at position 3
+✅ Parsed: {'base_id': '196', 'light_source': 'U', 'filename': '196UC1_uv_structural_auto_20250917_192316.csv', 'ts': '20250917'}
+🔍 DEBUG: Parsing '196UC2_uv_structural_auto_20250917_211335.csv' → stem: '196UC2_uv_structural_auto_20250917_211335'
+✅ Found timestamp date: 20250917
+✅ Found light 'U' at position 3
+✅ Parsed: {'base_id': '196', 'light_source': 'U', 'filename': '196UC2_uv_structural_auto_20250917_211335.csv', 'ts': '20250917'}
+🔍 DEBUG: Parsing '196UP1_uv_structural_auto_20250917_210941.csv' → stem: '196UP1_uv_structural_auto_20250917_210941'
+✅ Found timestamp date: 20250917
+✅ Found light 'U' at position 3
+✅ Parsed: {'base_id': '196', 'light_source': 'U', 'filename': '196UP1_uv_structural_auto_20250917_210941.csv', 'ts': '20250917'}
+🔍 DEBUG: Parsing '196UP2_uv_structural_auto_20250917_213729.csv' → stem: '196UP2_uv_structural_auto_20250917_213729'
+✅ Found timestamp date: 20250917
+✅ Found light 'U' at position 3
+✅ Parsed: {'base_id': '196', 'light_source': 'U', 'filename': '196UP2_uv_structural_auto_20250917_213729.csv', 'ts': '20250917'}
+🔍 DEBUG: Parsing '197BC3_halogen_structural_20250925_210557.csv' → stem: '197BC3_halogen_structural_20250925_210557'
+✅ Found timestamp date: 20250925
+✅ Found light 'B' at position 3
+✅ Parsed: {'base_id': '197', 'light_source': 'B', 'filename': '197BC3_halogen_structural_20250925_210557.csv', 'ts': '20250925'}
+🔍 DEBUG: Parsing '197BC4_halogen_structural_20250925_212955.csv' → stem: '197BC4_halogen_structural_20250925_212955'
+✅ Found timestamp date: 20250925
+✅ Found light 'B' at position 3
+✅ Parsed: {'base_id': '197', 'light_source': 'B', 'filename': '197BC4_halogen_structural_20250925_212955.csv', 'ts': '20250925'}
+🔍 DEBUG: Parsing '197BP3_halogen_structural_20250925_220026.csv' → stem: '197BP3_halogen_structural_20250925_220026'
+✅ Found timestamp date: 20250925
+✅ Found light 'B' at position 3
+✅ Parsed: {'base_id': '197', 'light_source': 'B', 'filename': '197BP3_halogen_structural_20250925_220026.csv', 'ts': '20250925'}
+🔍 DEBUG: Parsing '197LC3_laser_structural_20250925_210900.csv' → stem: '197LC3_laser_structural_20250925_210900'
+✅ Found timestamp date: 20250925
+✅ Found light 'L' at position 3
+✅ Parsed: {'base_id': '197', 'light_source': 'L', 'filename': '197LC3_laser_structural_20250925_210900.csv', 'ts': '20250925'}
+🔍 DEBUG: Parsing '197LC4_laser_structural_20250925_213253.csv' → stem: '197LC4_laser_structural_20250925_213253'
+✅ Found timestamp date: 20250925
+✅ Found light 'L' at position 3
+✅ Parsed: {'base_id': '197', 'light_source': 'L', 'filename': '197LC4_laser_structural_20250925_213253.csv', 'ts': '20250925'}
+🔍 DEBUG: Parsing '197LP3_laser_structural_20250925_220238.csv' → stem: '197LP3_laser_structural_20250925_220238'
+✅ Found timestamp date: 20250925
+✅ Found light 'L' at position 3
+✅ Parsed: {'base_id': '197', 'light_source': 'L', 'filename': '197LP3_laser_structural_20250925_220238.csv', 'ts': '20250925'}
+🔍 DEBUG: Parsing '197UC1_uv_structural_auto_20250925_210353.csv' → stem: '197UC1_uv_structural_auto_20250925_210353'
+✅ Found timestamp date: 20250925
+✅ Found light 'U' at position 3
+✅ Parsed: {'base_id': '197', 'light_source': 'U', 'filename': '197UC1_uv_structural_auto_20250925_210353.csv', 'ts': '20250925'}
+🔍 DEBUG: Parsing '197UC2_uv_structural_auto_20250925_212823.csv' → stem: '197UC2_uv_structural_auto_20250925_212823'
+✅ Found timestamp date: 20250925
+✅ Found light 'U' at position 3
+✅ Parsed: {'base_id': '197', 'light_source': 'U', 'filename': '197UC2_uv_structural_auto_20250925_212823.csv', 'ts': '20250925'}
+🔍 DEBUG: Parsing '197UP1_uv_structural_auto_20250925_215848.csv' → stem: '197UP1_uv_structural_auto_20250925_215848'
+✅ Found timestamp date: 20250925
+✅ Found light 'U' at position 3
+✅ Parsed: {'base_id': '197', 'light_source': 'U', 'filename': '197UP1_uv_structural_auto_20250925_215848.csv', 'ts': '20250925'}
+🔍 DEBUG: Parsing '199BC3_halogen_structural_20250925_235838.csv' → stem: '199BC3_halogen_structural_20250925_235838'
+✅ Found timestamp date: 20250925
+✅ Found light 'B' at position 3
+✅ Parsed: {'base_id': '199', 'light_source': 'B', 'filename': '199BC3_halogen_structural_20250925_235838.csv', 'ts': '20250925'}
+🔍 DEBUG: Parsing '199BC4_halogen_structural_20250926_094055.csv' → stem: '199BC4_halogen_structural_20250926_094055'
+✅ Found timestamp date: 20250926
+✅ Found light 'B' at position 3
+✅ Parsed: {'base_id': '199', 'light_source': 'B', 'filename': '199BC4_halogen_structural_20250926_094055.csv', 'ts': '20250926'}
+🔍 DEBUG: Parsing '199LC1_laser_structural_20250926_094305.csv' → stem: '199LC1_laser_structural_20250926_094305'
+✅ Found timestamp date: 20250926
+✅ Found light 'L' at position 3
+✅ Parsed: {'base_id': '199', 'light_source': 'L', 'filename': '199LC1_laser_structural_20250926_094305.csv', 'ts': '20250926'}
+🔍 DEBUG: Parsing '199UC1_uv_structural_auto_20250925_234746.csv' → stem: '199UC1_uv_structural_auto_20250925_234746'
+✅ Found timestamp date: 20250925
+✅ Found light 'U' at position 3
+✅ Parsed: {'base_id': '199', 'light_source': 'U', 'filename': '199UC1_uv_structural_auto_20250925_234746.csv', 'ts': '20250925'}
+🔍 DEBUG: Parsing '199UC1_uv_structural_auto_20250926_051400.csv' → stem: '199UC1_uv_structural_auto_20250926_051400'
+✅ Found timestamp date: 20250926
+✅ Found light 'U' at position 3
+✅ Parsed: {'base_id': '199', 'light_source': 'U', 'filename': '199UC1_uv_structural_auto_20250926_051400.csv', 'ts': '20250926'}
+🔍 DEBUG: Parsing '199UP2_uv_structural_auto_20250926_093915.csv' → stem: '199UP2_uv_structural_auto_20250926_093915'
+✅ Found timestamp date: 20250926
+✅ Found light 'U' at position 3
+✅ Parsed: {'base_id': '199', 'light_source': 'U', 'filename': '199UP2_uv_structural_auto_20250926_093915.csv', 'ts': '20250926'}
+🔍 DEBUG: Parsing '214BC1_halogen_structural_20250822_093241.csv' → stem: '214BC1_halogen_structural_20250822_093241'
+✅ Found timestamp date: 20250822
+✅ Found light 'B' at position 3
+✅ Parsed: {'base_id': '214', 'light_source': 'B', 'filename': '214BC1_halogen_structural_20250822_093241.csv', 'ts': '20250822'}
+🔍 DEBUG: Parsing '214BC2_halogen_structural_20250822_093328.csv' → stem: '214BC2_halogen_structural_20250822_093328'
+✅ Found timestamp date: 20250822
+✅ Found light 'B' at position 3
+✅ Parsed: {'base_id': '214', 'light_source': 'B', 'filename': '214BC2_halogen_structural_20250822_093328.csv', 'ts': '20250822'}
+🔍 DEBUG: Parsing '214BC3_halogen_structural_20250822_093508.csv' → stem: '214BC3_halogen_structural_20250822_093508'
+✅ Found timestamp date: 20250822
+✅ Found light 'B' at position 3
+✅ Parsed: {'base_id': '214', 'light_source': 'B', 'filename': '214BC3_halogen_structural_20250822_093508.csv', 'ts': '20250822'}
+🔍 DEBUG: Parsing '214BC4_halogen_structural_20250822_093928.csv' → stem: '214BC4_halogen_structural_20250822_093928'
+✅ Found timestamp date: 20250822
+✅ Found light 'B' at position 3
+✅ Parsed: {'base_id': '214', 'light_source': 'B', 'filename': '214BC4_halogen_structural_20250822_093928.csv', 'ts': '20250822'}
+🔍 DEBUG: Parsing '214BP1_halogen_structural_20250822_093548.csv' → stem: '214BP1_halogen_structural_20250822_093548'
+✅ Found timestamp date: 20250822
+✅ Found light 'B' at position 3
+✅ Parsed: {'base_id': '214', 'light_source': 'B', 'filename': '214BP1_halogen_structural_20250822_093548.csv', 'ts': '20250822'}
+🔍 DEBUG: Parsing '214BP2_halogen_structural_20250822_093626.csv' → stem: '214BP2_halogen_structural_20250822_093626'
+✅ Found timestamp date: 20250822
+✅ Found light 'B' at position 3
+✅ Parsed: {'base_id': '214', 'light_source': 'B', 'filename': '214BP2_halogen_structural_20250822_093626.csv', 'ts': '20250822'}
+🔍 DEBUG: Parsing '214BP3_halogen_structural_20250822_094028.csv' → stem: '214BP3_halogen_structural_20250822_094028'
+✅ Found timestamp date: 20250822
+✅ Found light 'B' at position 3
+✅ Parsed: {'base_id': '214', 'light_source': 'B', 'filename': '214BP3_halogen_structural_20250822_094028.csv', 'ts': '20250822'}
+🔍 DEBUG: Parsing '214BP4_halogen_structural_20250822_093730.csv' → stem: '214BP4_halogen_structural_20250822_093730'
+✅ Found timestamp date: 20250822
+✅ Found light 'B' at position 3
+✅ Parsed: {'base_id': '214', 'light_source': 'B', 'filename': '214BP4_halogen_structural_20250822_093730.csv', 'ts': '20250822'}
+🔍 DEBUG: Parsing '224BC3_halogen_structural_20250822_120456.csv' → stem: '224BC3_halogen_structural_20250822_120456'
+✅ Found timestamp date: 20250822
+✅ Found light 'B' at position 3
+✅ Parsed: {'base_id': '224', 'light_source': 'B', 'filename': '224BC3_halogen_structural_20250822_120456.csv', 'ts': '20250822'}
+🔍 DEBUG: Parsing '224BC4_halogen_structural_20250822_120931.csv' → stem: '224BC4_halogen_structural_20250822_120931'
+✅ Found timestamp date: 20250822
+✅ Found light 'B' at position 3
+✅ Parsed: {'base_id': '224', 'light_source': 'B', 'filename': '224BC4_halogen_structural_20250822_120931.csv', 'ts': '20250822'}
+🔍 DEBUG: Parsing '224BC5_halogen_structural_20250822_121221.csv' → stem: '224BC5_halogen_structural_20250822_121221'
+✅ Found timestamp date: 20250822
+✅ Found light 'B' at position 3
+✅ Parsed: {'base_id': '224', 'light_source': 'B', 'filename': '224BC5_halogen_structural_20250822_121221.csv', 'ts': '20250822'}
+🔍 DEBUG: Parsing '224BP3_halogen_structural_20250822_121458.csv' → stem: '224BP3_halogen_structural_20250822_121458'
+✅ Found timestamp date: 20250822
+✅ Found light 'B' at position 3
+✅ Parsed: {'base_id': '224', 'light_source': 'B', 'filename': '224BP3_halogen_structural_20250822_121458.csv', 'ts': '20250822'}
+🔍 DEBUG: Parsing '224BP4_halogen_structural_20250822_121704.csv' → stem: '224BP4_halogen_structural_20250822_121704'
+✅ Found timestamp date: 20250822
+✅ Found light 'B' at position 3
+✅ Parsed: {'base_id': '224', 'light_source': 'B', 'filename': '224BP4_halogen_structural_20250822_121704.csv', 'ts': '20250822'}
+🔍 DEBUG: Parsing '51BC1_halogen_structural_20250912_073815.csv' → stem: '51BC1_halogen_structural_20250912_073815'
+✅ Found timestamp date: 20250912
+✅ Found light 'B' at position 2
+✅ Parsed: {'base_id': '51', 'light_source': 'B', 'filename': '51BC1_halogen_structural_20250912_073815.csv', 'ts': '20250912'}
+🔍 DEBUG: Parsing '51UC1_uv_structural_auto_20250911_144623.csv' → stem: '51UC1_uv_structural_auto_20250911_144623'
+✅ Found timestamp date: 20250911
+✅ Found light 'U' at position 2
+✅ Parsed: {'base_id': '51', 'light_source': 'U', 'filename': '51UC1_uv_structural_auto_20250911_144623.csv', 'ts': '20250911'}
+🔍 DEBUG: Parsing '51UP1_uv_structural_auto_20250921_211536.csv' → stem: '51UP1_uv_structural_auto_20250921_211536'
+✅ Found timestamp date: 20250921
+✅ Found light 'U' at position 2
+✅ Parsed: {'base_id': '51', 'light_source': 'U', 'filename': '51UP1_uv_structural_auto_20250921_211536.csv', 'ts': '20250921'}
+🔍 DEBUG: Parsing '52BP1_halogen_structural_20250921_210500.csv' → stem: '52BP1_halogen_structural_20250921_210500'
+✅ Found timestamp date: 20250921
+✅ Found light 'B' at position 2
+✅ Parsed: {'base_id': '52', 'light_source': 'B', 'filename': '52BP1_halogen_structural_20250921_210500.csv', 'ts': '20250921'}
+🔍 DEBUG: Parsing '60LC1_laser_structural_20250921_210812.csv' → stem: '60LC1_laser_structural_20250921_210812'
+✅ Found timestamp date: 20250921
+✅ Found light 'L' at position 2
+✅ Parsed: {'base_id': '60', 'light_source': 'L', 'filename': '60LC1_laser_structural_20250921_210812.csv', 'ts': '20250921'}
+🔍 DEBUG: Parsing '92BC1_halogen_structural_20250901_151541.csv' → stem: '92BC1_halogen_structural_20250901_151541'
+✅ Found timestamp date: 20250901
+✅ Found light 'B' at position 2
+✅ Parsed: {'base_id': '92', 'light_source': 'B', 'filename': '92BC1_halogen_structural_20250901_151541.csv', 'ts': '20250901'}
+
+🚀 Starting timestamp-aware analysis of 6 gems...
+✅ Database loaded: 1,044 records
+🔍 GOI light sources: ['B', 'L', 'U']
+🔍 Finding gems with: ['B', 'L', 'U']
+✅ Using analysis_date column: 'analysis_date'
+❌ Invalid gem 140 (20250909): missing ['L', 'U']
+❌ Invalid gem 140 (20250821): missing ['L', 'U']
+❌ Invalid gem 140 (20250925): missing ['B', 'L']
+❌ Invalid gem 189 (20250821): missing ['U']
+❌ Invalid gem 190 (20250821): missing ['L', 'U']
+❌ Invalid gem 193 (20250915): missing ['L']
+✅ Valid gem 194 (20250915): ['B', 'L', 'U']
+❌ Invalid gem 194 (20250921): missing ['B', 'U']
+✅ Valid gem 195 (20250916): ['B', 'L', 'U']
+✅ Valid gem 196 (20250917): ['B', 'L', 'U']
+✅ Valid gem 197 (20250925): ['B', 'L', 'U']
+❌ Invalid gem 199 (20250925): missing ['L']
+✅ Valid gem 199 (20250926): ['B', 'L', 'U']
+❌ Invalid gem 214 (20250822): missing ['L', 'U']
+❌ Invalid gem 224 (20250822): missing ['L', 'U']
+❌ Invalid gem 51 (20250912): missing ['L', 'U']
+❌ Invalid gem 51 (20250911): missing ['B', 'L']
+❌ Invalid gem 51 (20250921): missing ['B', 'L']
+❌ Invalid gem 52 (20250921): missing ['L', 'U']
+❌ Invalid gem 60 (20250921): missing ['B', 'U']
+❌ Invalid gem 92 (20250901): missing ['L', 'U']
+📊 Valid gems: ['194_20250915', '195_20250916', '196_20250917', '197_20250925', '199_20250926'] (431 records)
+
+🎯 Analyzing Gem 140 (1/6)...
+📄 Processing B: 140BP2_halogen_structural_20250909_100304.csv
+   Extracted 3 B features
+   📊 GOI features: 3 (types: {'M'})
+   Extracted 6 B features
+   Extracted 3 B features
+   Extracted 6 B features
+   Extracted 6 B features
+   Extracted 3 B features
+   Extracted 3 B features
+   Extracted 3 B features
+   Extracted 3 B features
+✅ Best: 195BC1_halogen_structural_20250916_123934.csv (score: 50.000000)
+📄 Processing L: 140LC2_laser_structural_20250821_172719.csv
+   Extracted 5 L features
+   📊 GOI features: 5 (types: {'V', 'M', 'P'})
+   Extracted 2 L features
+   Extracted 2 L features
+   Extracted 2 L features
+   Extracted 2 L features
+   Extracted 2 L features
+   Extracted 2 L features
+   Extracted 2 L features
+   Extracted 2 L features
+✅ Best: 199LC1_laser_structural_20250926_094305.csv (score: 6.318716)
+📄 Processing U: 140UC1_uv_structural_auto_20250925_233339.csv
+   Extracted 24 UV peaks (normalized to 811nm = 41.48)
+   📊 GOI features: 24 (types: {'P'})
+   Extracted 41 UV peaks (normalized to 811nm = 18.95)
+   Extracted 25 UV peaks (normalized to 811nm = 32.93)
+   Extracted 26 UV peaks (normalized to 811nm = 21.88)
+   Extracted 26 UV peaks (normalized to 811nm = 22.13)
+   Extracted 26 UV peaks (normalized to 811nm = 23.58)
+   Extracted 27 UV peaks (normalized to 811nm = 23.09)
+   Extracted 33 UV peaks (normalized to 811nm = 52.44)
+   Extracted 30 UV peaks (normalized to 811nm = 50.81)
+   Extracted 29 UV peaks (normalized to 811nm = 46.55)
+   Extracted 35 UV peaks (normalized to 811nm = 27.89)
+   Extracted 29 UV peaks (normalized to 811nm = 33.58)
+✅ Best: 195UC1_uv_structural_auto_20250916_124525.csv (score: 17.416128)
+🔄 Combined score for 195 (20250916): 4.0000 (0.0%)
+🔄 Combined score for 197 (20250925): 4.0000 (0.0%)
+🔄 Combined score for 199 (20250926): 4.0000 (0.0%)
+🔄 Combined score for 194 (20250915): 4.0000 (0.0%)
+🔄 Combined score for 196 (20250917): 4.0000 (0.0%)
+🏆 Best combined: 199 (20250926) (score: 4.0000)
+📊 Total valid gems scored: 5
+
+🎯 Analyzing Gem 194 (2/6)...
+📄 Processing B: 194BC3_halogen_structural_20250915_183155.csv
+   Extracted 6 B features
+   📊 GOI features: 6 (types: {'M', 'T'})
+   Extracted 6 B features
+   🎯 SELF-MATCH: 194BC3_halogen_structural_20250915_183155.csv ↔ 194BC3_halogen_structural_20250915_183155.csv (score: 0.000000)
+   Extracted 3 B features
+   Extracted 6 B features
+   Extracted 6 B features
+   Extracted 3 B features
+   Extracted 3 B features
+   Extracted 3 B features
+   Extracted 3 B features
+✅ Best: 194BC3_halogen_structural_20250915_183155.csv (score: 0.000000)
+📄 Processing L: 194LC1_laser_structural_20250915_182951.csv
+   Extracted 2 L features
+   📊 GOI features: 2 (types: {'V', 'P'})
+   Extracted 2 L features
+   🎯 SELF-MATCH: 194LC1_laser_structural_20250915_182951.csv ↔ 194LC1_laser_structural_20250915_182951.csv (score: 0.000000)
+   Extracted 2 L features
+   Extracted 2 L features
+   Extracted 2 L features
+   Extracted 2 L features
+   Extracted 2 L features
+   Extracted 2 L features
+   Extracted 2 L features
+✅ Best: 194LC1_laser_structural_20250915_182951.csv (score: 0.000000)
+📄 Processing U: 194UC1_uv_structural_auto_20250915_183313.csv
+   Extracted 41 UV peaks (normalized to 811nm = 18.95)
+   📊 GOI features: 41 (types: {'P'})
+   Extracted 41 UV peaks (normalized to 811nm = 18.95)
+   🎯 SELF-MATCH: 194UC1_uv_structural_auto_20250915_183313.csv ↔ 194UC1_uv_structural_auto_20250915_183313.csv (score: 0.000000)
+   Extracted 25 UV peaks (normalized to 811nm = 32.93)
+   Extracted 26 UV peaks (normalized to 811nm = 21.88)
+   Extracted 26 UV peaks (normalized to 811nm = 22.13)
+   Extracted 26 UV peaks (normalized to 811nm = 23.58)
+   Extracted 27 UV peaks (normalized to 811nm = 23.09)
+   Extracted 33 UV peaks (normalized to 811nm = 52.44)
+   Extracted 30 UV peaks (normalized to 811nm = 50.81)
+   Extracted 29 UV peaks (normalized to 811nm = 46.55)
+   Extracted 35 UV peaks (normalized to 811nm = 27.89)
+   Extracted 29 UV peaks (normalized to 811nm = 33.58)
+✅ Best: 194UC1_uv_structural_auto_20250915_183313.csv (score: 0.000000)
+🔄 Combined score for 194 (20250915): 0.0000 (100.0%)
+🔄 Combined score for 196 (20250917): 3.9239 (1.9%)
+🔄 Combined score for 195 (20250916): 4.0000 (0.0%)
+🔄 Combined score for 199 (20250926): 3.1556 (21.1%)
+🔄 Combined score for 197 (20250925): 4.0000 (0.0%)
+🏆 Best combined: 194 (20250915) (score: 0.0000)
+📊 Total valid gems scored: 5
+
+🎯 Analyzing Gem 195 (3/6)...
+📄 Processing B: 195BC1_halogen_structural_20250916_123934.csv
+   Extracted 3 B features
+   📊 GOI features: 3 (types: {'M'})
+   Extracted 6 B features
+   Extracted 3 B features
+   🎯 SELF-MATCH: 195BC1_halogen_structural_20250916_123934.csv ↔ 195BC1_halogen_structural_20250916_123934.csv (score: 0.000000)
+   Extracted 6 B features
+   Extracted 6 B features
+   Extracted 3 B features
+   Extracted 3 B features
+   Extracted 3 B features
+   Extracted 3 B features
+✅ Best: 195BC1_halogen_structural_20250916_123934.csv (score: 0.000000)
+📄 Processing L: 195LC1_laser_structural_20250916_124200.csv
+   Extracted 2 L features
+   📊 GOI features: 2 (types: {'V', 'P'})
+   Extracted 2 L features
+   Extracted 2 L features
+   🎯 SELF-MATCH: 195LC1_laser_structural_20250916_124200.csv ↔ 195LC1_laser_structural_20250916_124200.csv (score: 0.000000)
+   Extracted 2 L features
+   Extracted 2 L features
+   Extracted 2 L features
+   Extracted 2 L features
+   Extracted 2 L features
+   Extracted 2 L features
+✅ Best: 195LC1_laser_structural_20250916_124200.csv (score: 0.000000)
+📄 Processing U: 195UC1_uv_structural_auto_20250916_124525.csv
+   Extracted 25 UV peaks (normalized to 811nm = 32.93)
+   📊 GOI features: 25 (types: {'P'})
+   Extracted 41 UV peaks (normalized to 811nm = 18.95)
+   Extracted 25 UV peaks (normalized to 811nm = 32.93)
+   🎯 SELF-MATCH: 195UC1_uv_structural_auto_20250916_124525.csv ↔ 195UC1_uv_structural_auto_20250916_124525.csv (score: 0.000000)
+   Extracted 26 UV peaks (normalized to 811nm = 21.88)
+   Extracted 26 UV peaks (normalized to 811nm = 22.13)
+   Extracted 26 UV peaks (normalized to 811nm = 23.58)
+   Extracted 27 UV peaks (normalized to 811nm = 23.09)
+   Extracted 33 UV peaks (normalized to 811nm = 52.44)
+   Extracted 30 UV peaks (normalized to 811nm = 50.81)
+   Extracted 29 UV peaks (normalized to 811nm = 46.55)
+   Extracted 35 UV peaks (normalized to 811nm = 27.89)
+   Extracted 29 UV peaks (normalized to 811nm = 33.58)
+✅ Best: 195UC1_uv_structural_auto_20250916_124525.csv (score: 0.000000)
+🔄 Combined score for 195 (20250916): 0.0000 (100.0%)
+🔄 Combined score for 197 (20250925): 4.0000 (0.0%)
+🔄 Combined score for 199 (20250926): 4.0000 (0.0%)
+🔄 Combined score for 194 (20250915): 4.0000 (0.0%)
+🔄 Combined score for 196 (20250917): 4.0000 (0.0%)
+🏆 Best combined: 195 (20250916) (score: 0.0000)
+📊 Total valid gems scored: 5
+
+🎯 Analyzing Gem 196 (4/6)...
+📄 Processing B: 196BC3_halogen_structural_20250917_191709.csv
+   Extracted 6 B features
+   📊 GOI features: 6 (types: {'M', 'T'})
+   Extracted 6 B features
+   Extracted 3 B features
+   Extracted 6 B features
+   🎯 SELF-MATCH: 196BC3_halogen_structural_20250917_191709.csv ↔ 196BC3_halogen_structural_20250917_191709.csv (score: 0.000000)
+   Extracted 6 B features
+   🎯 SELF-MATCH: 196BC3_halogen_structural_20250917_191709.csv ↔ 196BC4_halogen_structural_20250917_202514.csv (score: 18.534309)
+   Extracted 3 B features
+   Extracted 3 B features
+   Extracted 3 B features
+   Extracted 3 B features
+✅ Best: 196BC3_halogen_structural_20250917_191709.csv (score: 0.000000)
+📄 Processing L: 196LC1_laser_structural_20250917_192041.csv
+   Extracted 2 L features
+   📊 GOI features: 2 (types: {'V', 'P'})
+   Extracted 2 L features
+   Extracted 2 L features
+   Extracted 2 L features
+   🎯 SELF-MATCH: 196LC1_laser_structural_20250917_192041.csv ↔ 196LC1_laser_structural_20250917_192041.csv (score: 0.000000)
+   Extracted 2 L features
+   🎯 SELF-MATCH: 196LC1_laser_structural_20250917_192041.csv ↔ 196LC2_laser_structural_20250917_202649.csv (score: 0.131231)
+   Extracted 2 L features
+   Extracted 2 L features
+   Extracted 2 L features
+   Extracted 2 L features
+✅ Best: 196LC1_laser_structural_20250917_192041.csv (score: 0.000000)
+📄 Processing U: 196UC1_uv_structural_auto_20250917_192316.csv
+   Extracted 26 UV peaks (normalized to 811nm = 21.88)
+   📊 GOI features: 26 (types: {'P'})
+   Extracted 41 UV peaks (normalized to 811nm = 18.95)
+   Extracted 25 UV peaks (normalized to 811nm = 32.93)
+   Extracted 26 UV peaks (normalized to 811nm = 21.88)
+   🎯 SELF-MATCH: 196UC1_uv_structural_auto_20250917_192316.csv ↔ 196UC1_uv_structural_auto_20250917_192316.csv (score: 0.000000)
+   Extracted 26 UV peaks (normalized to 811nm = 22.13)
+   🎯 SELF-MATCH: 196UC1_uv_structural_auto_20250917_192316.csv ↔ 196UC2_uv_structural_auto_20250917_211335.csv (score: 0.256026)
+   Extracted 26 UV peaks (normalized to 811nm = 23.58)
+   🎯 SELF-MATCH: 196UC1_uv_structural_auto_20250917_192316.csv ↔ 196UP1_uv_structural_auto_20250917_210941.csv (score: 3.982181)
+   Extracted 27 UV peaks (normalized to 811nm = 23.09)
+   🎯 SELF-MATCH: 196UC1_uv_structural_auto_20250917_192316.csv ↔ 196UP2_uv_structural_auto_20250917_213729.csv (score: 3.127601)
+   Extracted 33 UV peaks (normalized to 811nm = 52.44)
+   Extracted 30 UV peaks (normalized to 811nm = 50.81)
+   Extracted 29 UV peaks (normalized to 811nm = 46.55)
+   Extracted 35 UV peaks (normalized to 811nm = 27.89)
+   Extracted 29 UV peaks (normalized to 811nm = 33.58)
+✅ Best: 196UC1_uv_structural_auto_20250917_192316.csv (score: 0.000000)
+🔄 Combined score for 196 (20250917): 2.9864 (25.3%)
+🔄 Combined score for 194 (20250915): 3.2370 (19.1%)
+🔄 Combined score for 197 (20250925): 4.0000 (0.0%)
+🔄 Combined score for 195 (20250916): 4.0000 (0.0%)
+🔄 Combined score for 199 (20250926): 2.8181 (29.5%)
+🏆 Best combined: 199 (20250926) (score: 2.8181)
+📊 Total valid gems scored: 5
+
+🎯 Analyzing Gem 197 (5/6)...
+📄 Processing B: 197BC3_halogen_structural_20250925_210557.csv
+   Extracted 3 B features
+   📊 GOI features: 3 (types: {'M'})
+   Extracted 6 B features
+   Extracted 3 B features
+   Extracted 6 B features
+   Extracted 6 B features
+   Extracted 3 B features
+   🎯 SELF-MATCH: 197BC3_halogen_structural_20250925_210557.csv ↔ 197BC3_halogen_structural_20250925_210557.csv (score: 0.000000)
+   Extracted 3 B features
+   🎯 SELF-MATCH: 197BC3_halogen_structural_20250925_210557.csv ↔ 197BC4_halogen_structural_20250925_212955.csv (score: 50.000000)
+   Extracted 3 B features
+   🎯 SELF-MATCH: 197BC3_halogen_structural_20250925_210557.csv ↔ 197BP3_halogen_structural_20250925_220026.csv (score: 50.000000)
+   Extracted 3 B features
+✅ Best: 197BC3_halogen_structural_20250925_210557.csv (score: 0.000000)
+📄 Processing L: 197LC3_laser_structural_20250925_210900.csv
+   Extracted 2 L features
+   📊 GOI features: 2 (types: {'V', 'P'})
+   Extracted 2 L features
+   Extracted 2 L features
+   Extracted 2 L features
+   Extracted 2 L features
+   Extracted 2 L features
+   🎯 SELF-MATCH: 197LC3_laser_structural_20250925_210900.csv ↔ 197LC3_laser_structural_20250925_210900.csv (score: 0.000000)
+   Extracted 2 L features
+   🎯 SELF-MATCH: 197LC3_laser_structural_20250925_210900.csv ↔ 197LC4_laser_structural_20250925_213253.csv (score: 50.040529)
+   Extracted 2 L features
+   🎯 SELF-MATCH: 197LC3_laser_structural_20250925_210900.csv ↔ 197LP3_laser_structural_20250925_220238.csv (score: 0.233247)
+   Extracted 2 L features
+✅ Best: 197LC3_laser_structural_20250925_210900.csv (score: 0.000000)
+📄 Processing U: 197UC1_uv_structural_auto_20250925_210353.csv
+   Extracted 33 UV peaks (normalized to 811nm = 52.44)
+   📊 GOI features: 33 (types: {'P'})
+   Extracted 41 UV peaks (normalized to 811nm = 18.95)
+   Extracted 25 UV peaks (normalized to 811nm = 32.93)
+   Extracted 26 UV peaks (normalized to 811nm = 21.88)
+   Extracted 26 UV peaks (normalized to 811nm = 22.13)
+   Extracted 26 UV peaks (normalized to 811nm = 23.58)
+   Extracted 27 UV peaks (normalized to 811nm = 23.09)
+   Extracted 33 UV peaks (normalized to 811nm = 52.44)
+   🎯 SELF-MATCH: 197UC1_uv_structural_auto_20250925_210353.csv ↔ 197UC1_uv_structural_auto_20250925_210353.csv (score: 0.000000)
+   Extracted 30 UV peaks (normalized to 811nm = 50.81)
+   🎯 SELF-MATCH: 197UC1_uv_structural_auto_20250925_210353.csv ↔ 197UC2_uv_structural_auto_20250925_212823.csv (score: 2.385754)
+   Extracted 29 UV peaks (normalized to 811nm = 46.55)
+   🎯 SELF-MATCH: 197UC1_uv_structural_auto_20250925_210353.csv ↔ 197UP1_uv_structural_auto_20250925_215848.csv (score: 2.857341)
+   Extracted 35 UV peaks (normalized to 811nm = 27.89)
+   Extracted 29 UV peaks (normalized to 811nm = 33.58)
+✅ Best: 197UC1_uv_structural_auto_20250925_210353.csv (score: 0.000000)
+🔄 Combined score for 197 (20250925): 3.9997 (0.0%)
+🔄 Combined score for 199 (20250926): 4.0000 (0.0%)
+🔄 Combined score for 195 (20250916): 4.0000 (0.0%)
+🔄 Combined score for 194 (20250915): 4.0000 (0.0%)
+🔄 Combined score for 196 (20250917): 4.0000 (0.0%)
+🏆 Best combined: 197 (20250925) (score: 3.9997)
+📊 Total valid gems scored: 5
+
+🎯 Analyzing Gem 199 (6/6)...
+📄 Processing B: 199BC3_halogen_structural_20250925_235838.csv
+   Extracted 3 B features
+   📊 GOI features: 3 (types: {'M'})
+   Extracted 6 B features
+   Extracted 3 B features
+   Extracted 6 B features
+   Extracted 6 B features
+   Extracted 3 B features
+   Extracted 3 B features
+   Extracted 3 B features
+   Extracted 3 B features
+✅ Best: 199BC4_halogen_structural_20250926_094055.csv (score: 33.745385)
+📄 Processing L: 199LC1_laser_structural_20250926_094305.csv
+   Extracted 2 L features
+   📊 GOI features: 2 (types: {'V', 'P'})
+   Extracted 2 L features
+   Extracted 2 L features
+   Extracted 2 L features
+   Extracted 2 L features
+   Extracted 2 L features
+   Extracted 2 L features
+   Extracted 2 L features
+   Extracted 2 L features
+   🎯 SELF-MATCH: 199LC1_laser_structural_20250926_094305.csv ↔ 199LC1_laser_structural_20250926_094305.csv (score: 0.000000)
+✅ Best: 199LC1_laser_structural_20250926_094305.csv (score: 0.000000)
+📄 Processing U: 199UC1_uv_structural_auto_20250925_234746.csv
+   Extracted 26 UV peaks (normalized to 811nm = 27.89)
+   📊 GOI features: 26 (types: {'P'})
+   Extracted 41 UV peaks (normalized to 811nm = 18.95)
+   Extracted 25 UV peaks (normalized to 811nm = 32.93)
+   Extracted 26 UV peaks (normalized to 811nm = 21.88)
+   Extracted 26 UV peaks (normalized to 811nm = 22.13)
+   Extracted 26 UV peaks (normalized to 811nm = 23.58)
+   Extracted 27 UV peaks (normalized to 811nm = 23.09)
+   Extracted 33 UV peaks (normalized to 811nm = 52.44)
+   Extracted 30 UV peaks (normalized to 811nm = 50.81)
+   Extracted 29 UV peaks (normalized to 811nm = 46.55)
+   Extracted 35 UV peaks (normalized to 811nm = 27.89)
+   Extracted 29 UV peaks (normalized to 811nm = 33.58)
+✅ Best: 196UC1_uv_structural_auto_20250917_192316.csv (score: 4.553942)
+🔄 Combined score for 199 (20250926): 2.6000 (35.0%)
+🔄 Combined score for 195 (20250916): 4.0000 (0.0%)
+🔄 Combined score for 197 (20250925): 4.0000 (0.0%)
+🔄 Combined score for 196 (20250917): 3.1638 (20.9%)
+🔄 Combined score for 194 (20250915): 3.1562 (21.1%)
+🏆 Best combined: 199 (20250926) (score: 2.6000)
+📊 Total valid gems scored: 5
+📄 Comprehensive results saved: structural_analysis_comprehensive_140_20251003_122942.csv
+📄 Summary saved: structural_analysis_summary_140_20251003_122942.csv
+📄 Comprehensive results saved: structural_analysis_comprehensive_194_20251003_122942.csv
+📄 Summary saved: structural_analysis_summary_194_20251003_122942.csv
+📄 Comprehensive results saved: structural_analysis_comprehensive_195_20251003_122942.csv
+📄 Summary saved: structural_analysis_summary_195_20251003_122942.csv
+📄 Comprehensive results saved: structural_analysis_comprehensive_196_20251003_122942.csv
+📄 Summary saved: structural_analysis_summary_196_20251003_122942.csv
+📄 Comprehensive results saved: structural_analysis_comprehensive_197_20251003_122942.csv
+📄 Summary saved: structural_analysis_summary_197_20251003_122942.csv
+📄 Comprehensive results saved: structural_analysis_comprehensive_199_20251003_122942.csv
+📄 Summary saved: structural_analysis_summary_199_20251003_122942.csv
+📄 Full results saved: structural_analysis_full_20251003_122942.json
+📈 Plot saved: match_scores_ts_aware_20251003_122942.png
+
+🎉 Analysis complete! Results in: C:\Users\David\OneDrive\Desktop\gemini_gemological_analysis\outputs\structural_results
