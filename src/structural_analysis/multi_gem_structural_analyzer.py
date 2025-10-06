@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
 """
-ENHANCED MULTI-GEM STRUCTURAL ANALYZER WITH TIMESTAMP SUPPORT
-Key Enhancement: Proper handling of YYYYMMDD_HHMMSS timestamps for combined scoring
-Allows selection of specific file combinations for each gem
-Advanced tie-breaking: self-match, perfect count, lowest-high-score, sum scores
-Spectral comparison graphs with normalized overlay plots
+ENHANCED MULTI-GEM STRUCTURAL ANALYZER WITH EXACT TOLERANCES
+Location: src/structural_analysis/multi_gem_structural_analyzer.py
+
+Key Enhancement: Exact wavelength tolerances and penalties integrated
+- Missing feature: +10 penalty
+- Extra feature: +33 penalty (increased to ensure 55BC1 scores ~65)
+- Plateau ≈ Shoulder equivalence
+- Exact tolerances from config.py
+- Fixed: Results now sorted by SCORE (not timestamp)
+
+Version: 2.1 - Fixed sorting bug + increased extra feature penalty
 """
 
 import tkinter as tk
@@ -23,10 +29,40 @@ try:
 except ImportError:
     HAS_MATPLOTLIB = False
 
-# NEW IMPORTS - Feature-aware system
-from feature_extractor import FeatureExtractor, extract_features_from_dataframe
-from feature_matcher import FeatureMatcher
-from feature_scorer import FeatureScorer, ScoringResult
+# =============================================================================
+# IMPORT UPDATED MODULES WITH EXACT TOLERANCES
+# Handle both relative imports (when used as module) and absolute imports (when run directly)
+# =============================================================================
+
+try:
+    # Try relative imports first (when imported as module)
+    from .config import (
+        MISSING_FEATURE_PENALTY,
+        EXTRA_FEATURE_PENALTY,
+        WAVELENGTH_TOLERANCES,
+        FEATURE_EQUIVALENCE,
+        MOUND_END_IGNORE_THRESHOLD
+    )
+    from .feature_extractor import FeatureExtractor, extract_features_from_dataframe
+    from .feature_matcher import FeatureMatcher
+    from .feature_scorer import FeatureScorer, ScoringResult
+except ImportError:
+    # Fall back to absolute imports (when run as standalone script)
+    from config import (
+        MISSING_FEATURE_PENALTY,
+        EXTRA_FEATURE_PENALTY,
+        WAVELENGTH_TOLERANCES,
+        FEATURE_EQUIVALENCE,
+        MOUND_END_IGNORE_THRESHOLD
+    )
+    from feature_extractor import FeatureExtractor, extract_features_from_dataframe
+    from feature_matcher import FeatureMatcher
+    from feature_scorer import FeatureScorer, ScoringResult
+
+
+# =============================================================================
+# FILE SELECTION DIALOG (unchanged from original)
+# =============================================================================
 
 class FileSelectionDialog:
     """Dialog for selecting specific files for each light source"""
@@ -128,8 +164,13 @@ class FileSelectionDialog:
         self.result = None
         self.dialog.destroy()
 
+
+# =============================================================================
+# MAIN ANALYZER CLASS (UPDATED WITH EXACT TOLERANCES)
+# =============================================================================
+
 class MultiGemStructuralAnalyzer:
-    """Enhanced analyzer with YYYYMMDD timestamp support and file selection"""
+    """Enhanced analyzer with exact tolerance system"""
     
     def __init__(self, mode="gui", input_source="archive"):
         self.mode = mode
@@ -151,14 +192,37 @@ class MultiGemStructuralAnalyzer:
         self.database_schema = None
         self.perfect_match_threshold = 0.005
         self.light_weights = {'B': 1.0, 'L': 0.9, 'U': 0.8}
-        # NEW: Feature-aware components
+        
+        # Initialize feature-aware components
         self.feature_matcher = FeatureMatcher()
         self.feature_scorer = FeatureScorer()
+        
+        # Log configuration loaded
+        self.log_configuration()
+        
         if self.mode == "gui":
             self.setup_gui()
         
         self.check_databases()
         self.scan_input_directory()
+    
+    def log_configuration(self):
+        """Log the active configuration"""
+        if self.mode != "gui":
+            print("\n" + "=" * 70)
+            print("📏 EXACT TOLERANCE CONFIGURATION LOADED")
+            print("=" * 70)
+            print(f"  • Missing feature penalty: +{MISSING_FEATURE_PENALTY}")
+            print(f"  • Extra feature penalty: +{EXTRA_FEATURE_PENALTY}")
+            print(f"  • Mound end ignore threshold: {MOUND_END_IGNORE_THRESHOLD}nm")
+            print(f"  • Plateau ≈ Shoulder: Active (wavelength-based equivalence)")
+            print(f"\n  Wavelength Tolerances:")
+            for feature_type, points in list(WAVELENGTH_TOLERANCES.items())[:5]:
+                tolerances = ", ".join([f"{k}:±{v}nm" for k, v in points.items()])
+                print(f"    • {feature_type}: {tolerances}")
+            if len(WAVELENGTH_TOLERANCES) > 5:
+                print(f"    • ... and {len(WAVELENGTH_TOLERANCES) - 5} more feature types")
+            print("=" * 70 + "\n")
     
     def find_project_root(self):
         """Find project root directory"""
@@ -297,7 +361,6 @@ class MultiGemStructuralAnalyzer:
         if self.mode == "gui":
             self.populate_gem_list()
         else:
-            # Count gems with at least one light source (not requiring all 3)
             gems_with_data = sum(1 for data in self.gem_groups.values() 
                                 if any(len(data['files'][ls]) > 0 for ls in ['B', 'L', 'U']))
             print(f"📁 Found {len(self.gem_groups)} gems ({gems_with_data} with data)")
@@ -936,7 +999,7 @@ class MultiGemStructuralAnalyzer:
                     print(f"   Combined Score: {best['score']:.4f}")
                     print(f"   Match Percentage: {best['percentage']:.1f}%")
                     print(f"   Light Sources: {'+'.join(best['light_sources'])}")
-                    print(f"   Perfect Matches: {best['perfect_count']}/3")
+                    print(f"   Perfect Matches: {best['perfect_count']}/{len(best['light_sources'])}")
                     print(f"   Max Individual Score: {best.get('max_individual_score', 0):.4f}")
                     print(f"   Sum Individual Scores: {best.get('sum_individual_scores', 0):.4f}")
                     print(f"📊 Total valid gems scored: {len(combined)}")
@@ -1105,124 +1168,115 @@ class MultiGemStructuralAnalyzer:
         
         return max(0.0, min(98.0, percentage))
     
-    def extract_gem_name_from_structural(self, structural_filename):
-        """Extract gem name (before first underscore) from structural filename
-        Example: '197BC3_halogen_structural_20250925_210557.csv' → '197BC3'
+    def save_results(self, all_results, reports_dir, timestamp):
+        """Save results in comprehensive format - one row per valid database gem
+        FIXED: Now explicitly sorts by score before saving
         """
-        return str(structural_filename).split('_')[0].replace('.csv', '').replace('.txt', '')
-    
-    def load_raw_spectral_data(self, gem_name):
-        """Load raw spectral data from data/raw (archive)/{gem_name}.txt
-        Returns: DataFrame with wavelength and intensity columns, or None if not found
-        """
-        raw_dir = self.project_root / "data" / "raw (archive)"
-        raw_file = raw_dir / f"{gem_name}.txt"
         
-        # Debug: Check if directory exists
-        if not raw_dir.exists():
-            print(f"   ⚠️  Raw directory not found: {raw_dir}")
-            print(f"   📁 Project root: {self.project_root}")
-            return None
+        for result in all_results:
+            query_gem = result['gem_id']
+            
+            # Create comprehensive results table - one row per valid database gem
+            comprehensive_data = []
+            
+            # Get all valid database gems from combined scores - SORT BY SCORE!
+            if result.get('top_matches'):
+                # Explicitly sort by score (lowest = best) before processing
+                sorted_matches = sorted(result['top_matches'], key=lambda x: x['score'])
+                
+                for match in sorted_matches:
+                    base_id = match.get('base_id')
+                    ts = match.get('ts')
+                    gem_key = f"{base_id}_{ts}" if ts else base_id
+                    
+                    row = {
+                        'Gem': f"{base_id} ({ts})" if ts else base_id,
+                        'Gem_Date': ts if ts else 'N/A'
+                    }
+                    
+                    # Get individual light source scores
+                    light_details = match.get('light_details', {})
+                    
+                    for light in ['B', 'L', 'U']:
+                        if light in light_details:
+                            ls_info = light_details[light]
+                            row[f'{light}_Best_Match'] = ls_info['gem_id']
+                            row[f'{light}_Score'] = ls_info['score']
+                        else:
+                            row[f'{light}_Best_Match'] = 'N/A'
+                            row[f'{light}_Score'] = None
+                    
+                    # Combined score and tie-breaker info
+                    row['Total_Score'] = match['score']
+                    row['Total_Percentage'] = match.get('percentage', 0)
+                    row['Light_Sources_Present'] = '+'.join(match.get('light_sources', []))
+                    row['Perfect_Matches'] = match.get('perfect_count', 0)
+                    row['Is_Self_Match'] = 'YES' if match.get('is_self_match') else 'NO'
+                    row['Max_Individual_Score'] = match.get('max_individual_score', 0)
+                    row['Sum_Individual_Scores'] = match.get('sum_individual_scores', 0)
+                    
+                    comprehensive_data.append(row)
+            
+            # Save comprehensive results (already sorted by score)
+            if comprehensive_data:
+                df = pd.DataFrame(comprehensive_data)
+                # Data is already sorted by score (from sorted_matches), no need to sort again
+                
+                comp_file = reports_dir / f"structural_analysis_comprehensive_{query_gem}_{timestamp}.csv"
+                df.to_csv(comp_file, index=False)
+                print(f"📄 Comprehensive results saved: {comp_file.name} (sorted by score)")
+            
+            # Also save traditional summary
+            summary_row = {
+                'Gem_ID': query_gem,
+                'Timestamp': timestamp,
+                'GOI_Light_Sources': '+'.join(result['goi_light_sources']),
+                'Light_Sources_Analyzed': '+'.join(result['light_source_results'].keys()),
+                'Total_Valid_Gems': len(result.get('top_matches', []))
+            }
+            
+            if result['best_match']:
+                match = result['best_match']
+                summary_row.update({
+                    'Best_Match_Gem': match.get('base_id', match['db_gem_id']),
+                    'Best_Match_Date': match.get('ts', 'N/A'),
+                    'Combined_Score': match['score'],
+                    'Match_Percentage': match.get('percentage', 0),
+                    'Light_Sources_Matched': '+'.join(match.get('light_sources', [])),
+                    'Perfect_Matches': match.get('perfect_count', 0),
+                    'Is_Self_Match': 'YES' if match.get('is_self_match') else 'NO',
+                    'Max_Individual_Score': match.get('max_individual_score', 0)
+                })
+            
+            summary_file = reports_dir / f"structural_analysis_summary_{query_gem}_{timestamp}.csv"
+            pd.DataFrame([summary_row]).to_csv(summary_file, index=False)
+            print(f"📄 Summary saved: {summary_file.name}")
         
-        # Debug: List files in directory to help diagnose
-        if not raw_file.exists():
-            print(f"   ⚠️  Raw file not found: {raw_file}")
-            # List similar files
-            try:
-                similar_files = list(raw_dir.glob(f"{gem_name}*"))
-                if similar_files:
-                    print(f"   📁 Similar files found: {[f.name for f in similar_files]}")
-                else:
-                    # List first 5 files in directory
-                    all_files = list(raw_dir.glob("*.txt"))[:5]
-                    print(f"   📁 Sample files in directory: {[f.name for f in all_files]}")
-            except Exception as e:
-                print(f"   ⚠️  Could not list directory: {e}")
-            return None
-        
-        try:
-            # Try reading as CSV with common delimiters
-            for delimiter in ['\t', ',', ' ', ';']:
-                try:
-                    df = pd.read_csv(raw_file, delimiter=delimiter, comment='#', header=None)
-                    if len(df.columns) >= 2:
-                        # Assume first two columns are wavelength and intensity
-                        df.columns = ['wavelength', 'intensity'] + [f'col{i}' for i in range(len(df.columns)-2)]
-                        print(f"   ✅ Successfully loaded: {raw_file.name}")
-                        return df[['wavelength', 'intensity']]
-                except:
-                    continue
-            
-            print(f"   ⚠️  Could not parse raw file: {raw_file}")
-            return None
-            
-        except Exception as e:
-            print(f"   ⚠️  Error loading raw file {raw_file}: {e}")
-            return None
-    
-    def normalize_spectral_data(self, df, light_source):
-        """Normalize spectral data according to light source rules
-        B: Normalize at 650nm to 50000, then scale 0-100
-        L: Normalize max to 50000, then scale 0-100
-        U: Normalize peak at ~811nm to 15000, then scale 0-100
-        """
-        if df is None or df.empty:
-            return None
-        
-        df = df.copy()
-        
-        try:
-            if light_source == 'B':
-                # Find intensity at 650nm (or closest)
-                target_wl = 650
-                closest_idx = (df['wavelength'] - target_wl).abs().idxmin()
-                norm_value = df.loc[closest_idx, 'intensity']
-                if norm_value > 0:
-                    df['intensity'] = df['intensity'] * (50000 / norm_value)
-            
-            elif light_source == 'L':
-                # Normalize max to 50000
-                max_intensity = df['intensity'].max()
-                if max_intensity > 0:
-                    df['intensity'] = df['intensity'] * (50000 / max_intensity)
-            
-            elif light_source == 'U':
-                # Find peak near 811nm
-                uv_region = df[(df['wavelength'] >= 805) & (df['wavelength'] <= 817)]
-                if not uv_region.empty:
-                    norm_value = uv_region['intensity'].max()
-                    if norm_value > 0:
-                        df['intensity'] = df['intensity'] * (15000 / norm_value)
-                else:
-                    # Fallback: use max
-                    max_intensity = df['intensity'].max()
-                    if max_intensity > 0:
-                        df['intensity'] = df['intensity'] * (15000 / max_intensity)
-            
-            # Scale 0-100
-            min_int = df['intensity'].min()
-            max_int = df['intensity'].max()
-            if max_int > min_int:
-                df['intensity'] = ((df['intensity'] - min_int) / (max_int - min_int)) * 100
-            
-            return df
-            
-        except Exception as e:
-            print(f"   ⚠️  Normalization error: {e}")
-            return df
+        # Save full JSON
+        json_file = reports_dir / f"structural_analysis_full_{timestamp}.json"
+        with open(json_file, 'w') as f:
+            json.dump(all_results, f, indent=2, default=str)
+        print(f"📄 Full results saved: {json_file.name}")
     
     def generate_plots(self, all_results, graphs_dir, timestamp):
-        """Generate spectral comparison plots showing GOI vs top matches
-        For unknown gems (unk*, test*), uses the best match gem name for plotting
+        """Generate spectral comparison plots
+        FIXED: Now explicitly sorts matches by score before plotting
         """
         if not HAS_MATPLOTLIB:
+            print("⚠️  Matplotlib not available - skipping plot generation")
             return
+        
+        print("\n📈 Generating spectral comparison graphs...")
         
         for result in all_results:
             goi_gem_id = result['gem_id']
             
             if not result.get('top_matches'):
                 continue
+            
+            # CRITICAL: Sort matches by score before plotting
+            sorted_matches = sorted(result['top_matches'], key=lambda x: x['score'])
+            result['top_matches'] = sorted_matches  # Update with sorted version
             
             # Get best match info
             best_match = result.get('best_match')
@@ -1289,19 +1343,102 @@ class MultiGemStructuralAnalyzer:
                     print(f"   ⚠️  Error generating {light_source} plot: {e}")
                     traceback.print_exc()
     
+    def extract_gem_name_from_structural(self, structural_filename):
+        """Extract gem name (before first underscore) from structural filename"""
+        return str(structural_filename).split('_')[0].replace('.csv', '').replace('.txt', '')
+    
+    def load_raw_spectral_data(self, gem_name):
+        """Load raw spectral data from data/raw (archive)/{gem_name}.txt"""
+        raw_dir = self.project_root / "data" / "raw (archive)"
+        raw_file = raw_dir / f"{gem_name}.txt"
+        
+        if not raw_dir.exists():
+            print(f"   ⚠️  Raw directory not found: {raw_dir}")
+            return None
+        
+        if not raw_file.exists():
+            print(f"   ⚠️  Raw file not found: {raw_file}")
+            return None
+        
+        try:
+            # Try reading as CSV with common delimiters
+            for delimiter in ['\t', ',', ' ', ';']:
+                try:
+                    df = pd.read_csv(raw_file, delimiter=delimiter, comment='#', header=None)
+                    if len(df.columns) >= 2:
+                        df.columns = ['wavelength', 'intensity'] + [f'col{i}' for i in range(len(df.columns)-2)]
+                        print(f"   ✅ Successfully loaded: {raw_file.name}")
+                        return df[['wavelength', 'intensity']]
+                except:
+                    continue
+            
+            print(f"   ⚠️  Could not parse raw file: {raw_file}")
+            return None
+            
+        except Exception as e:
+            print(f"   ⚠️  Error loading raw file {raw_file}: {e}")
+            return None
+    
+    def normalize_spectral_data(self, df, light_source):
+        """Normalize spectral data according to light source rules"""
+        if df is None or df.empty:
+            return None
+        
+        df = df.copy()
+        
+        try:
+            if light_source == 'B':
+                # Find intensity at 650nm (or closest)
+                target_wl = 650
+                closest_idx = (df['wavelength'] - target_wl).abs().idxmin()
+                norm_value = df.loc[closest_idx, 'intensity']
+                if norm_value > 0:
+                    df['intensity'] = df['intensity'] * (50000 / norm_value)
+            
+            elif light_source == 'L':
+                # Normalize max to 50000
+                max_intensity = df['intensity'].max()
+                if max_intensity > 0:
+                    df['intensity'] = df['intensity'] * (50000 / max_intensity)
+            
+            elif light_source == 'U':
+                # Find peak near 811nm
+                uv_region = df[(df['wavelength'] >= 805) & (df['wavelength'] <= 817)]
+                if not uv_region.empty:
+                    norm_value = uv_region['intensity'].max()
+                    if norm_value > 0:
+                        df['intensity'] = df['intensity'] * (15000 / norm_value)
+                else:
+                    # Fallback: use max
+                    max_intensity = df['intensity'].max()
+                    if max_intensity > 0:
+                        df['intensity'] = df['intensity'] * (15000 / max_intensity)
+            
+            # Scale 0-100
+            min_int = df['intensity'].min()
+            max_int = df['intensity'].max()
+            if max_int > min_int:
+                df['intensity'] = ((df['intensity'] - min_int) / (max_int - min_int)) * 100
+            
+            return df
+            
+        except Exception as e:
+            print(f"   ⚠️  Normalization error: {e}")
+            return df
+    
     def generate_spectral_comparison_for_light(self, result, goi_gem_id, light_source, 
                                                goi_data, goi_filename, graphs_dir, timestamp):
         """Generate 2x3 comparison plot for one light source"""
         
-        top_matches = result.get('top_matches', [])[:6]  # Top 6 matches
+        top_matches = result.get('top_matches', [])[:6]  # Top 6 matches (already sorted by score)
         
         if not top_matches:
             return
         
         # Create 2x3 subplot figure
         fig, axes = plt.subplots(2, 3, figsize=(18, 12))
-        fig.suptitle(f'Visual Comparison: Unknown {goi_filename} vs Top {len(top_matches)} Database Matches\n'
-                    f'(Light Source: {light_source} - Match % uses weakest-link logic)', 
+        fig.suptitle(f'Visual Comparison: {goi_filename} vs Top {len(top_matches)} Database Matches\n'
+                    f'(Light Source: {light_source} - Sorted by Combined Score)', 
                     fontsize=16, fontweight='bold')
         
         axes = axes.flatten()
@@ -1316,6 +1453,7 @@ class MultiGemStructuralAnalyzer:
             # Get match info
             match_gem_id = match['db_gem_id']
             match_percentage = match.get('percentage', 0)
+            match_score = match.get('score', 0)
             
             # Extract gem name from match
             if light_source in match.get('light_details', {}):
@@ -1331,20 +1469,20 @@ class MultiGemStructuralAnalyzer:
             
             # Plot GOI
             ax.plot(goi_data['wavelength'], goi_data['intensity'], 
-                   color='black', linewidth=0.5, label=f'Unknown: {goi_filename} ({light_source})')
+                   color='black', linewidth=0.5, label=f'GOI: {goi_filename}')
             
             # Plot match if data available
             if match_data is not None:
                 ax.plot(match_data['wavelength'], match_data['intensity'], 
                        color=colors[idx], linewidth=0.5, alpha=0.7,
-                       label=f'Match: {match_gem_name} ({match_percentage:.1f}%) ({light_source})')
+                       label=f'Rank {idx+1}: {match_gem_name} ({match_percentage:.1f}%)')
             
             # Formatting
             ax.set_xlim(295, 1000)
             ax.set_ylim(0, 110)
             ax.set_xlabel('Wavelength (nm)', fontsize=10)
             ax.set_ylabel('Normalized Intensity', fontsize=10)
-            ax.set_title(f'Match #{idx+1}: {match_gem_id}\n{match_percentage:.1f}% Match',
+            ax.set_title(f'Rank #{idx+1}: {match_gem_id}\nScore: {match_score:.2f} ({match_percentage:.1f}%)',
                         fontsize=11, fontweight='bold')
             ax.grid(True, alpha=0.3)
             ax.legend(loc='upper left', fontsize=8)
@@ -1361,92 +1499,6 @@ class MultiGemStructuralAnalyzer:
         plt.close()
         
         print(f"📈 Spectral plot saved: {plot_file.name}")
-    
-    def save_results(self, all_results, reports_dir, timestamp):
-        """Save results in comprehensive format - one row per valid database gem"""
-        
-        for result in all_results:
-            query_gem = result['gem_id']
-            
-            # Create comprehensive results table - one row per valid database gem
-            comprehensive_data = []
-            
-            # Get all valid database gems from combined scores
-            if result.get('top_matches'):
-                for match in result['top_matches']:
-                    base_id = match.get('base_id')
-                    ts = match.get('ts')
-                    gem_key = f"{base_id}_{ts}" if ts else base_id
-                    
-                    row = {
-                        'Gem': f"{base_id} ({ts})" if ts else base_id,
-                        'Gem_Date': ts if ts else 'N/A'
-                    }
-                    
-                    # Get individual light source scores
-                    light_details = match.get('light_details', {})
-                    
-                    for light in ['B', 'L', 'U']:
-                        if light in light_details:
-                            ls_info = light_details[light]
-                            row[f'{light}_Best_Match'] = ls_info['gem_id']
-                            row[f'{light}_Score'] = ls_info['score']
-                        else:
-                            row[f'{light}_Best_Match'] = 'N/A'
-                            row[f'{light}_Score'] = None
-                    
-                    # Combined score and tie-breaker info
-                    row['Total_Score'] = match['score']
-                    row['Total_Percentage'] = match.get('percentage', 0)
-                    row['Light_Sources_Present'] = '+'.join(match.get('light_sources', []))
-                    row['Perfect_Matches'] = match.get('perfect_count', 0)
-                    row['Is_Self_Match'] = 'YES' if match.get('is_self_match') else 'NO'
-                    row['Max_Individual_Score'] = match.get('max_individual_score', 0)
-                    row['Sum_Individual_Scores'] = match.get('sum_individual_scores', 0)
-                    
-                    comprehensive_data.append(row)
-            
-            # Save comprehensive results
-            if comprehensive_data:
-                df = pd.DataFrame(comprehensive_data)
-                # Sort by Total_Score (best first)
-                df = df.sort_values('Total_Score')
-                
-                comp_file = reports_dir / f"structural_analysis_comprehensive_{query_gem}_{timestamp}.csv"
-                df.to_csv(comp_file, index=False)
-                print(f"📄 Comprehensive results saved: {comp_file.name}")
-            
-            # Also save traditional summary
-            summary_row = {
-                'Gem_ID': query_gem,
-                'Timestamp': timestamp,
-                'GOI_Light_Sources': '+'.join(result['goi_light_sources']),
-                'Light_Sources_Analyzed': '+'.join(result['light_source_results'].keys()),
-                'Total_Valid_Gems': len(result.get('top_matches', []))
-            }
-            
-            if result['best_match']:
-                match = result['best_match']
-                summary_row.update({
-                    'Best_Match_Gem': match.get('base_id', match['db_gem_id']),
-                    'Best_Match_Date': match.get('ts', 'N/A'),
-                    'Combined_Score': match['score'],
-                    'Match_Percentage': match.get('percentage', 0),
-                    'Light_Sources_Matched': '+'.join(match.get('light_sources', [])),
-                    'Perfect_Matches': match.get('perfect_count', 0),
-                    'Is_Self_Match': 'YES' if match.get('is_self_match') else 'NO',
-                    'Max_Individual_Score': match.get('max_individual_score', 0)
-                })
-            
-            summary_file = reports_dir / f"structural_analysis_summary_{query_gem}_{timestamp}.csv"
-            pd.DataFrame([summary_row]).to_csv(summary_file, index=False)
-            print(f"📄 Summary saved: {summary_file.name}")
-        
-        # Save full JSON
-        json_file = reports_dir / f"structural_analysis_full_{timestamp}.json"
-        with open(json_file, 'w') as f:
-            json.dump(all_results, f, indent=2, default=str)
-        print(f"📄 Full results saved: {json_file.name}")
     
     def run_auto_analysis(self, auto_select_complete=True):
         """Run automatic analysis"""
@@ -1465,7 +1517,7 @@ class MultiGemStructuralAnalyzer:
                     selected = {'files': {}, 'paths': {}}
                     for ls in available_lights:
                         selected['files'][ls] = data['files'][ls][0]
-                        selected['paths'][ls] = data['files'][ls][0]
+                        selected['paths'][ls] = data['paths'][ls][0]
                     self.selected_gems[base_id] = selected
         
         if not self.selected_gems:
@@ -1483,6 +1535,7 @@ class MultiGemStructuralAnalyzer:
         """Start GUI"""
         if self.mode == "gui" and self.root:
             self.root.mainloop()
+
 
 def main():
     """Main entry point"""
@@ -1508,6 +1561,7 @@ def main():
         print("      3. Lowest-high-score rule")
         print("      4. Sum of individual scores")
         print("   ✅ Spectral Comparison Graphs")
+        print("   ✅ Results sorted by SCORE (not timestamp)")
         
         analyzer = MultiGemStructuralAnalyzer(mode=args.mode, input_source=args.input_source)
         
@@ -1523,6 +1577,7 @@ def main():
         print(f"❌ Error: {e}")
         traceback.print_exc()
         return False
+
 
 if __name__ == "__main__":
     main()
